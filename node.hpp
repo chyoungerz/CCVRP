@@ -11,10 +11,6 @@
 #include <eigen3/Eigen/Core>
 // #include <memory>
 
-class Node;                      // 前向声明
-extern std::vector<Node> nodes;  // 节点(全局变量)
-extern Eigen::MatrixXf dists;    // 距离矩阵(全局变量)
-
 /*class Axis {
 	protected:
 		int x, y; //(x, y)
