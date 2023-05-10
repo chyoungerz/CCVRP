@@ -42,29 +42,26 @@ class Node {
 	friend std::ostream& operator<<(std::ostream& _out, const Node _node);
 	// Node operator+ (const Node& node_);
 	Node& operator=(const Node&) = default;  // 允许赋值
-	// 返回序号，从1开始
-	unsigned int get_seq() const;
 	// 计算距离
 	float cal_distance(const Node& node) const;
 	// 计算距离（友元）
 	friend float dist(const Node& axis_x, const Node& axis_y);
 };
 
-// 车辆
+// 车辆或路线
 class Vehicle {
   public:
-	unsigned int locate;               // location
-	bool end{false};                   // wether to end
 	std::vector<unsigned int> path;    // 走过的路
-	std::vector<unsigned int> select;  // 寻找到的路径序列号
 	float length;                      // 走过的路长度
-	// 禁止无参构造
-	Vehicle() = delete;
-	// loc是位置，_seq为了初始化select
-	Vehicle(const unsigned int loc, const unsigned int _seq);
-	void move(const unsigned int dest_seq);
-	// 返回当前位置
-	unsigned int location() const;
+	uint32_t locate;                   // location
+	uint32_t load;                     // 载重量
+	bool end{false};                   // wether to end
+	// 无参构造,默认0
+	Vehicle();
+	// loc是位置
+	Vehicle(const unsigned int loc);
+	// 移动到dest节点，并计算距离
+	bool move(const Node& dest, const Eigen::MatrixXf& dists);
 	// 计算路径长度
 	float path_length(const Eigen::MatrixXf& dists);
 	// 方便输出
@@ -75,20 +72,21 @@ class Vehicle {
 // 厂站
 class Station : public Node {
   public:
-	Station() = delete;
-	Station(const int x_axis, const int y_axis, const unsigned int _seq, const unsigned int _start, const unsigned int _end);
+	Station();
+	//(x_axis, y_axis) _seq 序号
+	Station(const int x_axis, const int y_axis, const uint32_t _seq);
 };
 
-// 路线
-class Tour {
+// 一个解
+class Solution {
   public:
-	std::vector<Vehicle> Tours;
+	std::vector<Vehicle> solution;
 	// 总路径长度
-	float length;
-	// 禁止无参构造
-	Tour() = delete;
-	//
-	Tour(const std::vector<Vehicle>);
+	float allength{0.0};
+	// 无参初始化
+	Solution();
+	// 添加一条路线（车辆）
+	void add(const Vehicle& vehicle);
 };
 
 class Ant {

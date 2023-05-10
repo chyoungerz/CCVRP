@@ -5,6 +5,8 @@
 #include "node.hpp"
 #include "utils.hpp"
 
+#define MAXLOAD 200
+
 using namespace std;
 int main(int argc, char const *argv[]) {
 	const time_t now = time(nullptr);  // 以当前时间设置随机数种子
@@ -19,7 +21,7 @@ int main(int argc, char const *argv[]) {
 		return 1;
 	}
 	Eigen::MatrixXf dists = init_distance(nodes);  // 计算距离
-	string result = "data.txt";
-	create(result, now);
+	// string result = "data.txt";
+	//  create(result, now);
 	return 0;
 }

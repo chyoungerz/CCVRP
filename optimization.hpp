@@ -43,6 +43,6 @@ bool is_charging_station(int node);					//returns true if node is a charging sta
 std::vector<int> tsp2evrp_zga_mini(std::vector<int> tspTour);
 */
 // 交换路径中i和j位置
-bool swapexchange(Tour& tours, const size_t i, const size_t j);
+bool swapexchange(Solution& solution, const size_t i, const size_t j);
 
 #endif

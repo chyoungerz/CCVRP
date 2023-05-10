@@ -2,6 +2,8 @@
 #include "node.hpp"
 #include "distribution.hpp"
 
+#define MAXLOAD 200
+
 //============================= class Axis start =============================
 /*
 Axis::Axis(): x(0), y(0) {}
@@ -83,13 +85,19 @@ float dist(const Node& node_x, const Node& node_y) {
 //============================= class Node end =============================
 
 //============================= class Station public Node start =============================
-
-Station::Station(const int x_axis, const int y_axis, const unsigned int _seq, const unsigned int _start, const unsigned int _end) {
+Station::Station() {
+	x = 0;
+	y = 0;
+	seq = 0;
+	start = 0;
+	end = 0;
+}
+Station::Station(const int x_axis, const int y_axis, const uint32_t _seq) {
 	x = x_axis;
 	y = y_axis;
 	seq = _seq;
-	start = _start;
-	end = _end;
+	start = 0;
+	end = 0;
 } /*
  Station Station::operator= (const Station& station_) {
 	 Station _station;
@@ -106,26 +114,15 @@ Station::Station(const int x_axis, const int y_axis, const unsigned int _seq, co
 
 
 //============================= class Vehicle public Node start =============================
-Vehicle::Vehicle(const unsigned int loc, const unsigned int _sel) : locate(loc), length(0.0) {
-	path.reserve(_sel); //提前分配好大小
-    select.reserve(_sel);
-    path.push_back(loc);
-    for (unsigned int i = 1; i <= _sel; i++) { //init select paths
-        select.push_back(i);
-    }
+Vehicle::Vehicle() : locate(0), length(0.0), load(0), end(false) {
+	path.reserve(10);  // 提前分配好大小
+	path.push_back(0);
 }
-/*bool Ant::walk(const int node_seq) {
-    if (path.find(node_seq) == path.end()) {
-    path.insert(std::pair<int, int>(node_seq, node_seq));
-    locate = node_seq;
-    return true;
-    } else {
-        return false;
-    }
-};*/
+Vehicle::Vehicle(const unsigned int loc) : locate(loc), length(0.0), load(0), end(false) {
+	path.reserve(10);  // 提前分配好大小
+	path.push_back(loc);
+}
 
-
-unsigned int Vehicle::location() const{ return locate;}
 float Vehicle::path_length(const Eigen::MatrixXf& dists) {
     for (unsigned int j = 0; j + 1 < path.size(); j++) {
         length += dists(path[j], path[j + 1]);
@@ -133,9 +130,6 @@ float Vehicle::path_length(const Eigen::MatrixXf& dists) {
     return length;
 }
 
-/*const std::unordered_map<int, int> Ant::walked_path() {
-    return path;
-}*/
 std::ostream& operator<< (std::ostream& _out, const Vehicle& _ant) {
     for (unsigned int j = 0; j < _ant.path.size(); j++) {
         _out << _ant.path[j] << "-";
@@ -150,25 +144,35 @@ std::ostream& operator<< (std::ostream& _out, const Vehicle& _ant) {
 	_vohicle.path.assign(vohicle_.path.begin(), vohicle_.path.end());
 	return _vohicle;
 };*/
-void Vehicle::move(const unsigned int dest_seq) {
-    path.push_back(select[dest_seq]);
-    locate = select[dest_seq];
-    std::swap(select[dest_seq], select.back());
-    select.pop_back();  //快速删除
-    if (select.empty()) {
-        end = true;
-    }
+bool Vehicle::move(const Node& dest, const Eigen::MatrixXf& dists) {
+	if ((load + dest.demand) >= MAXLOAD) return false;
+	load += dest.demand;
+	path.push_back(dest.seq);
+	length += dists(locate, dest.seq);
+	locate = dest.seq;
+	return true;
 }
 //============================= class Vehicle public Node end =============================
 
+//============================= class Tour start =============================
+
+Solution::Solution() {
+	allength = 0.0;
+	solution.reserve(5);
+}
+void Solution::add(const Vehicle& vehicle) {
+	solution.push_back(vehicle);
+	allength += vehicle.length;
+}
+//============================= class Tour end =============================
 
 //============================= class Ant start =============================
 
-Ant::Ant(const unsigned int loc, const unsigned int sel): locate(loc), end(false), timenow(0) {
-    for (unsigned int i = 1; i < sel; i++) { //init select paths
-        select.push_back(i);
-    }
-    path.push_back(loc);
+Ant::Ant(const unsigned int loc, const unsigned int sel) : locate(loc), end(false), timenow(0) {
+	for (unsigned int i = 1; i < sel; i++) {  // init select paths
+		select.push_back(i);
+	}
+	path.push_back(loc);
 }
 Ant::Ant(): locate(0), end(false), timenow(0) {
     path.push_back(0);

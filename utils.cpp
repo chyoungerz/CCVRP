@@ -13,10 +13,8 @@ std::vector<Node> read(const std::string& file) {
 		std::vector<Node> empty;
 		return empty;
 	}
-	int maxload{200};
-	config >> maxload;  // 最大载货量
 	std::vector<Node> nodes;
-	nodes.reserve(maxload);
+	nodes.reserve(100);
 	int temp_x, temp_y, a, b, c;
 	unsigned int temp_duration, temp_demand, temp_start, temp_end, seq;
 	while (config >> seq >> temp_x >> temp_y >> temp_duration >> temp_demand >> a >> b >> c >> temp_start >> temp_end) {
@@ -41,7 +39,7 @@ Eigen::MatrixXf init_distance(std::vector<Node>& nodes) {
 	Eigen::MatrixXf dists(size, size);
 	for (unsigned int i = 0; i < size; i++) {
 		for (unsigned int j = 0; j < size; j++) {
-			dists(i, j) = dist(nodes[i], nodes[j]);
+			dists(i, j) = dist(nodes[i], nodes[j]);  // i行-j列（row, col)
 		}
 	}
 	return dists;
