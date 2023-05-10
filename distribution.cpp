@@ -1,8 +1,9 @@
 #include "distribution.hpp"
 
 unsigned int discrete_distribute(const std::vector<unsigned int>& interval, const unsigned int locale, const Eigen::MatrixXf& pheromates, const Eigen::MatrixXf& dists) {
-    std::vector<float> probs;
-	std::mt19937 gen(now);
+	std::vector<float> probs;
+	std::random_device rd;
+	std::mt19937 gen(rd());
 	unsigned int size = interval.size();
     //std::mt11213b gen(std::chrono::high_resolution_clock::now());
     /*float sum(0.0);

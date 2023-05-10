@@ -12,8 +12,6 @@
 
 #include "node.hpp"
 
-extern time_t now;  // 以当前时间设置随机数种子（全局变量）
-
 //离散分布，interval所有可能的选择的集合， locale当前位置， pheromates信息素，dists距离矩阵
 unsigned int discrete_distribute(const std::vector<unsigned int>& interval, const unsigned int locale, const Eigen::MatrixXf& pheromates, const Eigen::MatrixXf& dists);
 //约束分布，interval所有可能的选择的集合, locale当前位置, _timenow当前时间， dists距离矩阵
