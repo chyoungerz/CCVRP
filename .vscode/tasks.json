@@ -7,8 +7,7 @@
             "args": [
                 "-g",
                 "-Wall", 
-                "-std=gnu++17", 
-                //"-lblas", 
+				"-std=gnu++17",
                 "${fileDirname}\\*.cpp", 
                 "-o",
                 "${fileDirname}\\vrp.exe"
