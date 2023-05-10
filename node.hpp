@@ -52,14 +52,15 @@ class Node {
 class Vehicle {
   public:
 	std::vector<unsigned int> path;    // 走过的路
-	float length;                      // 走过的路长度
+	std::vector<float> diflength;      // 走过的路(时间）差分数组
+	float length;
 	uint32_t locate;                   // location
 	uint32_t load;                     // 载重量
 	bool end{false};                   // wether to end
 	// 无参构造,默认0
 	Vehicle();
-	// loc是位置
-	Vehicle(const unsigned int loc);
+	// loc是位置, lengthed 代表之前走过的长度（时间）
+	Vehicle(const unsigned int loc, const float lengthed);
 	// 移动到dest节点，并计算距离
 	bool move(const Node& dest, const Eigen::MatrixXf& dists);
 	// 计算路径长度

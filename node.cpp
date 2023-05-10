@@ -114,20 +114,24 @@ Station::Station(const int x_axis, const int y_axis, const uint32_t _seq) {
 
 
 //============================= class Vehicle public Node start =============================
-Vehicle::Vehicle() : locate(0), length(0.0), load(0), end(false) {
-	path.reserve(10);  // 提前分配好大小
+Vehicle::Vehicle() : length(0.0), locate(0), load(0), end(false) {
+	path.reserve(10);
+	diflength.reserve(10);  // 提前分配好大小
 	path.push_back(0);
+	diflength.push_back(0.0);
 }
-Vehicle::Vehicle(const unsigned int loc) : locate(loc), length(0.0), load(0), end(false) {
-	path.reserve(10);  // 提前分配好大小
+Vehicle::Vehicle(const unsigned int loc, const float lengthed) : length(lengthed), locate(loc), load(0), end(false) {
+	path.reserve(10);
+	diflength.reserve(10);  // 提前分配好大小
 	path.push_back(loc);
+	diflength.push_back(0.0);
 }
 
 float Vehicle::path_length(const Eigen::MatrixXf& dists) {
-    for (unsigned int j = 0; j + 1 < path.size(); j++) {
-        length += dists(path[j], path[j + 1]);
-    }
-    return length;
+	for (unsigned int j = 0; j + 1 < diflength.size(); j++) {
+		length += diflength[j];
+	}
+	return length;
 }
 
 std::ostream& operator<< (std::ostream& _out, const Vehicle& _ant) {
@@ -148,7 +152,7 @@ bool Vehicle::move(const Node& dest, const Eigen::MatrixXf& dists) {
 	if ((load + dest.demand) >= MAXLOAD) return false;
 	load += dest.demand;
 	path.push_back(dest.seq);
-	length += dists(locate, dest.seq);
+	diflength.push_back(diflength.back() + dists(locate, dest.seq));
 	locate = dest.seq;
 	return true;
 }
@@ -162,7 +166,7 @@ Solution::Solution() {
 }
 void Solution::add(const Vehicle& vehicle) {
 	solution.push_back(vehicle);
-	allength += vehicle.length;
+	allength += vehicle.;
 }
 //============================= class Tour end =============================
 
