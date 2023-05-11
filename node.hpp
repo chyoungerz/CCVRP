@@ -5,32 +5,23 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <string>
-// #include <unordered_map>
 #include <eigen3/Eigen/Core>
+#include <iostream>
+// #include <map>
+#include <string>
 // #include <memory>
 
-/*class Axis {
-	protected:
-		int x, y; //(x, y)
-	public:
-		Axis();
-		Axis(const int temp_x, const int temp_y);
-		void init(const int& temp_x, const int& temp_y);
-		void init(const Axis& temp_axis);
-		friend std::ostream& operator<< (std::ostream& _out, const Axis& _axis);
-		friend std::istream& operator>> (std::istream& _in, Axis& _axis);
-		Axis operator+ (const Axis& axis_);
-		Axis operator= (const Axis& axis_);
-		friend double dist(const Axis& axis_x, const Axis& axis_y);
-};*/
+struct Edge {
+	float distance;
+	uint32_t to;
+};
 
 class Node {
   protected:
 	int x, y;             //(x, y)
   public:
-	uint32_t seq;             // 序号，从1开始, 0 为厂站
+	std::vector<Edge> distances;  // 该节点到其他节点的距离
+	uint32_t seq;                 // 序号，从0开始
 	uint32_t duration;        // 服务时间
 	uint32_t demand;          // 需求
 	uint32_t start;           // 开始时间窗
@@ -53,20 +44,21 @@ class Vehicle {
   public:
 	std::vector<unsigned int> path;    // 走过的路
 	std::vector<float> diflength;      // 走过的路(时间）差分数组
-	float length;
+	float length;                      // 所有节点的长度（时间）之和
 	uint32_t locate;                   // location
 	uint32_t load;                     // 载重量
-	bool end{false};                   // wether to end
 	// 无参构造,默认0
 	Vehicle();
 	// loc是位置, lengthed 代表之前走过的长度（时间）
 	Vehicle(const unsigned int loc, const float lengthed);
-	// 移动到dest节点，并计算距离
-	bool move(const Node& dest, const Eigen::MatrixXf& dists);
+	// 移动到dest节点，并计算距离 (往返距离一样)
+	bool move(const Node& dest /*,const Eigen::MatrixXf& dists*/);
 	// 计算路径长度
-	float path_length(const Eigen::MatrixXf& dists);
+	float path_length(/*const Eigen::MatrixXf& dists*/);
+	// 清空, 并初始化位置
+	void clear(uint32_t seq);
 	// 方便输出
-	friend std::ostream& operator<<(std::ostream& _out, const Vehicle& _car);
+	friend std::ostream& operator<<(std::ostream& out, const Vehicle& car);
 	Vehicle& operator=(const Vehicle&) = default;  // 允许赋值
 };
 
@@ -88,6 +80,7 @@ class Solution {
 	Solution();
 	// 添加一条路线（车辆）
 	void add(const Vehicle& vehicle);
+	void show();
 };
 
 class Ant {

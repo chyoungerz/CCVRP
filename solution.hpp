@@ -8,7 +8,7 @@
 Solution cw(const std::vector<Node>& nodes, const Eigen::MatrixXf& dists);
 
 // 最近邻算法构造初始解
-Solution knn(const std::vector<Node>& nodes, const Eigen::MatrixXf& dists);
+Solution knn(const std::vector<Node>& nodes, const std::vector<Node>& station);
 
 // 最近插入法构造初始解
 Solution NInsertion(const std::vector<Node>& nodes, const Eigen::MatrixXf& dists);

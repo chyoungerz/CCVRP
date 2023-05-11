@@ -114,31 +114,32 @@ Station::Station(const int x_axis, const int y_axis, const uint32_t _seq) {
 
 
 //============================= class Vehicle public Node start =============================
-Vehicle::Vehicle() : length(0.0), locate(0), load(0), end(false) {
+Vehicle::Vehicle() : length(0.0), locate(0), load(0) {
 	path.reserve(10);
 	diflength.reserve(10);  // 提前分配好大小
 	path.push_back(0);
 	diflength.push_back(0.0);
 }
-Vehicle::Vehicle(const unsigned int loc, const float lengthed) : length(lengthed), locate(loc), load(0), end(false) {
+Vehicle::Vehicle(const unsigned int loc, const float lengthed) : length(lengthed), locate(loc), load(0) {
 	path.reserve(10);
 	diflength.reserve(10);  // 提前分配好大小
 	path.push_back(loc);
 	diflength.push_back(0.0);
 }
 
-float Vehicle::path_length(const Eigen::MatrixXf& dists) {
+float Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
 	for (unsigned int j = 0; j + 1 < diflength.size(); j++) {
 		length += diflength[j];
 	}
 	return length;
 }
 
-std::ostream& operator<< (std::ostream& _out, const Vehicle& _ant) {
-    for (unsigned int j = 0; j < _ant.path.size(); j++) {
-        _out << _ant.path[j] << "-";
-    }
-    return _out;
+std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
+	out << "length : " << car.length << "  ";
+	for (unsigned int j = 0; j < car.path.size(); j++) {
+		out << car.path[j] << "-";
+	}
+	return out;
 }
 /*Vehicle Vehicle::operator= (const Vehicle& vohicle_) {
 	Vehicle _vohicle;
@@ -148,17 +149,26 @@ std::ostream& operator<< (std::ostream& _out, const Vehicle& _ant) {
 	_vohicle.path.assign(vohicle_.path.begin(), vohicle_.path.end());
 	return _vohicle;
 };*/
-bool Vehicle::move(const Node& dest, const Eigen::MatrixXf& dists) {
-	if ((load + dest.demand) >= MAXLOAD) return false;
+bool Vehicle::move(const Node& dest /*,const Eigen::MatrixXf& dists*/) {
+	if ((load + dest.demand) > MAXLOAD) return false;
 	load += dest.demand;
 	path.push_back(dest.seq);
-	diflength.push_back(diflength.back() + dists(locate, dest.seq));
+	// diflength.push_back(diflength.back() + dists(locate, dest.seq));
+	diflength.push_back(diflength.back() + dest.distances[locate].distance);  // from a to b == from b to a
 	locate = dest.seq;
 	return true;
 }
+
+void Vehicle::clear(uint32_t seq) {
+	load = length = 0.0;
+	path.clear();
+	diflength.clear();
+	path.push_back(seq);
+	locate = seq;
+}
 //============================= class Vehicle public Node end =============================
 
-//============================= class Tour start =============================
+//============================= class Solution start =============================
 
 Solution::Solution() {
 	allength = 0.0;
@@ -166,9 +176,16 @@ Solution::Solution() {
 }
 void Solution::add(const Vehicle& vehicle) {
 	solution.push_back(vehicle);
-	allength += vehicle.;
+	allength += vehicle.length;
 }
-//============================= class Tour end =============================
+
+void Solution::show() {
+	std::cout << "total length: " << allength << std::endl;
+	for (uint32_t i = 0; i < solution.size(); i++) {
+		std::cout << solution[i] << std::endl;
+	}
+}
+//============================= class Solution end =============================
 
 //============================= class Ant start =============================
 

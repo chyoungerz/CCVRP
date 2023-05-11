@@ -3,6 +3,7 @@
 
 #include "heuristic.hpp"
 #include "node.hpp"
+#include "solution.hpp"
 #include "utils.hpp"
 
 #define MAXLOAD 200
@@ -16,12 +17,16 @@ int main(int argc, char const *argv[]) {
 		cerr << "use default" << endl;
 	}
 	vector<Node> nodes = read(file);
+	vector<Node> stations;
 	if (nodes.empty()) {
 		cerr << "file open failed" << endl;
 		return 1;
 	}
-	Eigen::MatrixXf dists = init_distance(nodes);  // 计算距离
-	// string result = "data.txt";
-	//  create(result, now);
+	/*Eigen::MatrixXf dists = */ init_distance(nodes);  // 计算客户距离
+	stations.assign(nodes.begin(), nodes.begin() + 1);  // 厂站
+	Solution sol = knn(nodes, stations);
+	sol.show();
+	string result = "data.txt";
+	create(result, now);
 	return 0;
 }

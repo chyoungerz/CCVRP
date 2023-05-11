@@ -1,6 +1,6 @@
 #include "optimization.hpp"
 #include "distribution.hpp"
 
-bool swapexchange(Tour& tours, const size_t i, const size_t j) {
+bool swapexchange(Solution& tours, const uint32_t i, const uint32_t j) {
 	return true;
 }
