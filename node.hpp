@@ -3,17 +3,16 @@
 #ifndef _NODE_HPP_
 #define _NODE_HPP_
 
-#include <algorithm>
-#include <cmath>
-#include <eigen3/Eigen/Core>
+// #include <eigen3/Eigen/Core>
 #include <iostream>
-// #include <map>
-#include <string>
-// #include <memory>
+#include <list>
+#include <memory>
+#include <vector>
 
+// 边长度，Node的一部分
 struct Edge {
-	float distance;
-	uint32_t to;
+	double distance;  // 长度
+	uint32_t to;      // 指向
 };
 
 class Node {
@@ -34,27 +33,27 @@ class Node {
 	// Node operator+ (const Node& node_);
 	Node& operator=(const Node&) = default;  // 允许赋值
 	// 计算距离
-	float cal_distance(const Node& node) const;
+	double cal_distance(const Node& node) const;
 	// 计算距离（友元）
-	friend float dist(const Node& axis_x, const Node& axis_y);
+	friend double dist(const Node& axis_x, const Node& axis_y);
 };
 
 // 车辆或路线
 class Vehicle {
   public:
-	std::vector<unsigned int> path;    // 走过的路
-	std::vector<float> diflength;      // 走过的路(时间）差分数组
-	float length;                      // 所有节点的长度（时间）之和
+	std::vector<uint32_t> path;        // 走过的路
+	std::vector<double> diflength;     // 走过的路(时间）差分数组
+	double length;                     // 所有节点的长度（时间）之和
 	uint32_t locate;                   // location
 	uint32_t load;                     // 载重量
 	// 无参构造,默认0
 	Vehicle();
 	// loc是位置, lengthed 代表之前走过的长度（时间）
-	Vehicle(const unsigned int loc, const float lengthed);
+	Vehicle(const unsigned int loc, const double lengthed);
 	// 移动到dest节点，并计算距离 (往返距离一样)
 	bool move(const Node& dest /*,const Eigen::MatrixXf& dists*/);
 	// 计算路径长度
-	float path_length(/*const Eigen::MatrixXf& dists*/);
+	double path_length(/*const Eigen::MatrixXf& dists*/);
 	// 清空, 并初始化位置
 	void clear(uint32_t seq);
 	// 方便输出
@@ -75,14 +74,14 @@ class Solution {
   public:
 	std::vector<Vehicle> solution;
 	// 总路径长度
-	float allength{0.0};
+	double allength{0.0};
 	// 无参初始化
 	Solution();
 	// 添加一条路线（车辆）
 	void add(const Vehicle& vehicle);
 	void show();
 };
-
+/*
 class Ant {
   protected:
 	unsigned int locate;  // location
@@ -92,7 +91,7 @@ class Ant {
 	std::vector<unsigned int> select;
 	std::vector<unsigned int> path;  // 走过的路
 	unsigned int timenow;            // 当前时间
-	float length;                    // 走过的路长度
+	double length;                    // 走过的路长度
 	// loc 位置（从1开始），sel 全部蚂蚁便于初始化可选路径
 	Ant(const unsigned int loc, const unsigned int sel);
 	Ant();
@@ -100,7 +99,7 @@ class Ant {
 	void move(const Eigen::MatrixXf pheromates, const Eigen::MatrixXf& dists);
 	void move(const unsigned int loc);
 	unsigned int location() const;
-	float path_length(const Eigen::MatrixXf& dists);
+	double path_length(const Eigen::MatrixXf& dists);
 	void remove_select_path(const unsigned int rm);
 	// const std::unordered_map<int, int> walked_path();
 	friend std::ostream& operator<<(std::ostream& _out, const Ant& _ant);
@@ -108,5 +107,5 @@ class Ant {
 	// friend double dist(const Node& node_x, const Node& node_y,
 	// std::map<int, double>& stored);
 };
-
+*/
 #endif

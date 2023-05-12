@@ -1,5 +1,8 @@
 
 #include "node.hpp"
+
+#include <cmath>
+
 #include "distribution.hpp"
 
 #define MAXLOAD 200
@@ -73,13 +76,13 @@ Node& Node::operator= (const Node& node_) {
 	this -> end_time = end_time;
 	return *this;
 };*/
-float Node::cal_distance(const Node& node) const{
-    float result = sqrt(pow((x - node.x),2) + pow((y - node.y),2));
-    //dists.push_back(result);
+double Node::cal_distance(const Node& node) const {
+	double result = sqrt(pow((x - node.x), 2) + pow((y - node.y), 2));
+	//dists.push_back(result);
     return result;
 };
-float dist(const Node& node_x, const Node& node_y) {
-    return sqrt(pow((node_x.x - node_y.x),2) + pow((node_x.y - node_y.y),2));
+double dist(const Node& node_x, const Node& node_y) {
+	return sqrt(pow((node_x.x - node_y.x),2) + pow((node_x.y - node_y.y),2));
 };
 
 //============================= class Node end =============================
@@ -120,14 +123,14 @@ Vehicle::Vehicle() : length(0.0), locate(0), load(0) {
 	path.push_back(0);
 	diflength.push_back(0.0);
 }
-Vehicle::Vehicle(const unsigned int loc, const float lengthed) : length(lengthed), locate(loc), load(0) {
+Vehicle::Vehicle(const unsigned int loc, const double lengthed) : length(lengthed), locate(loc), load(0) {
 	path.reserve(10);
 	diflength.reserve(10);  // 提前分配好大小
 	path.push_back(loc);
 	diflength.push_back(0.0);
 }
 
-float Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
+double Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
 	for (unsigned int j = 0; j + 1 < diflength.size(); j++) {
 		length += diflength[j];
 	}
@@ -186,7 +189,7 @@ void Solution::show() {
 	}
 }
 //============================= class Solution end =============================
-
+/*
 //============================= class Ant start =============================
 
 Ant::Ant(const unsigned int loc, const unsigned int sel) : locate(loc), end(false), timenow(0) {
@@ -196,65 +199,65 @@ Ant::Ant(const unsigned int loc, const unsigned int sel) : locate(loc), end(fals
 	path.push_back(loc);
 }
 Ant::Ant(): locate(0), end(false), timenow(0) {
-    path.push_back(0);
+	path.push_back(0);
 }
-/*bool Ant::walk(const int node_seq) {
-    if (path.find(node_seq) == path.end()) {
-    path.insert(std::pair<int, int>(node_seq, node_seq));
-    locate = node_seq;
-    return true;
-    } else {
-        return false;
-    }
-};*/
+bool Ant::walk(const int node_seq) {
+	if (path.find(node_seq) == path.end()) {
+	path.insert(std::pair<int, int>(node_seq, node_seq));
+	locate = node_seq;
+	return true;
+	} else {
+		return false;
+	}
+};
 void Ant::move(const Eigen::MatrixXf pheromates, const Eigen::MatrixXf& dists) {
-    unsigned int temp = discrete_distribute(select, locate, pheromates, dists); //
-    path.push_back(select[temp]);
-    locate = select[temp];
-    std::swap(select[temp], select.back());
-    select.pop_back();  //快速删除
-    if (select.empty()) {
-        end = true;
-    }
+	unsigned int temp = discrete_distribute(select, locate, pheromates, dists); //
+	path.push_back(select[temp]);
+	locate = select[temp];
+	std::swap(select[temp], select.back());
+	select.pop_back();  //快速删除
+	if (select.empty()) {
+		end = true;
+	}
 }
 void Ant::move(const unsigned int loc) {
-    path.push_back(loc);
-    locate = loc;
-    if (select.empty()) {
-        end = true;
-    }
+	path.push_back(loc);
+	locate = loc;
+	if (select.empty()) {
+		end = true;
+	}
 }
 unsigned int Ant::location() const { return locate;}
-float Ant::path_length(const Eigen::MatrixXf& dists) {
-    for (unsigned int j = 0; j + 1 < path.size(); j++) {
-        length += dists(path[j], path[j + 1]);
-    }
-    return length;
+double Ant::path_length(const Eigen::MatrixXf& dists) {
+	for (unsigned int j = 0; j + 1 < path.size(); j++) {
+		length += dists(path[j], path[j + 1]);
+	}
+	return length;
 }
 void Ant::remove_select_path(const unsigned int rm) {
-    std::swap(select[rm], select.back());
-    select.pop_back();
-    if (select.empty()) {
-        end = true;
-    }
+	std::swap(select[rm], select.back());
+	select.pop_back();
+	if (select.empty()) {
+		end = true;
+	}
 }
-/*
+
 std::vector<int>& Ant::select_path() {
-    return select;
+	return select;
 }
 const std::unordered_map<int, int> Ant::walked_path() {
-    return path;
-}*/
+	return path;
+}
 std::ostream& operator<< (std::ostream& _out, const Ant& _ant) {
-    for (unsigned int j = 0; j < _ant.path.size(); j++) {
-        _out << _ant.path[j] << "-";
-    }
-    return _out;
+	for (unsigned int j = 0; j < _ant.path.size(); j++) {
+		_out << _ant.path[j] << "-";
+	}
+	return _out;
 }
 bool Ant::end_path() const {
-    return end;
+	return end;
 }
 //double dist(const Node& node_x, const Node& node_y, std::map<int, double>& stored) {}
 
 //============================= class Ant end =============================
-
+*/

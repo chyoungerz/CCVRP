@@ -1,7 +1,7 @@
 #include "utils.hpp"
 
 #include <ctime>
-#include <eigen3/Eigen/Core>
+// #include <eigen3/Eigen/Core>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -34,17 +34,17 @@ void create(std::string& filename, const time_t now) {
 	out.close();
 }
 
-Eigen::MatrixXf init_distance(std::vector<Node>& nodes) {
+void init_distance(std::vector<Node>& nodes) {
 	uint32_t size = nodes.size();
-	Eigen::MatrixXf dists(size, size);
+	// Eigen::MatrixXf dists(size, size);
 	std::vector<Edge> temp_edges(size);
 	for (unsigned int i = 0; i < size; i++) {
 		for (unsigned int j = 0; j < size; j++) {
-			float d = dist(nodes[i], nodes[j]);  // i行-j列（row, col)
+			double d = dist(nodes[i], nodes[j]);  // i行-j列（row, col)
 			temp_edges.push_back({d, j});
 		}
 		nodes[i].distances.assign(temp_edges.begin(), temp_edges.end());
 		temp_edges.clear();
 	}
-	return dists;
+	// return dists;
 }

@@ -15,6 +15,6 @@ std::vector<Node> read(const std::string& file);
 void create(std::string& filename, const time_t now);
 
 // 计算节点距离矩阵返回到dists中
-Eigen::MatrixXf init_distance(std::vector<Node>& nodes);
+void init_distance(std::vector<Node>& nodes);
 
 #endif /*_UTILS_HPP_*/

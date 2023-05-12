@@ -22,7 +22,7 @@ int main(int argc, char const *argv[]) {
 		cerr << "file open failed" << endl;
 		return 1;
 	}
-	/*Eigen::MatrixXf dists = */ init_distance(nodes);  // 计算客户距离
+	init_distance(nodes);                               // 计算客户距离
 	stations.assign(nodes.begin(), nodes.begin() + 1);  // 厂站
 	Solution sol = knn(nodes, stations);
 	sol.show();

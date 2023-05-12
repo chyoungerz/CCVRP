@@ -1,8 +1,9 @@
 #include "solution.hpp"
 
+#include <algorithm>
 #include <set>
 
-Solution cw(const std::vector<Node>& nodes, const Eigen::MatrixXf& dists) {
+Solution cw(const std::vector<Node>& nodes, const std::vector<Node>& station) {
 	Solution solution;
 	return solution;
 }
@@ -63,12 +64,12 @@ Solution knn(const std::vector<Node>& nodes, const std::vector<Node>& station) {
 	}
 	return solution;  // 返回答案。
 }
-Solution NInsertion(const std::vector<Node>& nodes, const Eigen::MatrixXf& dists) {
+Solution NInsertion(const std::vector<Node>& nodes, const std::vector<Node>& station) {
 	Solution solution;
 	return solution;
 }
 
-Solution SweepA(const std::vector<Node>& nodes, const Eigen::MatrixXf& dists) {
+Solution SweepA(const std::vector<Node>& nodes, const std::vector<Node>& station) {
 	Solution solution;
 	return solution;
 }
