@@ -6,8 +6,6 @@
 #include "solution.hpp"
 #include "utils.hpp"
 
-#define MAXLOAD 200
-
 using namespace std;
 int main(int argc, char const *argv[]) {
 	const time_t now = time(nullptr);  // 以当前时间设置随机数种子
@@ -16,8 +14,8 @@ int main(int argc, char const *argv[]) {
 		cerr << "not enought args" << endl;
 		cerr << "use default" << endl;
 	}
-	vector<Node> nodes = read(file);
-	vector<Node> stations;
+	vector<Node *> nodes = read(file);
+	vector<Node *> stations;
 	if (nodes.empty()) {
 		cerr << "file open failed" << endl;
 		return 1;

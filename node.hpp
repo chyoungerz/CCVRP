@@ -41,7 +41,7 @@ class Node {
 // 车辆或路线
 class Vehicle {
   public:
-	std::vector<uint32_t> path;        // 走过的路
+	std::vector<const Node*> path;     // 走过的路
 	std::vector<double> diflength;     // 走过的路(时间）差分数组
 	double length;                     // 所有节点的长度（时间）之和
 	uint32_t locate;                   // location
@@ -51,11 +51,11 @@ class Vehicle {
 	// loc是位置, lengthed 代表之前走过的长度（时间）
 	Vehicle(const unsigned int loc, const double lengthed);
 	// 移动到dest节点，并计算距离 (往返距离一样)
-	bool move(const Node& dest /*,const Eigen::MatrixXf& dists*/);
+	bool move(const Node* dest /*,const Eigen::MatrixXf& dists*/);
 	// 计算路径长度
 	double path_length(/*const Eigen::MatrixXf& dists*/);
 	// 清空, 并初始化位置
-	void clear(uint32_t seq);
+	void clear(const Node* node0);
 	// 方便输出
 	friend std::ostream& operator<<(std::ostream& out, const Vehicle& car);
 	Vehicle& operator=(const Vehicle&) = default;  // 允许赋值

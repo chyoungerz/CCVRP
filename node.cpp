@@ -120,13 +120,11 @@ Station::Station(const int x_axis, const int y_axis, const uint32_t _seq) {
 Vehicle::Vehicle() : length(0.0), locate(0), load(0) {
 	path.reserve(10);
 	diflength.reserve(10);  // 提前分配好大小
-	path.push_back(0);
 	diflength.push_back(0.0);
 }
 Vehicle::Vehicle(const unsigned int loc, const double lengthed) : length(lengthed), locate(loc), load(0) {
 	path.reserve(10);
 	diflength.reserve(10);  // 提前分配好大小
-	path.push_back(loc);
 	diflength.push_back(0.0);
 }
 
@@ -152,22 +150,22 @@ std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
 	_vohicle.path.assign(vohicle_.path.begin(), vohicle_.path.end());
 	return _vohicle;
 };*/
-bool Vehicle::move(const Node& dest /*,const Eigen::MatrixXf& dists*/) {
-	if ((load + dest.demand) > MAXLOAD) return false;
-	load += dest.demand;
-	path.push_back(dest.seq);
+bool Vehicle::move(const Node* dest /*,const Eigen::MatrixXf& dists*/) {
+	if ((load + dest->demand) > MAXLOAD) return false;
+	load += dest->demand;
+	path.push_back(dest);
 	// diflength.push_back(diflength.back() + dists(locate, dest.seq));
-	diflength.push_back(diflength.back() + dest.distances[locate].distance);  // from a to b == from b to a
-	locate = dest.seq;
+	diflength.push_back(diflength.back() + dest->distances[locate].distance);  // from a to b == from b to a
+	locate = dest->seq;
 	return true;
 }
 
-void Vehicle::clear(uint32_t seq) {
+void Vehicle::clear(const Node* node0) {
 	load = length = 0.0;
 	path.clear();
 	diflength.clear();
-	path.push_back(seq);
-	locate = seq;
+	path.push_back(node0);
+	locate = node0->seq;
 }
 //============================= class Vehicle public Node end =============================
 

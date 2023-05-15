@@ -7,22 +7,25 @@
 #include <iostream>
 #include <ostream>
 
-std::vector<Node> read(const std::string& file) {
+std::vector<Node*> read(const std::string& file) {
 	std::ifstream config(file);
 	if (config.fail()) {
-		std::vector<Node> empty;
+		std::vector<Node*> empty;
 		return empty;
 	}
-	std::vector<Node> nodes;
-	nodes.reserve(100);
+	// std::vector<Node> nodes;
+	std::vector<Node*> nodes_ptr;
+	// nodes.reserve(100);
 	int temp_x, temp_y, a, b, c;
 	unsigned int temp_duration, temp_demand, temp_start, temp_end, seq;
 	while (config >> seq >> temp_x >> temp_y >> temp_duration >> temp_demand >> a >> b >> c >> temp_start >> temp_end) {
-		Node temp(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end);
-		nodes.push_back(temp);
+		// Node temp(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end);
+		Node* node = new Node(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end);
+		// nodes.push_back(temp);
+		nodes_ptr.push_back(node);
 	}
 	config.close();
-	return nodes;
+	return nodes_ptr;
 }
 
 void create(std::string& filename, const time_t now) {
@@ -34,16 +37,16 @@ void create(std::string& filename, const time_t now) {
 	out.close();
 }
 
-void init_distance(std::vector<Node>& nodes) {
+void init_distance(std::vector<Node*>& nodes) {
 	uint32_t size = nodes.size();
 	// Eigen::MatrixXf dists(size, size);
 	std::vector<Edge> temp_edges(size);
 	for (unsigned int i = 0; i < size; i++) {
 		for (unsigned int j = 0; j < size; j++) {
-			double d = dist(nodes[i], nodes[j]);  // i行-j列（row, col)
+			double d = dist(*nodes[i], *nodes[j]);  // i行-j列（row, col)
 			temp_edges.push_back({d, j});
 		}
-		nodes[i].distances.assign(temp_edges.begin(), temp_edges.end());
+		nodes[i]->distances.assign(temp_edges.begin(), temp_edges.end());
 		temp_edges.clear();
 	}
 	// return dists;
