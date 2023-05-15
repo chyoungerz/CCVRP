@@ -12,4 +12,5 @@ bool insertback(Vehicle& vehicle, const Node* node) {
 
 bool insert(Vehicle& vehicle, const Node& node, const uint32_t pos) {
 	if ((vehicle.load + node.demand) > MAXLOAD) return false;  // 超重
+	return true;
 }

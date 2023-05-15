@@ -26,5 +26,6 @@ int main(int argc, char const *argv[]) {
 	sol.show();
 	string result = "data.txt";
 	create(result, now);
+	release(nodes);
 	return 0;
 }

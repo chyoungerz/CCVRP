@@ -138,7 +138,7 @@ double Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
 std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
 	out << "length : " << car.length << "  ";
 	for (unsigned int j = 0; j < car.path.size(); j++) {
-		out << car.path[j] << "-";
+		out << car.path[j]->seq << "-";
 	}
 	return out;
 }

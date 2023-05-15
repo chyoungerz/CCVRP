@@ -17,4 +17,7 @@ void create(std::string& filename, const time_t now);
 // 计算节点距离矩阵
 void init_distance(std::vector<Node*>& nodes);
 
+// 释放nodes内存（包括厂站）
+void release(std::vector<Node*>& nodes);
+
 #endif /*_UTILS_HPP_*/

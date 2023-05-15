@@ -51,3 +51,10 @@ void init_distance(std::vector<Node*>& nodes) {
 	}
 	// return dists;
 }
+
+void release(std::vector<Node*>& nodes) {
+	for (auto& node : nodes) {
+		delete node;
+	}
+	nodes.clear();
+}
