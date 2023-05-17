@@ -117,26 +117,25 @@ Station::Station(const int x_axis, const int y_axis, const uint32_t _seq) {
 
 
 //============================= class Vehicle public Node start =============================
-Vehicle::Vehicle() : length(0.0), locate(0), load(0) {
+Vehicle::Vehicle() : cumlength(0.0), locate(0), load(0) {
 	path.reserve(10);
-	diflength.reserve(10);  // 提前分配好大小
-	diflength.push_back(0.0);
 }
-Vehicle::Vehicle(const unsigned int loc, const double lengthed) : length(lengthed), locate(loc), load(0) {
+Vehicle::Vehicle(const Node* loc, const double lengthed) : cumlength(lengthed), locate(loc->seq), load(0) {
 	path.reserve(10);
-	diflength.reserve(10);  // 提前分配好大小
-	diflength.push_back(0.0);
+	path.push_back(loc);
 }
 
 double Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
-	for (unsigned int j = 0; j + 1 < diflength.size(); j++) {
-		length += diflength[j];
+	double length{0.0}, sumlength{0.0};
+	for (unsigned int j = 0; j + 1 < path.size(); j++) {
+		length += path[j]->distances[path[j + 1]->seq].distance;
+		sumlength += length;
 	}
-	return length;
+	return sumlength;
 }
 
 std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
-	out << "length : " << car.length << "  ";
+	out << "length : " << car.cumlength << "  ";
 	for (unsigned int j = 0; j < car.path.size(); j++) {
 		out << car.path[j]->seq << "-";
 	}
@@ -151,19 +150,24 @@ std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
 	return _vohicle;
 };*/
 bool Vehicle::move(const Node* dest /*,const Eigen::MatrixXf& dists*/) {
+	double diflength{0.0};
 	if ((load + dest->demand) > MAXLOAD) return false;
 	load += dest->demand;
 	path.push_back(dest);
+	for (uint32_t i = 0; i + 1 < path.size(); i++) {
+		diflength += path[i]->distances[path[i + 1]->seq].distance;
+	}
+	cumlength += diflength;
 	// diflength.push_back(diflength.back() + dists(locate, dest.seq));
-	diflength.push_back(diflength.back() + dest->distances[locate].distance);  // from a to b == from b to a
+	// diflength.push_back(diflength.back() + dest->distances[locate].distance);  // from a to b == from b to a
 	locate = dest->seq;
 	return true;
 }
 
 void Vehicle::clear(const Node* node0) {
-	load = length = 0.0;
+	load = 0;
+	cumlength = 0.0;
 	path.clear();
-	diflength.clear();
 	path.push_back(node0);
 	locate = node0->seq;
 }
@@ -177,7 +181,7 @@ Solution::Solution() {
 }
 void Solution::add(const Vehicle& vehicle) {
 	solution.push_back(vehicle);
-	allength += vehicle.length;
+	allength += vehicle.cumlength;
 }
 
 void Solution::show() {

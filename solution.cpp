@@ -17,14 +17,14 @@ Solution knn(const std::vector<Node*>& nodes, const std::vector<Node*>& station)
 	}
 	for (uint32_t i = 0; i < station.size(); i++) {
 		std::vector<Edge> dist0 = station[i]->distances;
-		Vehicle vehicle(station[i]->seq, 0.0);
+		Vehicle vehicle(station[i], 0.0);
 		std::sort(dist0.begin(), dist0.end(), [](Edge a, Edge b) -> bool { return a.distance < b.distance; });
 		while (true) {
 			uint32_t far{dist0.back().to};
 			if (walked.find(far) == walked.end()) {
 				if (!vehicle.move(nodes[far])) {    // 达到最大
 					vehicle.move(station[i]);       // 返回厂站
-					vehicle.path_length();          // 计算路径长度。
+					vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 					solution.add(vehicle);          // 加入到答案。
 					vehicle.clear(station[i]);      // 清空
 					break;
@@ -40,13 +40,13 @@ Solution knn(const std::vector<Node*>& nodes, const std::vector<Node*>& station)
 						}
 						if (distnode.empty()) {                  // 走完了
 							vehicle.move(station[i]);            // 返回厂站
-							vehicle.path_length();               // 计算路径长度。
+							vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 							solution.add(vehicle);               // 加入到答案。
 							vehicle.clear(station[i]);           // 清空;
 							break;
 						} else if (!vehicle.move(nodes[far])) {  // 达到最大
 							vehicle.move(station[i]);            // 返回厂站
-							vehicle.path_length();               // 计算路径长度。
+							vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 							solution.add(vehicle);               // 加入到答案。
 							vehicle.clear(station[i]);           // 清空;
 							break;
