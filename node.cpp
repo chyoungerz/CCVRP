@@ -5,7 +5,7 @@
 
 #include "distribution.hpp"
 
-#define MAXLOAD 200
+constexpr int MAXLOAD = 200;  // 定义最大载货
 
 //============================= class Axis start =============================
 /*
