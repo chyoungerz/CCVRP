@@ -34,7 +34,7 @@ bool twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const
 // 反转路线（车辆）posA 和 posB之间的路线，
 bool reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t to_pos);
 
-// 交换两路线（车辆）两路线段位置，成功返回true
+// 交换两路线（车辆）两路线段位置，这里（from_a_pos - to_a_pos = from_b_pos - to_b_pos），成功返回true
 bool twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_a_pos, const uint32_t to_a_pos, const uint32_t from_b_pos, const uint32_t to_b_pos);
 
 #endif
