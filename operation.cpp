@@ -8,7 +8,7 @@ bool insertback(Vehicle& vehicle, const Node* node) {
 	if ((vehicle.load + node->demand) > MAXLOAD) return false;  // 超重
 	double diflength{0.0};
 	vehicle.path.push_back(node);
-	for (int i = 0; i + 1 < vehicle.path.size(); i++) {  // 计算插入的节点
+	for (uint32_t i = 0; i + 1 < vehicle.path.size(); i++) {  // 计算插入的节点
 		diflength += vehicle.path[i]->distances[vehicle.path[i + 1]->seq].distance;
 	}
 	vehicle.cumlength += diflength;  // 更新距离（时间）
@@ -31,7 +31,7 @@ bool insert(Vehicle& vehicle, const Node* node, const uint32_t pos) {
 	double diflength = (vehicle.path.size() - pos - 1) * (vehicle.path[pos]->distances[node->seq].distance + vehicle.path[pos + 1]->distances[node->seq].distance -
 														  vehicle.path[pos]->distances[vehicle.path[pos + 1]->seq].distance);  // 计算插入位置之后的时间（距离）
 	vehicle.path.insert(vehicle.path.begin() + pos, node);
-	for (int i = 0; i <= pos; i++) {                                                                                           // 计算插入的节点
+	for (uint32_t i = 0; i <= pos; i++) {                                                                                      // 计算插入的节点
 		diflength += vehicle.path[i]->distances[vehicle.path[i + 1]->seq].distance;
 	}
 	vehicle.cumlength += diflength;  // 更新距离（时间）
@@ -43,7 +43,7 @@ const Node* removeback(Vehicle& vehicle) {
 	if (vehicle.load == 0) return nullptr;  // 没法删
 	const Node* node = vehicle.path.back();
 	double diflength{0.0};
-	for (int i = 0; i + 1 < vehicle.path.size(); i++) {  // 计算删除的节点
+	for (uint32_t i = 0; i + 1 < vehicle.path.size(); i++) {  // 计算删除的节点
 		diflength += vehicle.path[i]->distances[vehicle.path[i + 1]->seq].distance;
 	}
 	vehicle.path.pop_back();
@@ -68,7 +68,7 @@ const Node* remove(Vehicle& vehicle, const uint32_t pos) {
 	const Node* node = vehicle.path[pos];
 	double diflength = (vehicle.path.size() - pos - 1) * (vehicle.path[pos - 1]->distances[vehicle.path[pos + 1]->seq].distance - vehicle.path[pos]->distances[pos + 1].distance - vehicle.path[pos - 1]->distances[pos].distance);  // 计算删除位置之后的时间（距离）
 	vehicle.path.erase(vehicle.path.begin() + pos);
-	for (int i = 0; i < pos; i++) {                                                                                                                          // 计算删除的节点
+	for (uint32_t i = 0; i < pos; i++) {                                                                                                                                                                                             // 计算删除的节点
 		diflength -= vehicle.path[i]->distances[vehicle.path[i + 1]->seq].distance;
 	}
 	vehicle.cumlength += diflength;  // 更新距离（时间）
@@ -98,7 +98,7 @@ bool twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const
 	double rpos_a = vehicle_b.path[pos_b]->distances[vehicle_a.path[pos_a + 1]->seq].distance - vehicle_a.path[pos_a]->distances[vehicle_a.path[pos_a + 1]->seq].distance;  // pos_a右的差值
 	double lpos_b = vehicle_a.path[pos_a]->distances[vehicle_b.path[pos_b - 1]->seq].distance - vehicle_b.path[pos_b]->distances[vehicle_b.path[pos_b - 1]->seq].distance;  // pos_b左的差值
 	double rpos_b = vehicle_a.path[pos_a]->distances[vehicle_b.path[pos_b + 1]->seq].distance - vehicle_b.path[pos_b]->distances[vehicle_b.path[pos_b + 1]->seq].distance;  // pos_b右的差值
-	double diflength_a = (vehicle_a.path.size() - pos_a) * lpos_a + (vehicle_a.path.size() - pos_a - 1) * rpos_b;                                                           // 路线（车辆）a所有受影响的差值
+	double diflength_a = (vehicle_a.path.size() - pos_a) * lpos_a + (vehicle_a.path.size() - pos_a - 1) * rpos_a;                                                           // 路线（车辆）a所有受影响的差值
 	double diflength_b = (vehicle_b.path.size() - pos_b) * lpos_b + (vehicle_b.path.size() - pos_b - 1) * rpos_b;                                                           // 路线（车辆）b所有受影响的差值
 	std::swap(vehicle_a.path[pos_a], vehicle_b.path[pos_b]);                                                                                                                // 交换
 	vehicle_a.cumlength += diflength_a;
@@ -118,7 +118,7 @@ bool reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t to_pos) {
 bool twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_a_pos, const uint32_t to_a_pos, const uint32_t from_b_pos, const uint32_t to_b_pos) {
 	if (from_a_pos >= to_a_pos || from_a_pos == 0 || to_a_pos == vehicle_a.path.size() - 1) return false;
 	if (from_b_pos >= to_b_pos || from_b_pos == 0 || to_b_pos == vehicle_b.path.size() - 1) return false;  // 不合法
-	uint32_t diff{to_a_pos - from_a_pos}, diff_a{vehicle_a.path.size() - from_a_pos}, diff_b{vehicle_b.path.size() - from_b_pos};
+	uint32_t diff{to_a_pos - from_a_pos}, diff_a{static_cast<uint32_t>(vehicle_a.path.size()) - from_a_pos}, diff_b{static_cast<uint32_t>(vehicle_b.path.size()) - from_b_pos};
 	if (diff != (to_b_pos - from_b_pos)) return false;
 	double diflength_a{0.0}, diflength_b{0.0};
 	int difload{0};

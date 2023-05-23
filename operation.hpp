@@ -6,6 +6,7 @@
 #include "node.hpp"
 
 //-------------------- node opt --------------------//
+
 // 在路线（车辆）vehicle的末尾插入节点node，成功返回true
 bool insertback(Vehicle& vehicle, const Node* node);
 
@@ -31,6 +32,7 @@ bool swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j);
 bool twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b);
 
 //-------------------- string opt --------------------//
+
 // 反转路线（车辆）posA 和 posB之间的路线，
 bool reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t to_pos);
 
