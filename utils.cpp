@@ -28,12 +28,21 @@ std::vector<Node*> read(const std::string& file) {
 	return nodes_ptr;
 }
 
-void create(std::string& filename, const time_t now) {
+void create(const std::string& filename, const time_t now) {
 	char str[12];
 	strftime(str, 96, "%Y%m%d%H%M", localtime(&now));
 	std::ofstream out(filename, std::ofstream::app);  // 输出, 追加末尾
 	out << "日期：" << str << "\n";
 	out << "随机数种子：" << now << "\n";
+	out.close();
+}
+
+void write(const std::string& filename, const Solution& sol) {
+	std::ofstream out(filename, std::ofstream::app);  // 输出, 追加末尾
+	out << "total length:" << sol.allength << std::endl;
+	for (auto& i : (sol.solution)) {
+		out << i << std::endl;
+	}
 	out.close();
 }
 

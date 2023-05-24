@@ -12,7 +12,10 @@
 std::vector<Node*> read(const std::string& file);
 
 // 创建保存结果的文件，按日期命名，并设置随机数种子。
-void create(std::string& filename, const time_t now);
+void create(const std::string& filename, const time_t now);
+
+// 将结果写入到文件中
+void write(const std::string& filename, const Solution& sol);
 
 // 计算节点距离矩阵
 void init_distance(std::vector<Node*>& nodes);
