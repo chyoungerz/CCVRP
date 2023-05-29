@@ -52,11 +52,9 @@ void init_distance(std::vector<Node*>& nodes) {
 	std::vector<Edge> temp_edges(size);
 	for (unsigned int i = 0; i < size; i++) {
 		for (unsigned int j = 0; j < size; j++) {
-			double d = dist(*nodes[i], *nodes[j]);  // i行-j列（row, col)
-			temp_edges.push_back({d, j});
+			temp_edges[j] = {dist(*nodes[i], *nodes[j]), j};  // i行-j列（row, col)
 		}
 		nodes[i]->distances.assign(temp_edges.begin(), temp_edges.end());
-		temp_edges.clear();
 	}
 	// return dists;
 }

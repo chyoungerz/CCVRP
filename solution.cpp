@@ -23,7 +23,7 @@ Solution knn(const std::vector<Node*>& nodes, const std::vector<Node*>& station)
 			uint32_t far{dist0.back().to};
 			if (walked.find(far) == walked.end()) {
 				if (!vehicle.move(nodes[far])) {    // 达到最大
-					vehicle.move(station[i]);       // 返回厂站
+					vehicle.path.push_back(station[i]);         // 返回厂站
 					vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 					solution.add(vehicle);          // 加入到答案。
 					vehicle.clear(station[i]);      // 清空
@@ -39,13 +39,13 @@ Solution knn(const std::vector<Node*>& nodes, const std::vector<Node*>& station)
 							far = distnode.back().to;
 						}
 						if (distnode.empty()) {                  // 走完了
-							vehicle.move(station[i]);            // 返回厂站
+							vehicle.path.push_back(station[i]);  // 返回厂站
 							vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 							solution.add(vehicle);               // 加入到答案。
 							vehicle.clear(station[i]);           // 清空;
 							break;
 						} else if (!vehicle.move(nodes[far])) {  // 达到最大
-							vehicle.move(station[i]);            // 返回厂站
+							vehicle.path.push_back(station[i]);  // 返回厂站
 							vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 							solution.add(vehicle);               // 加入到答案。
 							vehicle.clear(station[i]);           // 清空;

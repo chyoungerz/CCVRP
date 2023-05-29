@@ -3,6 +3,8 @@
 
 #include "heuristic.hpp"
 #include "node.hpp"
+#include "operation.hpp"
+#include "optimization.hpp"
 #include "solution.hpp"
 #include "utils.hpp"
 
@@ -20,6 +22,7 @@ int main(int argc, char const *argv[]) {
 		file = argv[1];
 		result = argv[2];
 	}
+	nodes = read(file);
 	if (nodes.empty()) {
 		cerr << "file open failed" << endl;
 		return 1;
@@ -30,6 +33,8 @@ int main(int argc, char const *argv[]) {
 	// sol.show();
 	create(result, now);
 	write(result, sol);
+	LS::twoPoint(sol, 1000);
+	// write(result, sol);
 	release(nodes);
 	return 0;
 }

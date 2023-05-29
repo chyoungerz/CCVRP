@@ -127,7 +127,7 @@ Vehicle::Vehicle(const Node* loc, const double lengthed) : cumlength(lengthed), 
 
 double Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
 	double length{0.0}, sumlength{0.0};
-	for (unsigned int j = 0; j + 1 < path.size(); j++) {
+	for (unsigned int j = 0; j + 2 < path.size(); j++) {
 		length += path[j]->distances[path[j + 1]->seq].distance;
 		sumlength += length;
 	}
@@ -150,14 +150,14 @@ std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
 	return _vohicle;
 };*/
 bool Vehicle::move(const Node* dest /*,const Eigen::MatrixXf& dists*/) {
-	double diflength{0.0};
+	// double diflength{0.0};
 	if ((load + dest->demand) > MAXLOAD) return false;
 	load += dest->demand;
 	path.push_back(dest);
-	for (uint32_t i = 0; i + 1 < path.size(); i++) {
+	/*for (uint32_t i = 0; i + 1 < path.size(); i++) {
 		diflength += path[i]->distances[path[i + 1]->seq].distance;
 	}
-	cumlength += diflength;
+	cumlength += diflength;*/
 	// diflength.push_back(diflength.back() + dists(locate, dest.seq));
 	// diflength.push_back(diflength.back() + dest->distances[locate].distance);  // from a to b == from b to a
 	locate = dest->seq;
