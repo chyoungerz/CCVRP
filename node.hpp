@@ -5,7 +5,6 @@
 
 // #include <eigen3/Eigen/Core>
 #include <iostream>
-#include <list>
 #include <memory>
 #include <vector>
 
@@ -44,12 +43,12 @@ class Vehicle {
 	std::vector<const Node*> path;     // 走过的路
 	// double diflength;                  // 走过的路(时间）差分数组
 	double cumlength;                  // 所有节点的长度（时间）之和
-	uint32_t locate;                   // location
+	uint32_t capacity;                 // 最大容量
 	uint32_t load;                     // 载重量
 	// 无参构造,默认0
-	Vehicle();
-	// loc是位置, lengthed 代表之前走过的长度（时间）
-	Vehicle(const Node* loc, const double lengthed);
+	Vehicle() = delete;
+	// loc是位置, max代表车的最大容量
+	Vehicle(const Node* loc, const int maxload);
 	// 移动到dest节点，并计算距离 (往返距离一样)
 	bool move(const Node* dest /*,const Eigen::MatrixXf& dists*/);
 	// 计算路径长度

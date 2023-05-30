@@ -10,14 +10,14 @@ Solution cw(const std::vector<Node>& nodes, const std::vector<Node>& station) {
 
 Solution knn(const std::vector<Node*>& nodes, const std::vector<Node*>& station) {
 	Solution solution;
-	// uint32_t size = nodes.size();
+	constexpr int MaxLoad = 200;
 	std::set<uint32_t> walked;                       // nodes we have already walked through so far.
 	for (uint32_t i = 0; i < station.size(); i++) {  // 排除厂站
 		walked.insert(station[i]->seq);
 	}
 	for (uint32_t i = 0; i < station.size(); i++) {
 		std::vector<Edge> dist0 = station[i]->distances;
-		Vehicle vehicle(station[i], 0.0);
+		Vehicle vehicle(station[i], MaxLoad);
 		std::sort(dist0.begin(), dist0.end(), [](Edge a, Edge b) -> bool { return a.distance < b.distance; });
 		while (true) {
 			uint32_t far{dist0.back().to};

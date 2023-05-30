@@ -5,7 +5,7 @@
 
 #include "distribution.hpp"
 
-constexpr int MAXLOAD = 200;  // 定义最大载货
+// constexpr int MAXLOAD = 200;  // 定义最大载货
 
 //============================= class Axis start =============================
 /*
@@ -117,11 +117,8 @@ Station::Station(const int x_axis, const int y_axis, const uint32_t _seq) {
 
 
 //============================= class Vehicle public Node start =============================
-Vehicle::Vehicle() : cumlength(0.0), locate(0), load(0) {
-	path.reserve(10);
-}
-Vehicle::Vehicle(const Node* loc, const double lengthed) : cumlength(lengthed), locate(loc->seq), load(0) {
-	path.reserve(10);
+Vehicle::Vehicle(const Node* loc, const int maxload) : cumlength(0.0), capacity(maxload), load(0) {
+	path.reserve(100);
 	path.push_back(loc);
 }
 
@@ -151,7 +148,7 @@ std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
 };*/
 bool Vehicle::move(const Node* dest /*,const Eigen::MatrixXf& dists*/) {
 	// double diflength{0.0};
-	if ((load + dest->demand) > MAXLOAD) return false;
+	if ((load + dest->demand) > capacity) return false;
 	load += dest->demand;
 	path.push_back(dest);
 	/*for (uint32_t i = 0; i + 1 < path.size(); i++) {
@@ -160,7 +157,6 @@ bool Vehicle::move(const Node* dest /*,const Eigen::MatrixXf& dists*/) {
 	cumlength += diflength;*/
 	// diflength.push_back(diflength.back() + dists(locate, dest.seq));
 	// diflength.push_back(diflength.back() + dest->distances[locate].distance);  // from a to b == from b to a
-	locate = dest->seq;
 	return true;
 }
 
@@ -169,7 +165,6 @@ void Vehicle::clear(const Node* node0) {
 	cumlength = 0.0;
 	path.clear();
 	path.push_back(node0);
-	locate = node0->seq;
 }
 //============================= class Vehicle public Node end =============================
 
@@ -180,7 +175,7 @@ Solution::Solution() {
 	solution.reserve(5);
 }
 void Solution::add(const Vehicle& vehicle) {
-	solution.push_back(vehicle);
+	solution.emplace_back(vehicle);
 	allength += vehicle.cumlength;
 }
 

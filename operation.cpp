@@ -2,10 +2,10 @@
 
 #include <algorithm>
 
-constexpr int MAXLOAD = 200;  // 定义最大载货
+// constexpr int MAXLOAD = 200;  // 定义最大载货
 
 bool OP::insertback(Vehicle& vehicle, const Node* node) {
-	if ((vehicle.load + node->demand) > MAXLOAD) return false;  // 超重
+	if ((vehicle.load + node->demand) > vehicle.capacity) return false;  // 超重
 	double diflength{0.0};
 	vehicle.path.push_back(node);
 	for (uint32_t i = 0; i + 2 < vehicle.path.size(); i++) {  // 计算插入的节点
@@ -17,7 +17,7 @@ bool OP::insertback(Vehicle& vehicle, const Node* node) {
 }
 
 bool OP::insertfront(Vehicle& vehicle, const Node* node) {
-	if ((vehicle.load + node->demand) > MAXLOAD) return false;  // 超重
+	if ((vehicle.load + node->demand) > vehicle.capacity) return false;  // 超重
 	double diflength = node->distances[vehicle.path[0]->seq].distance * vehicle.path.size();
 	vehicle.path.push_back(node);
 	vehicle.cumlength += diflength;  // 更新距离（时间）
@@ -25,18 +25,10 @@ bool OP::insertfront(Vehicle& vehicle, const Node* node) {
 	return true;
 }
 
-bool OP::insert(Vehicle& vehicle, const Node* node, const uint32_t pos) {
-	if ((vehicle.load + node->demand) > MAXLOAD) return false;                                                                 // 超重                                                                                                                 // 超重
-	if (pos >= vehicle.path.size() - 1 && pos == 0) return false;                                                              // 不合法
-	double diflength = (vehicle.path.size() - pos - 1) * (vehicle.path[pos]->distances[node->seq].distance + vehicle.path[pos + 1]->distances[node->seq].distance -
-														  vehicle.path[pos]->distances[vehicle.path[pos + 1]->seq].distance);  // 计算插入位置之后的时间（距离）
-	vehicle.path.insert(vehicle.path.begin() + pos, node);
-	for (uint32_t i = 0; i <= pos; i++) {                                                                                      // 计算插入的节点
-		diflength += vehicle.path[i]->distances[vehicle.path[i + 1]->seq].distance;
-	}
+inline void OP::insert(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength) {
 	vehicle.cumlength += diflength;  // 更新距离（时间）
+	vehicle.path.insert(vehicle.path.begin() + pos, node);
 	vehicle.load += node->demand;
-	return true;
 }
 
 const Node* OP::removeback(Vehicle& vehicle) {
@@ -62,15 +54,9 @@ const Node* OP::removefront(Vehicle& vehicle) {
 	return node;
 }
 
-const Node* OP::remove(Vehicle& vehicle, const uint32_t pos) {
-	if (vehicle.load == 0) return nullptr;                           // 没法删
-	if (pos >= vehicle.path.size() - 1 || pos == 0) return nullptr;  // 不合法
+inline const Node* OP::remove(Vehicle& vehicle, const uint32_t pos, const double diflength) {
 	const Node* node = vehicle.path[pos];
-	double diflength = (vehicle.path.size() - pos - 1) * (vehicle.path[pos - 1]->distances[vehicle.path[pos + 1]->seq].distance - vehicle.path[pos]->distances[pos + 1].distance - vehicle.path[pos - 1]->distances[pos].distance);  // 计算删除位置之后的时间（距离）
 	vehicle.path.erase(vehicle.path.begin() + pos);
-	for (uint32_t i = 0; i < pos; i++) {                                                                                                                                                                                             // 计算删除的节点
-		diflength -= vehicle.path[i]->distances[vehicle.path[i + 1]->seq].distance;
-	}
 	vehicle.cumlength += diflength;  // 更新距离（时间）
 	vehicle.load -= vehicle.path[pos]->demand;
 	return node;
@@ -91,7 +77,7 @@ bool OP::swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j) {
 bool OP::twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b) {
 	if (pos_a == 0 || pos_b == 0 || pos_a >= vehicle_a.path.size() - 1 || pos_b >= vehicle_b.path.size() - 1) return false;  // 不合法
 	int difload = vehicle_b.path[pos_b]->demand - vehicle_a.path[pos_a]->demand;
-	if ((vehicle_a.load + difload) > MAXLOAD || (vehicle_a.load - difload) > MAXLOAD) return false;                          // 超重                                                                                                                        // 更新距离（时间）
+	if ((vehicle_a.load + difload) > vehicle_a.capacity || (vehicle_a.load - difload) > vehicle_b.capacity) return false;    // 超重                                                                                                                        // 更新距离（时间）
 	vehicle_a.load += difload;
 	vehicle_b.load -= difload;
 	double lpos_a = vehicle_b.path[pos_b]->distances[vehicle_a.path[pos_a - 1]->seq].distance - vehicle_a.path[pos_a]->distances[vehicle_a.path[pos_a - 1]->seq].distance;  // pos_a左的差值
@@ -130,7 +116,7 @@ bool OP::twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_
 		std::swap(vehicle_a.path[from_a_pos + i], vehicle_b.path[from_b_pos + i]);                                                                                                                                       // 交换
 	}
 	std::swap(vehicle_a.path[to_a_pos], vehicle_b.path[to_b_pos]);                                                                                                                                                       // 完成剩下的交换
-	if ((vehicle_a.load - difload) > MAXLOAD || (vehicle_b.load + difload) > MAXLOAD) return false;                                                                                                                      // 超重
+	if ((vehicle_a.load - difload) > vehicle_a.capacity || (vehicle_b.load + difload) > vehicle_b.capacity) return false;                                                                                                // 超重
 	diflength_a += diff_a * (vehicle_a.path[from_a_pos - 1]->distances[vehicle_b.path[to_b_pos]->seq].distance - vehicle_a.path[from_a_pos - 1]->distances[vehicle_a.path[from_a_pos]->seq].distance);
 	diflength_a += (diff_a - diff - 1) * (vehicle_a.path[to_a_pos + 1]->distances[vehicle_b.path[to_b_pos]->seq].distance - vehicle_a.path[to_a_pos + 1]->distances[vehicle_a.path[to_a_pos]->seq].distance);            // 路线（车辆）a 受影响的差异
 	diflength_b += diff_b * (vehicle_b.path[from_b_pos - 1]->distances[vehicle_a.path[from_a_pos]->seq].distance - vehicle_b.path[from_b_pos - 1]->distances[vehicle_b.path[from_b_pos]->seq].distance);
@@ -141,4 +127,47 @@ bool OP::twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_
 	vehicle_b.cumlength += diflength_b;                                                                                                                                                                                  // 更新b
 	vehicle_b.load += difload;
 	return true;
+}
+
+double COST::insert(Vehicle& vehicle, const Node* node, const uint32_t pos) {
+	// 计算插入位置之后的时间（距离）
+	double diflength = (vehicle.path.size() - pos - 2) * (vehicle.path[pos]->distances[node->seq].distance + vehicle.path[pos + 1]->distances[node->seq].distance - vehicle.path[pos]->distances[vehicle.path[pos + 1]->seq].distance);
+	// 计算插入的节点
+	for (uint32_t i = 0; i < pos; i++) {
+		diflength += vehicle.path[i]->distances[vehicle.path[i + 1]->seq].distance;
+	}
+	diflength += node->distances[vehicle.path[pos]->seq].distance;
+	return diflength;
+}
+
+double COST::remove(Vehicle& vehicle, const uint32_t pos) {
+	// 计算删除位置之后的时间（距离）
+	double diflength = (vehicle.path.size() - pos - 2) * (vehicle.path[pos - 1]->distances[vehicle.path[pos + 1]->seq].distance - vehicle.path[pos]->distances[pos + 1].distance - vehicle.path[pos - 1]->distances[pos].distance);
+	// 计算删除的节点
+	for (uint32_t i = 0; i < pos; i++) {
+		diflength -= vehicle.path[i]->distances[vehicle.path[i + 1]->seq].distance;
+	}
+	return diflength;
+}
+
+double COST::reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t to_pos) {
+	double diflength = 0.0;
+	return diflength;
+}
+
+double COST::swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j) {
+	double diflength = 0.0;
+	return diflength;
+}
+
+std::pair<double, double> COST::twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b) {
+	double diflengtha = 0.0;
+	double diflengthb = 0.0;
+	return std::make_pair(diflengtha, diflengthb);
+}
+
+std::pair<double, double> COST::twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_a_pos, const uint32_t to_a_pos, const uint32_t from_b_pos, const uint32_t to_b_pos) {
+	double diflengtha = 0.0;
+	double diflengthb = 0.0;
+	return std::make_pair(diflengtha, diflengthb);
 }

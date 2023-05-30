@@ -33,8 +33,8 @@ int main(int argc, char const *argv[]) {
 	// sol.show();
 	create(result, now);
 	write(result, sol);
-	LS::twoPoint(sol, 1000);
-	// write(result, sol);
+	// LS::twoPoint(sol, 1000);
+	//  write(result, sol);
 	release(nodes);
 	return 0;
 }
