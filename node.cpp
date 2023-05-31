@@ -125,7 +125,7 @@ Vehicle::Vehicle(const Node* loc, const int maxload) : cumlength(0.0), capacity(
 double Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
 	double length{0.0}, sumlength{0.0};
 	for (unsigned int j = 0; j + 2 < path.size(); j++) {
-		length += path[j]->distances[path[j + 1]->seq].distance;
+		length += path[j]->dists[path[j + 1]->seq].dist;
 		sumlength += length;
 	}
 	return sumlength;

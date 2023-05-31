@@ -10,7 +10,7 @@
 
 // 边长度，Node的一部分
 struct Edge {
-	double distance;  // 长度
+	double dist;      // 长度
 	uint32_t to;      // 指向
 };
 
@@ -18,7 +18,8 @@ class Node {
   protected:
 	int x, y;             //(x, y)
   public:
-	std::vector<Edge> distances;  // 该节点到其他节点的距离(数组编号为节点序号)
+	std::vector<Edge> dists;      // 该节点到其他节点的距离(数组编号为节点序号)
+	std::vector<Edge> distsort;   // 该节点到其他节点的距离按从小到大排序
 	uint32_t seq;                 // 序号，从0开始
 	uint32_t duration;        // 服务时间
 	uint32_t demand;          // 需求

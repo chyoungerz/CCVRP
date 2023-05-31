@@ -11,55 +11,59 @@ Solution cw(const std::vector<Node>& nodes, const std::vector<Node>& station) {
 Solution knn(const std::vector<Node*>& nodes, const std::vector<Node*>& station) {
 	Solution solution;
 	constexpr int MaxLoad = 200;
-	std::set<uint32_t> walked;                       // nodes we have already walked through so far.
-	for (uint32_t i = 0; i < station.size(); i++) {  // 排除厂站
-		walked.insert(station[i]->seq);
+	std::vector<std::vector<const Node*>> classfy(station.size());
+	std::set<uint32_t> tabu;  // 排除厂站
+	for (uint32_t i = 0; i < station.size(); i++) {
+		tabu.insert(station[i]->seq);
+	}
+	for (auto& node : nodes) {                             // 将每个客户分给距离最近的厂站；
+		if (tabu.find(node->seq) != tabu.end()) continue;  // 排除厂站
+		for (uint32_t i = 1; i < node->distsort.size(); i++) {
+			if (tabu.find(node->distsort[i].to) != tabu.end()) {
+				classfy[node->distsort[i].to].push_back(node);
+				break;
+			}
+		}
 	}
 	for (uint32_t i = 0; i < station.size(); i++) {
-		std::vector<Edge> dist0 = station[i]->distances;
 		Vehicle vehicle(station[i], MaxLoad);
-		std::sort(dist0.begin(), dist0.end(), [](Edge a, Edge b) -> bool { return a.distance < b.distance; });
+		std::sort(classfy[i].begin(), classfy[i].end(), [i](const Node* a, const Node* b) { return a->dists[i].dist > b->dists[i].dist; });
+		std::set<uint32_t> walked, service;  // 每个厂站已服务的节点, 和需要服务的节点
+		for (auto& node : classfy[i]) {
+			service.insert(node->seq);
+		}
 		while (true) {
-			uint32_t far{dist0.back().to};
-			if (walked.find(far) == walked.end()) {
-				if (!vehicle.move(nodes[far])) {    // 达到最大
-					vehicle.path.push_back(station[i]);         // 返回厂站
-					vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
-					solution.add(vehicle);          // 加入到答案。
-					vehicle.clear(station[i]);      // 清空
-					break;
-				} else {                            // 没有达到
-					walked.insert(far);
-					while (true) {
-						std::vector<Edge> distnode = nodes[far]->distances;
-						std::sort(distnode.begin(), distnode.end(), [](Edge a, Edge b) -> bool { return a.distance > b.distance; });
-						far = distnode.back().to;                   // 下一个位置
-						while (walked.find(far) != walked.end()) {  // 没访问的位置
-							distnode.pop_back();
-							far = distnode.back().to;
+			const Node* near{classfy[i].back()};
+			if (walked.find(near->seq) == walked.end()) {           // 没有服务过
+				while (true) {
+					if (!vehicle.move(near)) {                      // 达到最大
+						vehicle.path.push_back(station[i]);         // 返回厂站
+						vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
+						solution.add(vehicle);                      // 加入到答案。
+						vehicle.clear(station[i]);                  // 清空
+						break;
+					} else {                                        // 没有达到
+						walked.insert(near->seq);
+						if (service.size() == walked.size()) {
+							vehicle.path.push_back(station[i]);         // 返回厂站
+							vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
+							solution.add(vehicle);                      // 加入到答案。
+							vehicle.clear(station[i]);                  // 清空
+							break;
 						}
-						if (distnode.empty()) {                  // 走完了
-							vehicle.path.push_back(station[i]);  // 返回厂站
-							vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
-							solution.add(vehicle);               // 加入到答案。
-							vehicle.clear(station[i]);           // 清空;
+						for (auto& n : near->distsort) {
+						if (service.find(nodes[n.to]->seq) != service.end() && walked.find(nodes[n.to]->seq) == walked.end()) {  // 在服务列表 且没有服务过
+							near = nodes[n.to];                                                                                  // 找到下一个位置
 							break;
-						} else if (!vehicle.move(nodes[far])) {  // 达到最大
-							vehicle.path.push_back(station[i]);  // 返回厂站
-							vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
-							solution.add(vehicle);               // 加入到答案。
-							vehicle.clear(station[i]);           // 清空;
-							break;
-						} else {                                 // 没有达到
-							walked.insert(far);                  // 记录已经访问过的位置。
+						}
 						}
 					}
-					dist0.pop_back();
 				}
+				classfy[i].pop_back();      // 服务过
 			} else {
-				dist0.pop_back();
+				classfy[i].pop_back();      // 服务过
 			}
-			if (dist0.empty()) break;
+			if (classfy[i].empty()) break;  // 服务完了
 		}
 	}
 	return solution;  // 返回答案。

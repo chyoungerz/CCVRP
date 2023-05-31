@@ -28,7 +28,7 @@ int main(int argc, char const *argv[]) {
 		return 1;
 	}
 	init_distance(nodes);                               // 计算客户距离
-	stations.assign(nodes.begin(), nodes.begin() + 1);  // 厂站
+	stations.assign(nodes.begin(), nodes.begin() + 1);  // 厂站必须在节点的开头
 	Solution sol = knn(nodes, stations);
 	// sol.show();
 	create(result, now);

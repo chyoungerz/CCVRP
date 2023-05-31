@@ -2,6 +2,7 @@
 
 #include <ctime>
 // #include <eigen3/Eigen/Core>
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -54,7 +55,9 @@ void init_distance(std::vector<Node*>& nodes) {
 		for (unsigned int j = 0; j < size; j++) {
 			temp_edges[j] = {dist(*nodes[i], *nodes[j]), j};  // i行-j列（row, col)
 		}
-		nodes[i]->distances.assign(temp_edges.begin(), temp_edges.end());
+		nodes[i]->dists.assign(temp_edges.begin(), temp_edges.end());
+		std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist < b.dist; });
+		nodes[i]->distsort.assign(temp_edges.begin(), temp_edges.end());
 	}
 	// return dists;
 }
