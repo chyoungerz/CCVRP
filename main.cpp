@@ -3,9 +3,7 @@
 
 #include "heuristic.hpp"
 #include "node.hpp"
-#include "operation.hpp"
-#include "optimization.hpp"
-#include "solution.hpp"
+#include "operator.hpp"
 #include "utils.hpp"
 
 using namespace std;
@@ -29,12 +27,10 @@ int main(int argc, char const *argv[]) {
 	}
 	init_distance(nodes);                               // 计算客户距离
 	stations.assign(nodes.begin(), nodes.begin() + 1);  // 厂站必须在节点的开头
-	Solution sol = knn(nodes, stations);
-	// sol.show();
+	SA vrp;
+	vrp.init(nodes, stations);
 	create(result, now);
-	write(result, sol);
-	// LS::twoPoint(sol, 1000);
-	//  write(result, sol);
+	write(result, vrp.bestSol);
 	release(nodes);
 	return 0;
 }

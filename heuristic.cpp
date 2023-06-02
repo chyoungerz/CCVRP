@@ -2,13 +2,11 @@
 #include "heuristic.hpp"
 
 #include "distribution.hpp"
-#include "optimization.hpp"
+#include "operator.hpp"
+#include "solution.hpp"
 #include "utils.hpp"
 
-//ILS算法
-void ILS::init(std::vector<Node>& nodes, const unsigned int num, const unsigned int epoch) {
-}
-
-//ALNS算法
-void ALNS::init(std::vector<Vehicle>& vehicles, const unsigned int num, const unsigned int epoch) {
+// SA算法
+void SA::init(const std::vector<Node*>& nodes, const std::vector<Node*>& station) {
+	bestSol = knn(nodes, station);
 }

@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef _OPERATION_HPP
-#define _OPERATION_HPP
+#ifndef _OPERATOR_HPP
+#define _OPERATOR_HPP
 
 #include "node.hpp"
 
