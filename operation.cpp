@@ -62,34 +62,15 @@ inline const Node* OP::remove(Vehicle& vehicle, const uint32_t pos, const double
 	return node;
 }
 
-bool OP::swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j) {
-	if (pos_i == pos_j || pos_i == 0 || pos_j == 0 || pos_i >= vehicle.path.size() - 1 || pos_j >= vehicle.path.size() - 1) return false;                                                          // 不合法
-	double lpos_i = vehicle.path[pos_j]->dists[vehicle.path[pos_i - 1]->seq].dist - vehicle.path[pos_i]->dists[vehicle.path[pos_i - 1]->seq].dist;                                                 // pos_i左的差值
-	double rpos_i = vehicle.path[pos_j]->dists[vehicle.path[pos_i + 1]->seq].dist - vehicle.path[pos_i]->dists[vehicle.path[pos_i + 1]->seq].dist;                                                 // pos_i右的差值
-	double lpos_j = vehicle.path[pos_i]->dists[vehicle.path[pos_j - 1]->seq].dist - vehicle.path[pos_j]->dists[vehicle.path[pos_j - 1]->seq].dist;                                                 // pos_j左的差值
-	double rpos_j = vehicle.path[pos_i]->dists[vehicle.path[pos_j + 1]->seq].dist - vehicle.path[pos_j]->dists[vehicle.path[pos_j + 1]->seq].dist;                                                 // pos_j右的差值
-	double diflength = (vehicle.path.size() - pos_i) * lpos_i + (vehicle.path.size() - pos_i - 1) * rpos_i + (vehicle.path.size() - pos_j) * lpos_j + (vehicle.path.size() - pos_j - 1) * rpos_j;  // 路线（车辆）所有受影响的差值
+inline void OP::swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j, const double diflength) {
 	std::swap(vehicle.path[pos_i], vehicle.path[pos_j]);                                                                                                                                           // 交换
 	vehicle.cumlength += diflength;                                                                                                                                                                // 更新距离（时间）
-	return true;
 }
 
-bool OP::twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b) {
-	if (pos_a == 0 || pos_b == 0 || pos_a >= vehicle_a.path.size() - 1 || pos_b >= vehicle_b.path.size() - 1) return false;  // 不合法
-	int difload = vehicle_b.path[pos_b]->demand - vehicle_a.path[pos_a]->demand;
-	if ((vehicle_a.load + difload) > vehicle_a.capacity || (vehicle_a.load - difload) > vehicle_b.capacity) return false;    // 超重                                                                                                                        // 更新距离（时间）
-	vehicle_a.load += difload;
-	vehicle_b.load -= difload;
-	double lpos_a = vehicle_b.path[pos_b]->dists[vehicle_a.path[pos_a - 1]->seq].dist - vehicle_a.path[pos_a]->dists[vehicle_a.path[pos_a - 1]->seq].dist;                  // pos_a左的差值
-	double rpos_a = vehicle_b.path[pos_b]->dists[vehicle_a.path[pos_a + 1]->seq].dist - vehicle_a.path[pos_a]->dists[vehicle_a.path[pos_a + 1]->seq].dist;                  // pos_a右的差值
-	double lpos_b = vehicle_a.path[pos_a]->dists[vehicle_b.path[pos_b - 1]->seq].dist - vehicle_b.path[pos_b]->dists[vehicle_b.path[pos_b - 1]->seq].dist;                  // pos_b左的差值
-	double rpos_b = vehicle_a.path[pos_a]->dists[vehicle_b.path[pos_b + 1]->seq].dist - vehicle_b.path[pos_b]->dists[vehicle_b.path[pos_b + 1]->seq].dist;                  // pos_b右的差值
-	double diflength_a = (vehicle_a.path.size() - pos_a) * lpos_a + (vehicle_a.path.size() - pos_a - 1) * rpos_a;                                                           // 路线（车辆）a所有受影响的差值
-	double diflength_b = (vehicle_b.path.size() - pos_b) * lpos_b + (vehicle_b.path.size() - pos_b - 1) * rpos_b;                                                           // 路线（车辆）b所有受影响的差值
+inline void OP::twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, const std::pair<double, double> diflength) {
 	std::swap(vehicle_a.path[pos_a], vehicle_b.path[pos_b]);                                                                                                                // 交换
-	vehicle_a.cumlength += diflength_a;
-	vehicle_b.cumlength += diflength_b;                                                                                                                                     // 更新距离（时间）
-	return true;
+	vehicle_a.cumlength += diflength.first;
+	vehicle_b.cumlength += diflength.second;                                                                                                                                // 更新距离（时间）
 }
 
 bool OP::reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t to_pos) {
@@ -156,13 +137,21 @@ double COST::reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t t
 }
 
 double COST::swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j) {
-	double diflength = 0.0;
+	double lpos_i = vehicle.path[pos_j]->dists[vehicle.path[pos_i - 1]->seq].dist - vehicle.path[pos_i]->dists[vehicle.path[pos_i - 1]->seq].dist;                                                 // pos_i左的差值
+	double rpos_i = vehicle.path[pos_j]->dists[vehicle.path[pos_i + 1]->seq].dist - vehicle.path[pos_i]->dists[vehicle.path[pos_i + 1]->seq].dist;                                                 // pos_i右的差值
+	double lpos_j = vehicle.path[pos_i]->dists[vehicle.path[pos_j - 1]->seq].dist - vehicle.path[pos_j]->dists[vehicle.path[pos_j - 1]->seq].dist;                                                 // pos_j左的差值
+	double rpos_j = vehicle.path[pos_i]->dists[vehicle.path[pos_j + 1]->seq].dist - vehicle.path[pos_j]->dists[vehicle.path[pos_j + 1]->seq].dist;                                                 // pos_j右的差值
+	double diflength = (vehicle.path.size() - pos_i) * lpos_i + (vehicle.path.size() - pos_i - 1) * rpos_i + (vehicle.path.size() - pos_j) * lpos_j + (vehicle.path.size() - pos_j - 1) * rpos_j;  // 路线（车辆）所有受影响的差值
 	return diflength;
 }
 
 std::pair<double, double> COST::twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b) {
-	double diflengtha = 0.0;
-	double diflengthb = 0.0;
+	double lpos_a = vehicle_b.path[pos_b]->dists[vehicle_a.path[pos_a - 1]->seq].dist - vehicle_a.path[pos_a]->dists[vehicle_a.path[pos_a - 1]->seq].dist;  // pos_a左的差值
+	double rpos_a = vehicle_b.path[pos_b]->dists[vehicle_a.path[pos_a + 1]->seq].dist - vehicle_a.path[pos_a]->dists[vehicle_a.path[pos_a + 1]->seq].dist;  // pos_a右的差值
+	double lpos_b = vehicle_a.path[pos_a]->dists[vehicle_b.path[pos_b - 1]->seq].dist - vehicle_b.path[pos_b]->dists[vehicle_b.path[pos_b - 1]->seq].dist;  // pos_b左的差值
+	double rpos_b = vehicle_a.path[pos_a]->dists[vehicle_b.path[pos_b + 1]->seq].dist - vehicle_b.path[pos_b]->dists[vehicle_b.path[pos_b + 1]->seq].dist;  // pos_b右的差值
+	double diflengtha = (vehicle_a.path.size() - pos_a) * lpos_a + (vehicle_a.path.size() - pos_a - 1) * rpos_a;                                            // 路线（车辆）a所有受影响的差值
+	double diflengthb = (vehicle_b.path.size() - pos_b) * lpos_b + (vehicle_b.path.size() - pos_b - 1) * rpos_b;                                            // 路线（车辆）b所有受影响的差值
 	return std::make_pair(diflengtha, diflengthb);
 }
 

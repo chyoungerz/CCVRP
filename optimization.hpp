@@ -9,11 +9,11 @@
 
 namespace LS {
 
-	/// @brief 两点优化
+	/// @brief 两点移动
 	/// @param solution 解
 	/// @param stop 达到最大停止次数
 	/// @return true，false
-	bool twoPoint(Solution& solution, uint32_t stop);
+	bool twoPointMove(Solution& solution, uint32_t stop);
 }  // namespace LS
 
 #endif

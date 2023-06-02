@@ -51,16 +51,16 @@ namespace OP {
 	/// @param vehicle 待交换的路线（车辆）
 	/// @param pos_i 位置 i [1, size-1)
 	/// @param pos_j 位置 j [1, size-1)
-	/// @return true，false
-	bool swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j);
+	/// @param diflength 差值
+	void swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j, const double diflength);
 
 	/// @brief 交换不同路线（车辆）两节点, 开头和末尾为厂站
 	/// @param vehicle_a 待交换的路线（车辆）A
 	/// @param vehicle_b 待交换的路线（车辆）B
 	/// @param pos_a 路线（车辆）A 的位置 [1, size-1)
 	/// @param pos_b 路线（车辆）B 的位置 [1, size-1)
-	/// @return true，false
-	bool twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b);
+	/// @param diflength pair<路线A差值, 路线B差值>
+	void twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, const std::pair<double, double> diflength);
 
 	//-------------------- string opt --------------------//
 
@@ -99,18 +99,18 @@ namespace COST {
 	/// @return 差值
 	double remove(Vehicle& vehicle, const uint32_t pos);
 
-	/// @brief 计算交换同一路线（车辆）节点的差值, 开头和末尾为厂站（未实现）
-	/// @param vehicle
-	/// @param pos_i
-	/// @param pos_j
+	/// @brief 计算交换同一路线（车辆）节点的差值, 开头和末尾为厂站
+	/// @param vehicle 待交换的路线（车辆）
+	/// @param pos_i 位置 i [1, size-1)
+	/// @param pos_j 位置 j [1, size-1)
 	/// @return 差值
 	double swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j);
 
 	/// @brief 计算交换不同路线（车辆）两节点的差值, 开头和末尾为厂站（未实现）
-	/// @param vehicle_a
-	/// @param vehicle_b
-	/// @param pos_a
-	/// @param pos_b
+	/// @param vehicle_a 待交换的路线（车辆） A
+	/// @param vehicle_b 待交换的路线（车辆） B
+	/// @param pos_a A的位置 [1, size-1)
+	/// @param pos_b B的位置 [1, size-1)
 	/// @return pair<差值A, 差值B>
 	std::pair<double, double> twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b);
 
