@@ -119,7 +119,7 @@ Station::Station(const int x_axis, const int y_axis, const uint32_t _seq) {
 //============================= class Vehicle public Node start =============================
 Vehicle::Vehicle(const Node* loc, const int maxload) : cumlength(0.0), capacity(maxload), load(0) {
 	path.reserve(100);
-	path.push_back(loc);
+	path.emplace_back(loc);
 }
 
 double Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
@@ -150,7 +150,7 @@ bool Vehicle::move(const Node* dest /*,const Eigen::MatrixXf& dists*/) {
 	// double diflength{0.0};
 	if ((load + dest->demand) > capacity) return false;
 	load += dest->demand;
-	path.push_back(dest);
+	path.emplace_back(dest);
 	/*for (uint32_t i = 0; i + 1 < path.size(); i++) {
 		diflength += path[i]->distances[path[i + 1]->seq].distance;
 	}
@@ -164,7 +164,7 @@ void Vehicle::clear(const Node* node0) {
 	load = 0;
 	cumlength = 0.0;
 	path.clear();
-	path.push_back(node0);
+	path.emplace_back(node0);
 }
 //============================= class Vehicle public Node end =============================
 

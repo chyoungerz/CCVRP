@@ -21,9 +21,9 @@ std::vector<Node*> read(const std::string& file) {
 	unsigned int temp_duration, temp_demand, temp_start, temp_end, seq;
 	while (config >> seq >> temp_x >> temp_y >> temp_duration >> temp_demand >> a >> b >> c >> temp_start >> temp_end) {
 		// Node temp(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end);
-		Node* node = new Node(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end);
+		// Node* node = new Node(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end);
 		// nodes.push_back(temp);
-		nodes_ptr.push_back(node);
+		nodes_ptr.emplace_back(new Node(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end));
 	}
 	config.close();
 	return nodes_ptr;

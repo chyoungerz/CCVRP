@@ -6,6 +6,7 @@
 // #include <eigen3/Eigen/Core>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 // 边长度，Node的一部分
@@ -16,7 +17,7 @@ struct Edge {
 
 class Node {
   protected:
-	int x, y;             //(x, y)
+	double x, y;                  //(x, y)
   public:
 	std::vector<Edge> dists;      // 该节点到其他节点的距离(数组编号为节点序号)
 	std::vector<Edge> distsort;   // 该节点到其他节点的距离按从小到大排序
@@ -75,6 +76,8 @@ class Solution {
 	std::vector<Vehicle> solution;
 	// 总路径长度
 	double allength{0.0};
+	// hash查找表，key为节点序号，value为所在路线
+	std::unordered_map<uint32_t, uint32_t> shash;
 	// 无参初始化
 	Solution();
 	// 添加一条路线（车辆）
