@@ -57,7 +57,7 @@ namespace OP {
 	/// @param pos 位置 [1, size-1)
 	/// @param diflength 差值
 	/// @return 删除的节点指针
-	const Node* remove(Vehicle& vehicle, const uint32_t pos, const double diflength) {
+	inline const Node* remove(Vehicle& vehicle, const uint32_t pos, const double diflength) {
 		const Node* node = vehicle.path[pos];
 		vehicle.path.erase(vehicle.path.begin() + pos);
 		vehicle.cumlength += diflength;  // 更新距离（时间）
@@ -72,7 +72,7 @@ namespace OP {
 	/// @param pos_i 位置 i [1, size-1)
 	/// @param pos_j 位置 j [1, size-1)
 	/// @param diflength 差值
-	void swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j, const double diflength) {
+	inline void swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j, const double diflength) {
 		std::swap(vehicle.path[pos_i], vehicle.path[pos_j]);  // 交换
 		vehicle.cumlength += diflength;                       // 更新距离（时间）
 	}
@@ -83,7 +83,7 @@ namespace OP {
 	/// @param pos_a 路线（车辆）A 的位置 [1, size-1)
 	/// @param pos_b 路线（车辆）B 的位置 [1, size-1)
 	/// @param diflength pair<路线A差值, 路线B差值>
-	void twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, const std::pair<double, double> diflength) {
+	inline void twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, const std::pair<double, double> diflength) {
 		std::swap(vehicle_a.path[pos_a], vehicle_b.path[pos_b]);  // 交换
 		vehicle_a.cumlength += diflength.first;
 		vehicle_b.cumlength += diflength.second;                  // 更新距离（时间）
