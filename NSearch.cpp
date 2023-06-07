@@ -47,8 +47,7 @@ void ALNS::destory_wst(Solution& solution, const float p, std::vector<std::pair<
 			std::sort(cost.begin(), cost.end(), [](const std::pair<uint32_t, double>& a, const std::pair<uint32_t, double>& b) { return a.second < b.second; });
 			while (num) {
 				double dif = COST::remove(r, cost.back().first);
-				const Node* node = OP::remove(r, cost.back().first, dif);
-				rest.emplace_back(std::make_pair(r.path.back()->seq, node));
+				rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, cost.back().first, dif)));
 				solution.shash.erase(rest.back().second->seq);
 				cost.pop_back();
 				num--;
@@ -60,8 +59,7 @@ void ALNS::destory_wst(Solution& solution, const float p, std::vector<std::pair<
 					mx = cost[mx].second > cost[i].second ? mx : i;
 				}
 				double dif = COST::remove(r, cost[mx].first);
-				const Node* node = OP::remove(r, cost[mx].first, dif);
-				rest.emplace_back(std::make_pair(r.path.back()->seq, node));
+				rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, cost[mx].first, dif)));
 				solution.shash.erase(rest.back().second->seq);
 				std::swap(cost[mx], cost.back());
 				cost.pop_back();
@@ -82,8 +80,7 @@ void ALNS::destory_rnd(Solution& solution, const float p, std::vector<std::pair<
 			std::uniform_int_distribution<> dis(1, r.path.size() - 2);
 			uint32_t rd = dis(gen);
 			double dif = COST::remove(r, rd);
-			const Node* node = OP::remove(r, rd, dif);
-			rest.emplace_back(std::make_pair(r.path.back()->seq, node));
+			rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, rd, dif)));
 			solution.shash.erase(rest.back().second->seq);
 			num--;
 		}

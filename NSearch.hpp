@@ -12,7 +12,6 @@ namespace ALNS {
 
 	/// @brief 修复算子
 	/// @param solution 解
-	/// @param near 邻域
 	/// @param rest 需要插入的节点（pair<厂站序号， 节点>）
 	void repair(Solution& solution, std::vector<std::pair<uint32_t, const Node*>>& rest);
 

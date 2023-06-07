@@ -83,6 +83,7 @@ class Solution {
 	// 添加一条路线（车辆）
 	void add(const Vehicle& vehicle);
 	void show();
+	void update();
 };
 /*
 class Ant {

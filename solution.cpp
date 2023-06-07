@@ -99,6 +99,7 @@ Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& stat
 				vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 				solution.add(vehicle);                      // 加入到答案。
 				vehicle.clear(station[i]);                  // 清空
+				vehicle.move(node);                         // 补上
 			}
 		}
 		if (!vehicle.path.empty()) {                    // 最后的客户

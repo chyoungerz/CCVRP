@@ -8,7 +8,7 @@
 
 using namespace std;
 int main(int argc, char const *argv[]) {
-	const time_t now = time(nullptr);  // 以当前时间设置随机数种子
+	// const time_t now = time(nullptr);  // 以当前时间设置随机数种子
 	string file, result;
 	vector<Node *> nodes, stations;
 	if (argc != 3) {
@@ -28,9 +28,10 @@ int main(int argc, char const *argv[]) {
 	init_distance(nodes);                               // 计算客户距离
 	stations.assign(nodes.begin(), nodes.begin() + 1);  // 厂站必须在节点的开头
 	SA vrp;
-	vrp.init(nodes, stations);
-	create(result, now);
-	write(result, vrp.bestSol);
+	vrp.init(nodes, stations, 'n');
+	vrp.run();
+	// create(result, now);
+	// write(result, vrp.bestSol);
 	release(nodes);
 	return 0;
 }

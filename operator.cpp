@@ -4,23 +4,23 @@
 
 // constexpr int MAXLOAD = 200;  // 定义最大载货
 
-/*void OP::insertb(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength) {
+void OP::insertb(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength) {
 	vehicle.cumlength += diflength;  // 更新距离（时间）
-	vehicle.path.emplace(vehicle.path.begin() + pos, node);
+	vehicle.path.emplace(vehicle.path.begin() + pos + 1, node);
 	vehicle.load += node->demand;
 }
 
 void OP::insertf(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength) {
 	vehicle.cumlength += diflength;  // 更新距离（时间）
-	vehicle.path.emplace(vehicle.path.begin() + pos - 1, node);
+	vehicle.path.emplace(vehicle.path.begin() + pos, node);
 	vehicle.load += node->demand;
 }
 
 void OP::insert(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength) {
 	vehicle.cumlength += diflength;  // 更新距离（时间）
-	vehicle.path.emplace(vehicle.path.begin() + pos, node);
+	vehicle.path.emplace(vehicle.path.begin() + pos + 1, node);
 	vehicle.load += node->demand;
-}*/
+}
 
 const Node* OP::removeback(Vehicle& vehicle) {
 	if (vehicle.load == 0) return nullptr;  // 没法删
@@ -45,7 +45,7 @@ const Node* OP::removefront(Vehicle& vehicle) {
 	return node;
 }
 
-/*const Node* OP::remove(Vehicle& vehicle, const uint32_t pos, const double diflength) {
+const Node* OP::remove(Vehicle& vehicle, const uint32_t pos, const double diflength) {
 	const Node* node = vehicle.path[pos];
 	vehicle.path.erase(vehicle.path.begin() + pos);
 	vehicle.cumlength += diflength;  // 更新距离（时间）
@@ -62,7 +62,7 @@ void OP::twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, c
 	std::swap(vehicle_a.path[pos_a], vehicle_b.path[pos_b]);  // 交换
 	vehicle_a.cumlength += diflength.first;
 	vehicle_b.cumlength += diflength.second;                  // 更新距离（时间）
-}*/
+}
 
 bool OP::reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t to_pos) {
 	if (from_pos >= to_pos || from_pos == 0 || to_pos == vehicle.path.size() - 1) return false;                                                                                                       // 不合法
@@ -101,9 +101,17 @@ bool OP::twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_
 	return true;
 }
 
+bool OP::find(Solution& solution, const Node* node) { return true; }
+
 double COST::insertb(Vehicle& vehicle, const Node* node, const uint32_t pos) {
 	// 计算插入位置之后的时间（距离）
-	double diflength = (vehicle.path.size() - pos - 2) * (vehicle.path[pos]->dists[node->seq].dist + vehicle.path[pos + 1]->dists[node->seq].dist - vehicle.path[pos]->dists[vehicle.path[pos + 1]->seq].dist);
+	uint32_t tim = vehicle.path.size() - pos - 2;
+	double pos_node = vehicle.path[pos]->dists[node->seq].dist;
+	double pos1_node = vehicle.path[pos + 1]->dists[node->seq].dist;
+	double pos_pos1 = vehicle.path[pos]->dists[vehicle.path[pos + 1]->seq].dist;
+	double diflength = pos_node + pos1_node - pos_pos1;
+	diflength = tim * diflength;
+	//(vehicle.path.size() - pos - 2) * (vehicle.path[pos]->dists[node->seq].dist + vehicle.path[pos + 1]->dists[node->seq].dist - vehicle.path[pos]->dists[vehicle.path[pos + 1]->seq].dist);
 	// 计算插入的节点
 	for (uint32_t i = 0; i < pos; i++) {
 		diflength += vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
@@ -125,7 +133,7 @@ double COST::insertf(Vehicle& vehicle, const Node* node, const uint32_t pos) {
 
 double COST::remove(Vehicle& vehicle, const uint32_t pos) {
 	// 计算删除位置之后的时间（距离）
-	double diflength = (vehicle.path.size() - pos - 2) * (vehicle.path[pos - 1]->dists[vehicle.path[pos + 1]->seq].dist - vehicle.path[pos]->dists[pos + 1].dist - vehicle.path[pos - 1]->dists[pos].dist);
+	double diflength = (vehicle.path.size() - pos - 2) * (vehicle.path[pos - 1]->dists[vehicle.path[pos + 1]->seq].dist - vehicle.path[pos]->dists[vehicle.path[pos + 1]->seq].dist - vehicle.path[pos - 1]->dists[vehicle.path[pos]->seq].dist);
 	// 计算删除的节点
 	for (uint32_t i = 0; i < pos; i++) {
 		diflength -= vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;

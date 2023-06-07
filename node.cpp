@@ -123,12 +123,12 @@ Vehicle::Vehicle(const Node* loc, const int maxload) : cumlength(0.0), capacity(
 }
 
 double Vehicle::path_length(/*const Eigen::MatrixXf& dists*/) {
-	double length{0.0}, sumlength{0.0};
+	double length{0.0};
+	uint32_t weight = path.size() - 2;
 	for (unsigned int j = 0; j + 2 < path.size(); j++) {
-		length += path[j]->dists[path[j + 1]->seq].dist;
-		sumlength += length;
+		length += (weight - j) * path[j]->dists[path[j + 1]->seq].dist;
 	}
-	return sumlength;
+	return length;
 }
 
 std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
@@ -185,6 +185,14 @@ void Solution::show() {
 		std::cout << solution[i] << std::endl;
 	}
 }
+
+void Solution::update() {
+	allength = 0.0;
+	for (auto& i : solution) {
+		allength += i.cumlength;
+	}
+}
+
 //============================= class Solution end =============================
 /*
 //============================= class Ant start =============================
