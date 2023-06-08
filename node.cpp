@@ -189,6 +189,7 @@ void Solution::show() {
 void Solution::update() {
 	allength = 0.0;
 	for (auto& i : solution) {
+		i.cumlength = i.path_length();
 		allength += i.cumlength;
 	}
 }

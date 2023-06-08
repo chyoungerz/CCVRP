@@ -45,6 +45,17 @@ namespace OP {
 	/// @param pos 位置 [1, size-1)
 	/// @param diflength 差值
 	/// @return 删除的节点指针
+	const Node* erase(Vehicle& vehicle, const uint32_t pos, const double diflength);
+
+	/// @brief 删除无用节点，配合remove使用
+	/// @param vehicle 待去除的路线（车辆）
+	void erase(Vehicle& vehicle);
+
+	/// @brief 去除节点(将位置替换为首节点), 非开头和末尾
+	/// @param vehicle 待去除的路线（车辆）
+	/// @param pos 位置 [1, size-1)
+	/// @param diflength 差值
+	/// @return 删除的节点指针
 	const Node* remove(Vehicle& vehicle, const uint32_t pos, const double diflength);
 
 	/// @brief 交换同一路线（车辆）节点, 开头和末尾为厂站
@@ -97,20 +108,20 @@ namespace COST {
 	/// @param node 插入的节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @return 差值
-	double insertf(Vehicle& vehicle, const Node* node, const uint32_t pos);
+	double insertf(std::vector<const Node*>& route, const Node* node, const uint32_t pos);
 
 	/// @brief 计算后插操作的差值
 	/// @param vehicle 待插入的路线（车辆）
 	/// @param node 插入的节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @return 差值
-	double insertb(Vehicle& vehicle, const Node* node, const uint32_t pos);
+	double insertb(std::vector<const Node*>& route, const Node* node, const uint32_t pos);
 
 	/// @brief 计算删除操作的差值
 	/// @param vehicle 待删除的路线（车辆）
 	/// @param pos 位置（之后）[1, size-1)
 	/// @return 差值
-	double remove(Vehicle& vehicle, const uint32_t pos);
+	double erase(std::vector<const Node*>& route, const uint32_t pos);
 
 	/// @brief 计算交换同一路线（车辆）节点的差值, 开头和末尾为厂站
 	/// @param vehicle 待交换的路线（车辆）

@@ -18,5 +18,12 @@ void SA::init(const std::vector<Node*>& nodes, const std::vector<Node*>& station
 }
 
 void SA::run() {
+	std::vector<std::pair<uint32_t, const Node*>> rest;
+	sol.show();
+
+	ALNS::destory_wst(sol, 0.5, rest);
+	ALNS::repair(sol, rest);
+
+	sol.update();
 	sol.show();
 }
