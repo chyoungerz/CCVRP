@@ -3,14 +3,17 @@
 #include <algorithm>
 #include <set>
 
+#include "algorithm.hpp"
+
 Solution cw(const std::vector<Node>& nodes, const std::vector<Node>& station) {
 	Solution solution;
 	return solution;
 }
 
-Solution greedynear(const std::vector<Node*>& nodes, const std::vector<Node*>& station) {
+/*
+Solution greedynear(const std::vector<Node*>& nodes, const std::vector<Node*>& station, const int maxload) {
 	Solution solution;
-	constexpr int MaxLoad = 200;
+	// constexpr int MaxLoad = 200;
 	std::vector<std::vector<const Node*>> classfy(station.size());
 	std::set<uint32_t> tabu;  // 排除厂站
 	for (uint32_t i = 0; i < station.size(); i++) {
@@ -26,7 +29,7 @@ Solution greedynear(const std::vector<Node*>& nodes, const std::vector<Node*>& s
 		}
 	}
 	for (uint32_t i = 0; i < station.size(); i++) {
-		Vehicle vehicle(station[i], MaxLoad);
+		Vehicle vehicle(station[i], maxload);
 		std::sort(classfy[i].begin(), classfy[i].end(), [i](const Node* a, const Node* b) { return a->dists[i].dist > b->dists[i].dist; });
 		std::set<uint32_t> walked, service;  // 每个厂站已服务的节点, 和需要服务的节点
 		for (auto& node : classfy[i]) {      // 初始化服务节点
@@ -67,15 +70,30 @@ Solution greedynear(const std::vector<Node*>& nodes, const std::vector<Node*>& s
 		}
 	}
 	for (uint32_t i = 0; i < solution.solution.size(); i++) {
-		for (auto& j : solution.solution[i].path) {
-			solution.shash.emplace(std::make_pair(j->seq, i));  // 建立hash 查找表
+		for (uint32_t j = 1; j < solution.solution[i].path.size() - 1; j++) {              // 排除厂站
+			solution.shash.emplace(std::make_pair(solution.solution[i].path[j]->seq, i));  // 建立hash 查找表
 		}
 	}
 	return solution;  // 返回答案。
-}
-Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& station) {
+}*/
+
+Solution greedynear(std::vector<const Node*>& nodes, const uint32_t depot_num, const uint32_t maxload) {
 	Solution solution;
-	constexpr int MaxLoad = 200;
+	std::vector<const Node*> depots, custers;
+	std::vector<std::vector<const Node*>> classfy;
+	classfy.reserve(depot_num);
+	custers.assign(nodes.begin(), nodes.end() - depot_num);
+	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
+	ALG::Kmean(nodes, depot_num, 1000, classfy);
+	for (uint32_t i = 0; i < classfy.size(); i++) {
+		/* todo */
+	}
+	return solution;
+}
+
+Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& station, const int maxload) {
+	Solution solution;
+	// constexpr int MaxLoad = 200;
 	std::vector<std::vector<const Node*>> classfy(station.size());
 	std::set<uint32_t> tabu;  // 排除厂站
 	for (uint32_t i = 0; i < station.size(); i++) {
@@ -91,7 +109,7 @@ Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& stat
 		}
 	}
 	for (uint32_t i = 0; i < station.size(); i++) {
-		Vehicle vehicle(station[i], MaxLoad);
+		Vehicle vehicle(station[i], maxload);
 		std::sort(classfy[i].begin(), classfy[i].end(), [i](const Node* a, const Node* b) { return a->dists[i].dist < b->dists[i].dist; });
 		for (auto& node : classfy[i]) {
 			if (!vehicle.move(node)) {                      // 达到最大
@@ -110,8 +128,8 @@ Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& stat
 		}
 	}
 	for (uint32_t i = 0; i < solution.solution.size(); i++) {
-		for (auto& j : solution.solution[i].path) {
-			solution.shash.emplace(std::make_pair(j->seq, i));  // 建立hash 查找表
+		for (uint32_t j = 1; j < solution.solution[i].path.size() - 1; j++) {              // 排除厂站
+			solution.shash.emplace(std::make_pair(solution.solution[i].path[j]->seq, i));  // 建立hash 查找表
 		}
 	}
 	return solution;

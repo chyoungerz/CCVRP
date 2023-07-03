@@ -4,15 +4,18 @@
 #define _NODE_HPP_
 
 // #include <eigen3/Eigen/Core>
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
+class Node;
 // 边长度，Node的一部分
 struct Edge {
 	double dist;      // 长度
 	uint32_t to;      // 指向
+	Node* toNode{nullptr};  // 指向的节点
 };
 
 class Node {
@@ -26,48 +29,154 @@ class Node {
 	uint32_t demand;          // 需求
 	uint32_t start;           // 开始时间窗
 	uint32_t end;             // 结束时间窗
+
+	/**********构造函数************/
 	//_seq序号， （x.axis, y.axis), start开始时间窗， end结束时间窗, duration 服务时间，demand需求
-	Node();
-	Node(const uint32_t seq, const int x_axis, const int y_axis, const uint32_t duration, const uint32_t demand, const uint32_t start, const uint32_t end);
+	Node() : x(0), y(0), seq(0), duration(0), demand(0), start(0), end(0) {}
+	Node(const uint32_t _seq, const int x_axis, const int y_axis, const uint32_t _duration, const uint32_t _demand, const uint32_t _start, const uint32_t _end) {
+		x = x_axis;
+		y = y_axis;
+		seq = _seq;
+		duration = _duration;
+		demand = _demand;
+		start = _start;
+		end = _end;
+	}
+
 	// 方便输出
-	friend std::ostream& operator<<(std::ostream& _out, const Node _node);
+	friend std::ostream& operator<<(std::ostream& _out, const Node _node) {
+		_out << _node.seq << " : "
+			 << "(" << _node.x << ", " << _node.y << ")" << std::endl;
+		return _out;
+	}
 	// Node operator+ (const Node& node_);
 	Node& operator=(const Node&) = default;  // 允许赋值
+	bool operator!=(const Node& node_) {
+		if (this->x == node_.x && this->y == node_.y) return false;
+		return true;
+	}
+	Node& operator+=(const Node& node_) {
+		this->x = node_.x + this->x;
+		this->y = node_.y + this->y;
+		return *this;
+	}
+	Node& operator/=(const double i) {
+		this->x /= i;
+		this->y /= i;
+		return *this;
+	}
+
+	/***********成员函数**********/
 	// 计算距离
-	double cal_distance(const Node& node) const;
+	double cal_distance(const Node& node) const {
+		double result = sqrt(pow((x - node.x), 2) + pow((y - node.y), 2));
+		// dists.push_back(result);
+		return result;
+	}
+	void clone(const Node* node) {
+		this->x = node->x;
+		this->y = node->y;
+	}
 	// 计算距离（友元）
-	friend double dist(const Node& axis_x, const Node& axis_y);
+	friend double dist(const Node& node_x, const Node& node_y) {
+		return sqrt(pow((node_x.x - node_y.x), 2) + pow((node_x.y - node_y.y), 2));
+	}
+	// 计算距离（友元）指针
+	friend double dist(const Node* node_x, const Node* node_y) {
+		return sqrt(pow((node_x->x - node_y->x), 2) + pow((node_x->y - node_y->y), 2));
+	}
 };
 
 // 车辆或路线
 class Vehicle {
   public:
-	std::vector<const Node*> path;     // 走过的路
+	std::vector<const Node*> path;  // 走过的路
 	// double diflength;                  // 走过的路(时间）差分数组
 	double cumlength;                  // 所有节点的长度（时间）之和
 	uint32_t capacity;                 // 最大容量
 	uint32_t load;                     // 载重量
+	uint32_t seq;                      // 路线序号
+
 	// 无参构造,默认0
 	Vehicle() = delete;
 	// loc是位置, max代表车的最大容量
-	Vehicle(const Node* loc, const int maxload);
+	Vehicle(const Node* loc, const int maxload) : cumlength(0.0), capacity(maxload), load(0) {
+		path.reserve(100);
+		path.emplace_back(loc);
+	}
+
 	// 移动到dest节点，并计算距离 (往返距离一样)
-	bool move(const Node* dest /*,const Eigen::MatrixXf& dists*/);
+	bool move(const Node* dest /*,const Eigen::MatrixXf& dists*/) {
+		// double diflength{0.0};
+		if ((load + dest->demand) > capacity) return false;
+		load += dest->demand;
+		path.emplace_back(dest);
+		/*for (uint32_t i = 0; i + 1 < path.size(); i++) {
+			diflength += path[i]->distances[path[i + 1]->seq].distance;
+		}
+		cumlength += diflength;*/
+		// diflength.push_back(diflength.back() + dists(locate, dest.seq));
+		// diflength.push_back(diflength.back() + dest->distances[locate].distance);  // from a to b == from b to a
+		return true;
+	}
+
 	// 计算路径长度
-	double path_length(/*const Eigen::MatrixXf& dists*/);
+	double path_length(/*const Eigen::MatrixXf& dists*/) {
+		double length{0.0};
+		uint32_t weight = path.size() - 2;
+		for (unsigned int j = 0; j + 2 < path.size(); j++) {
+			length += (weight - j) * path[j]->dists[path[j + 1]->seq].dist;
+		}
+		return length;
+	}
+
+	// 更新路径长度
+	void update_length(/*const Eigen::MatrixXf& dists*/) {
+		cumlength = 0.0;
+		uint32_t weight = path.size() - 2;
+		for (unsigned int j = 0; j + 2 < path.size(); j++) {
+			cumlength += (weight - j) * path[j]->dists[path[j + 1]->seq].dist;
+		}
+	}
+
 	// 清空, 并初始化位置
-	void clear(const Node* node0);
+	void clear(const Node* node0) {
+		load = 0;
+		cumlength = 0.0;
+		path.clear();
+		path.emplace_back(node0);
+	}
+
 	// 方便输出
-	friend std::ostream& operator<<(std::ostream& out, const Vehicle& car);
+	friend std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
+		out << "length : " << car.cumlength << "  ";
+		for (unsigned int j = 0; j < car.path.size(); j++) {
+			out << car.path[j]->seq << "-";
+		}
+		return out;
+	}
+
 	Vehicle& operator=(const Vehicle&) = default;  // 允许赋值
 };
 
 // 厂站
 class Station : public Node {
   public:
-	Station();
+	Station() {
+		x = 0;
+		y = 0;
+		seq = 0;
+		start = 0;
+		end = 0;
+	}
 	//(x_axis, y_axis) _seq 序号
-	Station(const int x_axis, const int y_axis, const uint32_t _seq);
+	Station(const int x_axis, const int y_axis, const uint32_t _seq) {
+		x = x_axis;
+		y = y_axis;
+		seq = _seq;
+		start = 0;
+		end = 0;
+	}
 };
 
 // 一个解
@@ -78,12 +187,33 @@ class Solution {
 	double allength{0.0};
 	// hash查找表，key为节点序号，value为所在路线
 	std::unordered_map<uint32_t, uint32_t> shash;
+
 	// 无参初始化
-	Solution();
+	Solution() {
+		allength = 0.0;
+		solution.reserve(5);
+	}
+
 	// 添加一条路线（车辆）
-	void add(const Vehicle& vehicle);
-	void show();
-	void update();
+	void add(const Vehicle& vehicle) {
+		solution.emplace_back(vehicle);
+		allength += vehicle.cumlength;
+	}
+
+	void show() {
+		std::cout << "total length: " << allength << std::endl;
+		for (uint32_t i = 0; i < solution.size(); i++) {
+			std::cout << solution[i] << std::endl;
+		}
+	}
+
+	void update() {
+		allength = 0.0;
+		for (auto& i : solution) {
+			i.cumlength = i.path_length();
+			allength += i.cumlength;
+		}
+	}
 };
 /*
 class Ant {
@@ -111,5 +241,76 @@ class Ant {
 	// friend double dist(const Node& node_x, const Node& node_y,
 	// std::map<int, double>& stored);
 };
+
+//============================= class Ant start =============================
+
+Ant::Ant(const unsigned int loc, const unsigned int sel) : locate(loc), end(false), timenow(0) {
+	for (unsigned int i = 1; i < sel; i++) {  // init select paths
+		select.push_back(i);
+	}
+	path.push_back(loc);
+}
+Ant::Ant(): locate(0), end(false), timenow(0) {
+	path.push_back(0);
+}
+bool Ant::walk(const int node_seq) {
+	if (path.find(node_seq) == path.end()) {
+	path.insert(std::pair<int, int>(node_seq, node_seq));
+	locate = node_seq;
+	return true;
+	} else {
+		return false;
+	}
+};
+void Ant::move(const Eigen::MatrixXf pheromates, const Eigen::MatrixXf& dists) {
+	unsigned int temp = discrete_distribute(select, locate, pheromates, dists); //
+	path.push_back(select[temp]);
+	locate = select[temp];
+	std::swap(select[temp], select.back());
+	select.pop_back();  //快速删除
+	if (select.empty()) {
+		end = true;
+	}
+}
+void Ant::move(const unsigned int loc) {
+	path.push_back(loc);
+	locate = loc;
+	if (select.empty()) {
+		end = true;
+	}
+}
+unsigned int Ant::location() const { return locate;}
+double Ant::path_length(const Eigen::MatrixXf& dists) {
+	for (unsigned int j = 0; j + 1 < path.size(); j++) {
+		length += dists(path[j], path[j + 1]);
+	}
+	return length;
+}
+void Ant::remove_select_path(const unsigned int rm) {
+	std::swap(select[rm], select.back());
+	select.pop_back();
+	if (select.empty()) {
+		end = true;
+	}
+}
+
+std::vector<int>& Ant::select_path() {
+	return select;
+}
+const std::unordered_map<int, int> Ant::walked_path() {
+	return path;
+}
+std::ostream& operator<< (std::ostream& _out, const Ant& _ant) {
+	for (unsigned int j = 0; j < _ant.path.size(); j++) {
+		_out << _ant.path[j] << "-";
+	}
+	return _out;
+}
+bool Ant::end_path() const {
+	return end;
+}
+//double dist(const Node& node_x, const Node& node_y, std::map<int, double>& stored) {}
+
+//============================= class Ant end =============================
 */
 #endif

@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "-Wall -std=gnu++23")
 # 设置指定的C++编译器版本是必须的，如果不设置，或者为OFF，则指定版本不可用时，会使用上一版本。
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 指定为C++11 版本
+# 指定为C++23 版本
 set(CMAKE_CXX_STANDARD 23)
 
 #编译选项
@@ -34,4 +34,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
 
 # 指定生成目标 
 #add_executable(vrp ${DIR_SRCS})
-add_executable(vrp main.cpp node.cpp utils.cpp operator.cpp solution.cpp NSearch.cpp distribution.cpp heuristic.cpp)
+add_executable(vrp main.cpp operator.cpp solution.cpp NSearch.cpp heuristic.cpp)
+
+# 测试
+#enable_testing()
+#add_test(NAME p01 COMMAND vrp p01)
+#set_tests_properties(p01 PROPERTIES PASS_CONFIGURE "0")

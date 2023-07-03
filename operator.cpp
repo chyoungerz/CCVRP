@@ -182,3 +182,10 @@ std::pair<double, double> COST::twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_
 	double diflengthb = 0.0;
 	return std::make_pair(diflengtha, diflengthb);
 }
+
+uint32_t CHK::find(std::vector<const Node*>& route, const uint32_t seq) {
+	for (uint32_t i = 1; i < route.size() - 1; i++) {
+		if (route[i]->seq == seq) return i;
+	}
+	return 0;
+}

@@ -28,7 +28,7 @@ namespace OP {
 	/// @param node 插入节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @param diflength 差值
-	inline void insert(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength);
+	void insert(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength);
 
 	/// @brief 末尾删除
 	/// @param vehicle 待删除的路线（车辆）
@@ -156,4 +156,13 @@ namespace COST {
 	std::pair<double, double> twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_a_pos, const uint32_t to_a_pos, const uint32_t from_b_pos, const uint32_t to_b_pos);
 }  // namespace COST
 
+namespace CHK {
+
+	/// @brief 查找
+	/// @param route
+	/// @param seq
+	/// @return
+	uint32_t find(std::vector<const Node*>& route, const uint32_t seq);
+
+}  // namespace CHK
 #endif

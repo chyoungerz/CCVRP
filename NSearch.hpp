@@ -28,4 +28,10 @@ namespace ALNS {
 	void destory_rnd(Solution& solution, const float p, std::vector<std::pair<uint32_t, const Node*>>& rest);
 }  // namespace ALNS
 
+namespace LNS {
+	bool twoOpt(Solution& solution, const std::vector<const Node*>& nodes);
+	bool treeOpt(Solution& solution, const std::vector<const Node*>& nodes);
+	bool crossExch(Solution& solution, const std::vector<const Node*>& nodes);
+
+}  // namespace LNS
 #endif
