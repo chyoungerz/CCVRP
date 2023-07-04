@@ -1,5 +1,6 @@
 *.exe
 /.vscode
 *.mm
+*.bike
 /build
 /CCVRP

@@ -63,7 +63,7 @@ inline void init_distance(std::vector<Node*>& nodes) {
 	std::vector<Edge> temp_edges(size);
 	for (unsigned int i = 0; i < size; i++) {
 		for (unsigned int j = 0; j < size; j++) {
-			temp_edges[j] = {dist(*nodes[i], *nodes[j]), j};  // i行-j列（row, col)
+			temp_edges[j] = {dist(nodes[i], nodes[j]), j, nodes[j]};  // i行-j列（row, col)
 		}
 		nodes[i]->dists.assign(temp_edges.begin(), temp_edges.end());
 		std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist < b.dist; });

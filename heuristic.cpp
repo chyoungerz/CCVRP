@@ -13,6 +13,7 @@ void SA::init(std::vector<const Node*>& nodes, const uint32_t depot_num, uint32_
 	// custers.assign(nodes.begin(), nodes.end() - depot_num);
 	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
 	sol = bestSol = greedynear(nodes, depot_num, maxload);
+	sol.show();
 }
 
 void SA::run() {

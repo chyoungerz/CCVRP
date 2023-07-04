@@ -69,15 +69,17 @@ namespace ALG {
 			topK(vec, low_index, left - 1, k);
 	}
 
-	inline bool Kmean(std::vector<const Node*>& nodes, unsigned int k, unsigned int epoch_max, std::vector<std::vector<const Node*>>& classfy) {
-		std::vector<Node> K(k);
+	/// @brief K聚类算法
+	/// @param nodes 节点
+	/// @param K K 同时也是初始群
+	/// @param epoch_max 最大迭代次数
+	/// @param classfy 结果
+	/// @return 若超过最大迭代次数则false，否则true
+	inline bool Kmean(std::vector<const Node*>& nodes, std::vector<Node>& K, unsigned int epoch_max, std::vector<std::vector<const Node*>>& classfy) {
+		// std::vector<Node> K(k);
+		uint32_t k = K.size();
 		std::vector<const Node*> vec;
 		vec.assign(nodes.begin(), nodes.end() - k);
-		unsigned int num = nodes.size() - 1;
-		for (uint32_t i = 0; i <= k; i++) {
-			K[i].clone(nodes[num - i]);
-		}
-		classfy.resize(k);
 		while (epoch_max--) {
 			for (auto& v : vec) {
 				double min_dist = 1000000.0;
@@ -113,7 +115,8 @@ namespace ALG {
 		K.clear();
 		vec.clear();
 		if (epoch_max) return true;
-		return false;
+		else
+			return false;
 	}
 
 }  // namespace ALG

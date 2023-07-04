@@ -13,10 +13,10 @@ int main(int argc, char const *argv[]) {
 	vector<Node *> node;
 	vector<const Node *> nodes;
 	if (argc != 3) {
-		cerr << "not enought args" << endl;
-		cerr << "use default" << endl;
-		file = "p01";
+		file = "p10";
 		result = "data.txt";
+		cerr << "no enought args" << endl;
+		cerr << "use default: " << file << " " << result << endl;
 	} else {
 		file = argv[1];
 		result = argv[2];
@@ -35,7 +35,7 @@ int main(int argc, char const *argv[]) {
 	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
 	SA vrp;
 	vrp.init(nodes, depot_num, maxload);
-	vrp.run();
+	// vrp.run();
 	nodes.clear();
 	// create(result, now);
 	// write(result, vrp.bestSol);

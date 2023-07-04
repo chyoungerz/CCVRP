@@ -80,19 +80,56 @@ Solution greedynear(const std::vector<Node*>& nodes, const std::vector<Node*>& s
 Solution greedynear(std::vector<const Node*>& nodes, const uint32_t depot_num, const uint32_t maxload) {
 	Solution solution;
 	std::vector<const Node*> depots, custers;
-	std::vector<std::vector<const Node*>> classfy;
-	classfy.reserve(depot_num);
+	uint32_t num{0};  // 路线序号
+	std::vector<std::vector<const Node*>> classfy(depot_num);
 	custers.assign(nodes.begin(), nodes.end() - depot_num);
-	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
-	ALG::Kmean(nodes, depot_num, 1000, classfy);
-	for (uint32_t i = 0; i < classfy.size(); i++) {
-		/* todo */
+	depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
+	std::vector<Node> K;
+	K.reserve(depot_num);
+	for (auto& i : depots) {
+		K.emplace_back(*i);  // K
+	}
+	ALG::Kmean(nodes, K, 1000, classfy);
+	for (uint32_t i = 0; i < depot_num; i++) {  // 将分好类的客户安排给最近厂站
+		double min_dist = 1000000.0;
+		unsigned int min_index = 10000;
+		for (unsigned int j = 0; j < depot_num; ++j) {
+			double d = dist(K[i], *depots[j]);
+			if (d < min_dist) {
+				min_dist = d;
+				min_index = j;
+			}
+		}
+		Vehicle vehicle(depots[min_index], maxload, num++);  // 初始路线
+		// 按离厂站距离排序
+		std::sort(classfy[i].begin(), classfy[i].end(), [&depots, min_index](const Node* a, const Node* b) { return a->dists[depots[min_index]->seq].dist < b->dists[depots[min_index]->seq].dist; });
+		for (auto& node : classfy[i]) {
+			if (!vehicle.move(node)) {                         // 达到最大
+				vehicle.path.emplace_back(depots[min_index]);  // 返回厂站
+				vehicle.cumlength = vehicle.path_length();     // 计算路径长度。
+				solution.add(vehicle);                         // 加入到答案。
+				vehicle.clear(depots[min_index], num++);       // 清空
+				vehicle.move(node);                            // 补上
+			}
+		}
+		if (!vehicle.path.empty()) {                       // 最后的客户
+			vehicle.path.emplace_back(depots[min_index]);  // 返回厂站
+			vehicle.cumlength = vehicle.path_length();     // 计算路径长度。
+			solution.add(vehicle);                         // 加入到答案。
+			vehicle.clear(depots[min_index], num++);       // 清空
+		}
+	}
+	for (uint32_t i = 0; i < solution.solution.size(); i++) {
+		for (uint32_t j = 1; j < solution.solution[i].path.size() - 1; j++) {              // 排除厂站
+			solution.shash.emplace(std::make_pair(solution.solution[i].path[j]->seq, i));  // 建立hash 查找表
+		}
 	}
 	return solution;
 }
 
 Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& station, const int maxload) {
 	Solution solution;
+	uint32_t num{0};  // 路线序号
 	// constexpr int MaxLoad = 200;
 	std::vector<std::vector<const Node*>> classfy(station.size());
 	std::set<uint32_t> tabu;  // 排除厂站
@@ -109,14 +146,14 @@ Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& stat
 		}
 	}
 	for (uint32_t i = 0; i < station.size(); i++) {
-		Vehicle vehicle(station[i], maxload);
+		Vehicle vehicle(station[i], maxload, num++);
 		std::sort(classfy[i].begin(), classfy[i].end(), [i](const Node* a, const Node* b) { return a->dists[i].dist < b->dists[i].dist; });
 		for (auto& node : classfy[i]) {
 			if (!vehicle.move(node)) {                      // 达到最大
 				vehicle.path.emplace_back(station[i]);      // 返回厂站
 				vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 				solution.add(vehicle);                      // 加入到答案。
-				vehicle.clear(station[i]);                  // 清空
+				vehicle.clear(station[i], num++);           // 清空
 				vehicle.move(node);                         // 补上
 			}
 		}
@@ -124,7 +161,7 @@ Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& stat
 			vehicle.path.emplace_back(station[i]);      // 返回厂站
 			vehicle.cumlength = vehicle.path_length();  // 计算路径长度。
 			solution.add(vehicle);                      // 加入到答案。
-			vehicle.clear(station[i]);                  // 清空
+			vehicle.clear(station[i], num++);           // 清空
 		}
 	}
 	for (uint32_t i = 0; i < solution.solution.size(); i++) {

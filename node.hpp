@@ -15,7 +15,7 @@ class Node;
 struct Edge {
 	double dist;      // 长度
 	uint32_t to;      // 指向
-	Node* toNode{nullptr};  // 指向的节点
+	const Node* toNode{nullptr};  // 指向的节点
 };
 
 class Node {
@@ -100,7 +100,7 @@ class Vehicle {
 	// 无参构造,默认0
 	Vehicle() = delete;
 	// loc是位置, max代表车的最大容量
-	Vehicle(const Node* loc, const int maxload) : cumlength(0.0), capacity(maxload), load(0) {
+	Vehicle(const Node* loc, const uint32_t maxload, const uint32_t seq_) : cumlength(0.0), capacity(maxload), load(0), seq(seq_) {
 		path.reserve(100);
 		path.emplace_back(loc);
 	}
@@ -140,9 +140,10 @@ class Vehicle {
 	}
 
 	// 清空, 并初始化位置
-	void clear(const Node* node0) {
+	void clear(const Node* node0, uint32_t seq_) {
 		load = 0;
 		cumlength = 0.0;
+		seq = seq_;
 		path.clear();
 		path.emplace_back(node0);
 	}
@@ -201,10 +202,13 @@ class Solution {
 	}
 
 	void show() {
-		std::cout << "total length: " << allength << std::endl;
-		for (uint32_t i = 0; i < solution.size(); i++) {
-			std::cout << solution[i] << std::endl;
+		uint32_t num{};
+		uint32_t routes = solution.size();
+		for (uint32_t i = 0; i < routes; i++) {
+			std::cout << solution[i] << ":" << solution[i].path.size() - 2 << std::endl;
+			num += solution[i].path.size() - 2;
 		}
+		std::cout << "total length: " << allength << "\ttotal customers: " << num << "\ttotal routes: " << routes << std::endl;
 	}
 
 	void update() {
