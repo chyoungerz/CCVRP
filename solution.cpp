@@ -89,7 +89,7 @@ Solution greedynear(std::vector<const Node*>& nodes, const uint32_t depot_num, c
 	for (auto& i : depots) {
 		K.emplace_back(*i);  // K
 	}
-	ALG::Kmean(nodes, K, 1000, classfy);
+	ALG::Kmean(nodes, K, 10, classfy);
 	for (uint32_t i = 0; i < depot_num; i++) {  // 将分好类的客户安排给最近厂站
 		double min_dist = 1000000.0;
 		unsigned int min_index = 10000;
@@ -166,7 +166,7 @@ Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& stat
 	}
 	for (uint32_t i = 0; i < solution.solution.size(); i++) {
 		for (uint32_t j = 1; j < solution.solution[i].path.size() - 1; j++) {              // 排除厂站
-			solution.shash.emplace(std::make_pair(solution.solution[i].path[j]->seq, i));  // 建立hash 查找表
+			solution.shash.emplace(std::make_pair(solution.solution[i].path[j]->seq, solution.solution[i].seq));  // 建立hash 查找表
 		}
 	}
 	return solution;

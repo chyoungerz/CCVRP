@@ -29,9 +29,7 @@ namespace ALNS {
 }  // namespace ALNS
 
 namespace LNS {
-	bool twoOpt(Solution& solution, const std::vector<const Node*>& nodes);
-	bool treeOpt(Solution& solution, const std::vector<const Node*>& nodes);
-	bool crossExch(Solution& solution, const std::vector<const Node*>& nodes);
+	void run(Solution& solution, const std::vector<const Node*>& nodes, uint32_t epoch);
 
 }  // namespace LNS
 #endif

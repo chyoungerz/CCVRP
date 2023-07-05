@@ -79,11 +79,11 @@ class Node {
 	}
 	// 计算距离（友元）
 	friend double dist(const Node& node_x, const Node& node_y) {
-		return sqrt(pow((node_x.x - node_y.x), 2) + pow((node_x.y - node_y.y), 2));
+		return sqrt((node_x.x - node_y.x) * (node_x.x - node_y.x) + (node_x.y - node_y.y) * (node_x.y - node_y.y));
 	}
 	// 计算距离（友元）指针
 	friend double dist(const Node* node_x, const Node* node_y) {
-		return sqrt(pow((node_x->x - node_y->x), 2) + pow((node_x->y - node_y->y), 2));
+		return sqrt((node_x->x - node_y->x) * (node_x->x - node_y->x) + (node_x->y - node_y->y) * (node_x->y - node_y->y));
 	}
 };
 
@@ -123,9 +123,8 @@ class Vehicle {
 	// 计算路径长度
 	double path_length(/*const Eigen::MatrixXf& dists*/) {
 		double length{0.0};
-		uint32_t weight = path.size() - 2;
-		for (unsigned int j = 0; j + 2 < path.size(); j++) {
-			length += (weight - j) * path[j]->dists[path[j + 1]->seq].dist;
+		for (unsigned int j{0}, n{path.size() - 2}; j + 2 < n; j++) {
+			length += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
 		}
 		return length;
 	}
@@ -133,9 +132,8 @@ class Vehicle {
 	// 更新路径长度
 	void update_length(/*const Eigen::MatrixXf& dists*/) {
 		cumlength = 0.0;
-		uint32_t weight = path.size() - 2;
-		for (unsigned int j = 0; j + 2 < path.size(); j++) {
-			cumlength += (weight - j) * path[j]->dists[path[j + 1]->seq].dist;
+		for (unsigned int j{0}, n{path.size() - 2}; j + 2 < n; j++) {
+			cumlength += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
 		}
 	}
 

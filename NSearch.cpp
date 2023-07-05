@@ -94,21 +94,5 @@ void ALNS::destory_rnd(Solution& solution, const float p, std::vector<std::pair<
 	}
 }
 
-bool LNS::twoOpt(Solution& sol, const std::vector<const Node*>& nodes) {
-	std::vector<Vehicle> s = sol.solution;  // 局部解
-	uint32_t locate{};                      // 为了降低一行代码的长度
-	for (auto& r : s) {
-		for (uint32_t i = 1; i < r.path.size() - 1; i++) {
-			locate = sol.shash[r.path[i]->distsort[1].to];                         // 邻域的位置
-			uint32_t near = CHK::find(s[locate].path, r.path[i]->distsort[1].to);  // 找到最近邻域的节点
-			locate == r.seq ? OP::swaptwo(r, near, i, 0.0) : OP::twoswap(r, s[locate], i, near, std::make_pair(0.0, 0.0));
-		}
-	}
-
-	return true;
+void LNS::run(Solution& solution, const std::vector<const Node*>& nodes, uint32_t epoch) {
 }
-
-bool LNS::treeOpt(Solution& sol, const std::vector<const Node*>& nodes) {
-	return true;
-}
-// write treeOpt

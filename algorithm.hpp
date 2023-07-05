@@ -84,7 +84,7 @@ namespace ALG {
 			for (auto& v : vec) {
 				double min_dist = 1000000.0;
 				unsigned int min_index = 10000;
-				for (unsigned int i = 0; i < k; ++i) {
+				for (unsigned int i{0}; i < k; ++i) {
 					double d = dist(*v, K[i]);
 					if (d < min_dist) {
 						min_dist = d;
@@ -94,7 +94,7 @@ namespace ALG {
 				classfy[min_index].emplace_back(v);
 			}
 			bool flag = true;
-			for (unsigned int i = 0; i < k; ++i) {
+			for (unsigned int i{0}; i < k; ++i) {
 				Node sum;
 				for (auto& v : classfy[i]) {
 					sum += *v;
