@@ -58,15 +58,20 @@ namespace OP {
 	/// @return 删除的节点指针
 	const Node* remove(Vehicle& vehicle, const uint32_t pos, const double diflength);
 
-	/// @brief 两点交换算子
+	/// @brief 两点交换算子(使用邻域)
 	/// @param sol 解
 	/// @param nodes 节点
-	void twoOpt(Solution& sol, const std::vector<const Node*>& nodes);
+	void twoNSwap(Solution& sol, const std::vector<const Node*>& nodes);
 
-	/// @brief 一点移动算子
+	/// @brief 一点移动算子(使用邻域)
 	/// @param sol 解
 	/// @param nodes 节点
-	void oneOpt(Solution& sol, const std::vector<const Node*>& nodes);
+	void oneNMove(Solution& sol, const std::vector<const Node*>& nodes);
+
+	/// @brief 2-opt
+	/// @param sol
+	/// @param nodes
+	void twoOpt(Solution& sol, const std::vector<const Node*>& nodes);
 
 	/// @brief 交换不同路线（车辆）两节点, 开头和末尾为厂站
 	/// @param vehicle_a 待交换的路线（车辆）A
@@ -94,12 +99,6 @@ namespace OP {
 	/// @param to_b_pos 路线（车辆）B 结束位置 [1, size-1)
 	/// @return true，false
 	bool twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_a_pos, const uint32_t to_a_pos, const uint32_t from_b_pos, const uint32_t to_b_pos);
-
-	/// @brief 查找
-	/// @param solution
-	/// @param node
-	/// @return
-	bool find(Solution& solution, const Node* node);
 
 }  // namespace OP
 
@@ -163,9 +162,10 @@ namespace CHK {
 
 	/// @brief 查找
 	/// @param route
-	/// @param seq
-	/// @return
+	/// @param seq(序号或指针)
+	/// @return 位置
 	uint32_t find(std::vector<const Node*>& route, const uint32_t seq);
+	uint32_t find(std::vector<const Node*>& route, const Node* seq);
 
 	/// @brief 计算移动发生在同一路线（车辆）的差值, 开头和末尾为厂站
 	/// @param vehicle 待移动的路线（车辆）
@@ -204,6 +204,16 @@ namespace CHK {
 	/// @param out_db B的路径差值
 	/// @return 是否可行
 	bool twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
+
+	/// @brief 2-opt-cross
+	/// @param vehicle_a 待交换的路线（车辆） A
+	/// @param vehicle_b 待交换的路线（车辆） B
+	/// @param pos_a A的位置 [1, size-1)
+	/// @param pos_b B的位置 [1, size-1)
+	/// @param out_da A的路径差值
+	/// @param out_db B的路径差值
+	/// @return 是否可行, 可行时已交换好
+	bool twoCross(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
 
 }  // namespace CHK
 #endif

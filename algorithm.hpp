@@ -50,8 +50,8 @@ namespace ALG {
 	/// @param high_index 结束位置
 	/// @param k 最大的个数
 	/// @param cmp 比较函数(<)
-	template <typename T, typename F>
-	inline void topK(std::vector<T>& vec, unsigned int low_index, unsigned int high_index, unsigned int k, F cmp) {
+	template <typename T, typename Fn>
+	inline void topK(std::vector<T>& vec, unsigned int low_index, unsigned int high_index, unsigned int k, Fn cmp) {
 		if (high_index <= low_index) return;
 		unsigned int left{low_index}, right{high_index};
 		T pivot{vec[low_index]};

@@ -6,9 +6,11 @@
 // #include <eigen3/Eigen/Core>
 #include <cmath>
 #include <iostream>
-#include <memory>
+// #include <memory>
 #include <unordered_map>
 #include <vector>
+
+typedef unsigned int uint32_t;
 
 class Node;
 // 边长度，Node的一部分
