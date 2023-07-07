@@ -60,18 +60,15 @@ namespace OP {
 
 	/// @brief 两点交换算子(使用邻域)
 	/// @param sol 解
-	/// @param nodes 节点
-	void twoNSwap(Solution& sol, const std::vector<const Node*>& nodes);
+	void twoNSwap(Solution& sol);
 
 	/// @brief 一点移动算子(使用邻域)
 	/// @param sol 解
-	/// @param nodes 节点
-	void oneNMove(Solution& sol, const std::vector<const Node*>& nodes);
+	void oneNMove(Solution& sol);
 
 	/// @brief 2-opt
 	/// @param sol
-	/// @param nodes
-	void twoOpt(Solution& sol, const std::vector<const Node*>& nodes);
+	void twoOpt(Solution& sol);
 
 	/// @brief 交换不同路线（车辆）两节点, 开头和末尾为厂站
 	/// @param vehicle_a 待交换的路线（车辆）A
@@ -167,32 +164,30 @@ namespace CHK {
 	uint32_t find(std::vector<const Node*>& route, const uint32_t seq);
 	uint32_t find(std::vector<const Node*>& route, const Node* seq);
 
-	/// @brief 计算移动发生在同一路线（车辆）的差值, 开头和末尾为厂站
+	/// @brief 计算移动发生在同一路线（车辆）的差值, 开头和末尾为厂站，默认后插
 	/// @param vehicle 待移动的路线（车辆）
 	/// @param h 起始位置
 	/// @param d 目标位置
 	/// @param out_d 差值
-	/// @param locate 移动到目标的前面（0）还是后面（1）
 	/// @return 是否可行
-	bool move(Vehicle& vehicle, const uint32_t h, const uint32_t d, double& out_d, bool& locate);
+	bool move(Vehicle& vehicle, const uint32_t h, const uint32_t d, double& out_d);
 
-	/// @brief 计算移动发生在不同路线（车辆）的差值, 开头和末尾为厂站
+	/// @brief 计算移动发生在不同路线（车辆）的差值, 开头和末尾为厂站,默认后插
 	/// @param vehicle_h 待移动的起始路线（车辆）
 	/// @param vehicle_d 待移动的目标路线（车辆）
 	/// @param h 起始位置
 	/// @param d 目标位置
 	/// @param out_da 起始路线（车辆）差值
 	/// @param out_db 目标路线（车辆）差值
-	/// @param locate 移动到目标的前面（0）还是后面（1）
 	/// @return 是否可行
-	bool move(Vehicle& vehicle_h, Vehicle& vehicle_d, const uint32_t h, const uint32_t d, double& out_da, double& out_db, bool& locate);
+	bool move(Vehicle& vehicle_h, Vehicle& vehicle_d, const uint32_t h, const uint32_t d, double& out_da, double& out_db);
 
 	/// @brief 计算交换同一路线（车辆）节点的差值, 开头和末尾为厂站
 	/// @param vehicle 待交换的路线（车辆）
 	/// @param pos_i 位置 i [1, size-1)
 	/// @param pos_j 位置 j [1, size-1)
 	/// @param out_d 路径差值
-	/// @return 是否可行, 可行时已交换好
+	/// @return 是否可行
 	bool swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j, double& out_d);
 
 	/// @brief 计算交换不同路线（车辆）两节点的差值, 开头和末尾为厂站
@@ -205,7 +200,7 @@ namespace CHK {
 	/// @return 是否可行
 	bool twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
 
-	/// @brief 2-opt-cross
+	/// @brief 2-opt-cross 测试失败
 	/// @param vehicle_a 待交换的路线（车辆） A
 	/// @param vehicle_b 待交换的路线（车辆） B
 	/// @param pos_a A的位置 [1, size-1)

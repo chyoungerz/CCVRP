@@ -57,7 +57,7 @@ inline void write(const std::string& filename, const Solution& sol) {
 }
 
 // 计算节点距离矩阵
-inline void init_distance(std::vector<Node*>& nodes) {
+inline void init_distance(std::vector<Node*>& nodes, uint32_t depot_num) {
 	uint32_t size = nodes.size();
 	// Eigen::MatrixXf dists(size, size);
 	std::vector<Edge> temp_edges(size);
@@ -66,7 +66,7 @@ inline void init_distance(std::vector<Node*>& nodes) {
 			temp_edges[j] = {dist(nodes[i], nodes[j]), j, nodes[j]};  // i行-j列（row, col)
 		}
 		nodes[i]->dists.assign(temp_edges.begin(), temp_edges.end());
-		std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist < b.dist; });
+		std::sort(temp_edges.begin(), temp_edges.end() - depot_num, [](Edge& a, Edge& b) { return a.dist < b.dist; });
 		nodes[i]->distsort.assign(temp_edges.begin(), temp_edges.end());
 	}
 	// return dists;

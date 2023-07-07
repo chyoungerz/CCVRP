@@ -11,6 +11,7 @@
 #include <vector>
 
 typedef unsigned int uint32_t;
+typedef unsigned long long int uint64_t;
 
 class Node;
 // 边长度，Node的一部分
@@ -125,7 +126,7 @@ class Vehicle {
 	// 计算路径长度
 	double path_length(/*const Eigen::MatrixXf& dists*/) {
 		double length{0.0};
-		for (unsigned int j{0}, n{path.size() - 2}; j + 2 < n; j++) {
+		for (uint64_t j{0}, n{path.size() - 2}; j < n; j++) {
 			length += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
 		}
 		return length;
@@ -134,7 +135,7 @@ class Vehicle {
 	// 更新路径长度
 	void update_length(/*const Eigen::MatrixXf& dists*/) {
 		cumlength = 0.0;
-		for (unsigned int j{0}, n{path.size() - 2}; j + 2 < n; j++) {
+		for (uint64_t j{0}, n{path.size() - 2}; j < n; j++) {
 			cumlength += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
 		}
 	}

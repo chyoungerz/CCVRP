@@ -89,7 +89,7 @@ Solution greedynear(std::vector<const Node*>& nodes, const uint32_t depot_num, c
 	for (auto& i : depots) {
 		K.emplace_back(*i);  // K
 	}
-	ALG::Kmean(nodes, K, 10, classfy);
+	ALG::Kmean(nodes, K, 25, classfy);
 	for (uint32_t i = 0; i < depot_num; i++) {  // 将分好类的客户安排给最近厂站
 		double min_dist = 1000000.0;
 		unsigned int min_index = 10000;
@@ -116,7 +116,7 @@ Solution greedynear(std::vector<const Node*>& nodes, const uint32_t depot_num, c
 			vehicle.path.emplace_back(depots[min_index]);  // 返回厂站
 			vehicle.cumlength = vehicle.path_length();     // 计算路径长度。
 			solution.add(vehicle);                         // 加入到答案。
-			vehicle.clear(depots[min_index], num++);       // 清空
+			vehicle.clear(depots[min_index], num);         // 清空
 		}
 	}
 	for (uint32_t i = 0; i < solution.solution.size(); i++) {

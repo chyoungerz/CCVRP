@@ -17,12 +17,8 @@ void SA::init(std::vector<const Node*>& nodes, const uint32_t depot_num, uint32_
 }
 
 void SA::run() {
-	std::vector<std::pair<uint32_t, const Node*>> rest;
-	sol.show();
-	// uint32_t sum{};
-	std::cout << std::endl;
-	ALNS::destory_wst(sol, 0.9, rest);
-	ALNS::repair(sol, rest);
+	// OP::twoOpt(sol);
+	OP::twoNSwap(sol);
 	sol.update();
 	sol.show();
 	// sum = 0;

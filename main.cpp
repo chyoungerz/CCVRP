@@ -27,7 +27,7 @@ int main(int argc, char const *argv[]) {
 		cerr << "file open failed" << endl;
 		return 1;
 	}
-	init_distance(node);  // 计算客户距离
+	init_distance(node, depot_num);  // 计算客户距离
 	for (uint32_t i = 0; i < node.size(); i++) {
 		nodes.emplace_back(static_cast<const Node *>(node[i]));
 	}
@@ -35,7 +35,7 @@ int main(int argc, char const *argv[]) {
 	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
 	SA vrp;
 	vrp.init(nodes, depot_num, maxload);
-	// vrp.run();
+	vrp.run();
 	nodes.clear();
 	// create(result, now);
 	// write(result, vrp.bestSol);
