@@ -350,63 +350,75 @@ bool CHK::twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, 
 }
 
 bool CHK::twoCross(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db) {
-	uint32_t index_a = vehicle_a.path.size() - 1 - pos_a, index_b = vehicle_b.path.size() - 1 - pos_b;
+	uint32_t index_a = vehicle_a.path.size() - 2 - pos_a, index_b = vehicle_b.path.size() - 2 - pos_b;
 	uint32_t difload{};
 	if (index_a > index_b) {  // 判断容量约束
-		for (uint32_t i{0}; i < index_a; i++) {
-			if (index_b - i > 0)
-				difload += vehicle_a.path[pos_a + i]->demand - vehicle_b.path[pos_b + i]->demand;
-			else
-				difload += vehicle_a.path[pos_a + i]->demand;
+		uint32_t i{0};
+		for (; i < index_b; i++) {
+			difload += vehicle_a.path[pos_a + i]->demand - vehicle_b.path[pos_b + i]->demand;
 		}
-		if (vehicle_a.load - difload > vehicle_a.capacity || vehicle_b.load + difload > vehicle_b.capacity) return false;  // 超载
+		for (; i < index_a; i++) {
+			difload += vehicle_a.path[pos_a + i]->demand;
+		}
 	} else {
-		for (uint32_t i{0}; i < index_b; i++) {
-			if (index_a - i > 0)
-				difload += vehicle_a.path[pos_a + i]->demand - vehicle_b.path[pos_b + i]->demand;
-			else
-				difload -= vehicle_a.path[pos_b + i]->demand;
+		uint32_t i{0};
+		for (; i < index_a; i++) {
+			difload += vehicle_a.path[pos_a + i]->demand - vehicle_b.path[pos_b + i]->demand;
 		}
-		if (vehicle_a.load - difload > vehicle_a.capacity || vehicle_b.load + difload > vehicle_b.capacity) return false;  // 超载
+		for (; i < index_b; i++) {
+			difload -= vehicle_b.path[pos_b + i]->demand;
+		}
 	}
-	index_a += pos_b, index_b += pos_a;
-	uint32_t index_dif = pos_a - pos_b;
+	if (vehicle_a.load - difload > vehicle_a.capacity || vehicle_b.load + difload > vehicle_b.capacity) return false;  // 超载
 	double difa{}, difb{};
 	out_da = -vehicle_a.cumlength, out_db = -vehicle_b.cumlength;
-	for (uint32_t i{0}; i < index_a; i++) {  // 计算a距离差值
-		if (i < pos_a) {
-			difa += vehicle_a.path[i]->dists[vehicle_a.path[i + 1]->seq].dist;
-			out_da += difa;
-		} else {
-			difa += vehicle_b.path[i - index_dif]->dists[vehicle_b.path[i - index_dif + 1]->seq].dist;
-			out_da += difa;
-		}
+	for (uint32_t i{1}; i < pos_a; i++) {  // 计算a距离差值
+		difa += vehicle_a.path[i - 1]->dists[vehicle_a.path[i]->seq].dist;
+		out_da += difa;
 	}
-	for (uint32_t i{0}; i < index_b; i++) {  // 计算b距离差值
-		if (i < pos_b) {
-			difb += vehicle_b.path[i]->dists[vehicle_b.path[i + 1]->seq].dist;
-			out_db += difb;
-		} else {
-			difb += vehicle_a.path[i + index_dif]->dists[vehicle_a.path[i + index_dif + 1]->seq].dist;
-			out_db += difb;
-		}
+	difa += vehicle_a.path[pos_a - 1]->dists[vehicle_b.path[pos_b]->seq].dist;
+	out_da += difa;
+	for (uint32_t i{pos_b}, n{index_b + pos_b}; i < n; i++) {  // 计算a距离差值
+		difa += vehicle_b.path[i]->dists[vehicle_b.path[i + 1]->seq].dist;
+		out_da += difa;
+	}
+
+	for (uint32_t i{1}; i < pos_b; i++) {  // 计算b距离差值
+		difb += vehicle_b.path[i - 1]->dists[vehicle_b.path[i]->seq].dist;
+		out_db += difb;
+	}
+	difb += vehicle_b.path[pos_b - 1]->dists[vehicle_a.path[pos_a]->seq].dist;
+	out_db += difb;
+	for (uint32_t i{pos_a}, n{index_a + pos_a}; i < n; i++) {  // 计算b距离差值
+		difb += vehicle_a.path[i]->dists[vehicle_a.path[i + 1]->seq].dist;
+		out_db += difb;
 	}
 	if (out_da + out_db > 0) return false;  // 不满足约束
-	index_a += 1 - pos_b, index_b += 1 - pos_b;
+	index_a++, index_b++;
+	vehicle_a.path.pop_back();
+	vehicle_b.path.pop_back();
 	if (index_a > index_b) {                // 移动
-		for (uint32_t i{0}; i < index_a; i++) {
-			if (index_b - i > 0)
-				std::swap(vehicle_a.path[pos_a + i], vehicle_b.path[pos_b + i]);
-			else
-				vehicle_b.path.emplace_back(vehicle_a.path[pos_a + i]);
+		uint32_t i{0};
+		for (; i < index_b; i++) {
+			std::swap(vehicle_a.path[pos_a + i], vehicle_b.path[pos_b + i]);
 		}
+		for (; i < index_a; i++) {
+			vehicle_b.path.emplace_back(vehicle_a.path[pos_a + i]);
+		}
+		vehicle_b.path.emplace_back(vehicle_b.path.front());
+		vehicle_a.path.resize(pos_a + index_b);
+		vehicle_a.path.emplace_back(vehicle_a.path.front());
 	} else {
-		for (uint32_t i{0}; i < index_b; i++) {
-			if (index_a - i > 0)
-				std::swap(vehicle_a.path[pos_a + i], vehicle_b.path[pos_b + i]);
-			else
-				vehicle_a.path.emplace_back(vehicle_b.path[pos_b + i]);
+		uint32_t i{0};
+		for (; i < index_a; i++) {
+			std::swap(vehicle_a.path[pos_a + i], vehicle_b.path[pos_b + i]);
 		}
+		for (; i < index_b; i++) {
+			vehicle_a.path.emplace_back(vehicle_b.path[pos_b + i]);
+		}
+		vehicle_a.path.emplace_back(vehicle_a.path.front());
+		vehicle_b.path.resize(pos_b + index_a);
+		vehicle_b.path.emplace_back(vehicle_b.path.front());
 	}
 	return true;
 }

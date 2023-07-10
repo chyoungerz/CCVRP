@@ -200,7 +200,7 @@ namespace CHK {
 	/// @return 是否可行
 	bool twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
 
-	/// @brief 2-opt-cross 测试失败
+	/// @brief 2-opt-cross
 	/// @param vehicle_a 待交换的路线（车辆） A
 	/// @param vehicle_b 待交换的路线（车辆） B
 	/// @param pos_a A的位置 [1, size-1)

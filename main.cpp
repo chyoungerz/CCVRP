@@ -24,12 +24,12 @@ int main(int argc, char const *argv[]) {
 	uint32_t maxload, depot_num;
 	node = read(file, maxload, depot_num);
 	if (node.empty()) {
-		cerr << "file open failed" << endl;
+		cerr << "file: " << file << " open failed" << endl;
 		return 1;
 	}
 	init_distance(node, depot_num);  // 计算客户距离
 	for (uint32_t i = 0; i < node.size(); i++) {
-		nodes.emplace_back(static_cast<const Node *>(node[i]));
+		nodes.emplace_back(static_cast<const Node *>(node[i]));  // why node -\> const node ?
 	}
 	node.clear();
 	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾

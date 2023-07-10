@@ -37,6 +37,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
 add_executable(vrp main.cpp operator.cpp solution.cpp NSearch.cpp heuristic.cpp)
 
 # 测试
-#enable_testing()
-#add_test(NAME p01 COMMAND vrp p01)
+enable_testing()
+add_test(NAME p01 COMMAND vrp p01 data01.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p02 COMMAND vrp p02 data02.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p03 COMMAND vrp p03 data03.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p04 COMMAND vrp p04 data04.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p05 COMMAND vrp p05 data05.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p06 COMMAND vrp p06 data06.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p07 COMMAND vrp p07 data07.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p08 COMMAND vrp p08 data08.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p09 COMMAND vrp p09 data09.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+add_test(NAME p10 COMMAND vrp p10 data10.txt CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/p)
+
 #set_tests_properties(p01 PROPERTIES PASS_CONFIGURE "0")

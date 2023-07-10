@@ -7,7 +7,7 @@
 #include <ctime>
 #include <fstream>
 #include <iomanip>
-#include <ostream>
+// #include <ostream>
 #include <string>
 
 #include "node.hpp"
@@ -40,7 +40,11 @@ inline std::vector<Node*> read(const std::string& file, uint32_t& maxload, uint3
 inline void create(const std::string& filename, const time_t now) {
 	char str[12];
 	strftime(str, 96, "%Y%m%d%H%M", localtime(&now));
-	std::ofstream out(filename, std::ofstream::app);  // 输出, 追加末尾
+	std::ofstream out(filename, std::ios::app);  // 输出, 追加末尾
+	if (out.fail()) {
+		std::cerr << "Error! cannot write to file: " << filename << std::endl;
+		return;
+	}
 	out << "日期：" << str << "\n";
 	out << "随机数种子：" << now << "\n";
 	out.close();
@@ -48,11 +52,22 @@ inline void create(const std::string& filename, const time_t now) {
 
 // 将结果写入到文件中
 inline void write(const std::string& filename, const Solution& sol) {
-	std::ofstream out(filename, std::ofstream::app);  // 输出, 追加末尾
-	out << "total length:" << sol.allength << std::endl;
-	for (auto& i : (sol.solution)) {
-		out << i << std::endl;
+	std::fstream out(filename, std::ios::out | std::ios::app);  // 输出, 追加末尾
+	if (out.fail()) {
+		std::cerr << "Error! cannot write to file: " << filename << std::endl;
+		return;
 	}
+	char chs[12];
+	const time_t now = std::time(nullptr);
+	strftime(chs, 96, "%Y%m%d%H%M", localtime(&now));
+	out << "日期：" << chs << std::endl;
+	uint32_t num{};
+	uint32_t routes = sol.solution.size();
+	for (uint32_t i = 0; i < routes; i++) {
+		out << sol.solution[i] << " : " << sol.solution[i].path.size() - 2 << std::endl;
+		num += sol.solution[i].path.size() - 2;
+	}
+	out << "总路线长度: " << sol.allength << "\t 总客户数: " << num << "\t 总路线: " << routes << std::endl;
 	out.close();
 }
 
