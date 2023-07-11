@@ -95,36 +95,22 @@ void OP::twoNSwap(Solution& sol) {
 	}
 }
 
-void OP::oneNMove(Solution& sol) {
-	uint32_t locate{}, h{}, d{};  // 为了降低一行代码的长度
+void OP::oneNMove(Solution& sol, std::vector<const Node*>& nodes, const uint32_t depot_num) {
 	double difla{}, diflb{};      // 路线A和B的差值
-	for (auto& r : sol.solution) {
-		for (uint32_t i = 1; i < r.path.size() - 1; i++) {
-			locate = sol.shash[r.path[i]->distsort[1].to];                                    // 邻域的位置
-			uint32_t near = CHK::find(sol.solution[locate].path, r.path[i]->distsort[1].toNode);  // 找到最近邻域的节点
-			if (locate == r.seq) {                                                            // 是否在同路线
-				if (CHK::move(r, i, near, difla)) {
-					if (i < near) {                                                           // 判断大小
-						h = i;
-						d = near;
-					} else {
-						h = near;
-						d = i;
-					}
-					for (uint32_t j = h; j < d; j++) {  // 开始移动
-						std::swap(r.path[j], r.path[j + 1]);
-					}
-					r.cumlength += difla;  // 更新距离
-				}
-			} else {
-				if (CHK::move(r, sol.solution[locate], i, near, difla, diflb)) {
-					const Node* node{r.path[i]};
-					r.cumlength += difla, sol.solution[locate].cumlength += diflb;      // 更新距离
-					r.load -= node->demand, sol.solution[locate].load += node->demand;  // 更新容量
-					r.path.erase(r.path.begin() + i);                                   // 移动
-					sol.solution[locate].path.emplace(sol.solution[locate].path.begin() + near + 1, node);
-					sol.shash[r.path[i]->seq] = locate;  // 更新hash表
-				}
+	uint32_t from{}, home{}, to{}, dest{};
+	for (uint32_t i{0}, n = nodes.size() - depot_num; i < n; i++) {
+		from = sol.shash[nodes[i]->seq];
+		home = CHK::find(sol.solution[from].path, nodes[i]);
+		to = sol.shash[nodes[i]->distsort[1].toNode->seq];
+		dest = CHK::find(sol.solution[to].path, nodes[i]->distsort[1].toNode);
+		if (from == to) {  // 是否在同路线
+			if (CHK::move(sol.solution[from], home, dest, difla))
+				sol.solution[from].cumlength += difla;
+		} else {
+			if (CHK::move(sol.solution[from], sol.solution[to], home, dest, difla, diflb)) {
+				sol.solution[from].cumlength += difla;
+				sol.solution[to].cumlength += diflb;
+				sol.shash[nodes[i]->seq] = to;  // 更新hash表
 			}
 		}
 	}
@@ -132,11 +118,11 @@ void OP::oneNMove(Solution& sol) {
 
 void OP::twoOpt(Solution& sol) {
 	double dif{};  // 距离差值
-	for (auto& s : sol.solution) {
-		for (uint32_t i = s.path.size() - 2; i > 1; i--) {
-			if (CHK::swaptwo(s, i - 1, i, dif)) {
-				s.cumlength += dif;  // 更新距离
-				std::swap(s.path[i - 1], s.path[i]);
+	for (uint32_t s{0}, size = sol.solution.size(); s < size; s++) {
+		for (uint32_t i{1}, n = sol.solution[s].path.size() - 2; i < n; i++) {
+			if (CHK::swaptwo(sol.solution[s], i, i + 1, dif)) {
+				sol.solution[s].cumlength += dif;  // 更新距离
+				std::swap(sol.solution[s].path[i], sol.solution[s].path[i + 1]);
 			}
 		}
 	}
@@ -262,71 +248,125 @@ uint32_t CHK::find(std::vector<const Node*>& route, const Node* seq) {
 }
 
 bool CHK::move(Vehicle& vehicle, const uint32_t h, const uint32_t d, double& out_d) {
-	double dif{};
+	double dift{};  // d的后面
 	out_d = -vehicle.cumlength;
-	for (uint32_t i{0}, n = vehicle.path.size() - 2; i < n; i++) {
-		if (i == h - 1) {
-			dif += vehicle.path[h - 1]->dists[vehicle.path[h + 1]->seq].dist;
-			out_d += dif;
-			i++;
-			continue;
+	const Node* node{vehicle.path[h]};
+	if (h < d) {
+		for (uint32_t i{h + 1}; i < d; i++) {  // d的前面
+			vehicle.path[i - 1] = vehicle.path[i];
 		}
-		if (i == d) {
-			dif += vehicle.path[i]->dists[vehicle.path[h]->seq].dist;
-			out_d += dif;
-			dif += vehicle.path[h]->dists[vehicle.path[i + 1]->seq].dist;
-			out_d += dif;
-			continue;
+		vehicle.path[d - 1] = node;
+		for (uint64_t i{0}, n{vehicle.path.size() - 2}; i < n; i++) {  // 计算d前面的距离
+			out_d += (n - i) * vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
 		}
-		dif += vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
-		out_d += dif;
-	}
-	if (out_d > 0)
-		return false;
-	else
+		uint32_t size = vehicle.path.size() - 1 - d;  // 0-a-b-c-h-d-0
+		dift = (vehicle.path[d - 2]->dists[vehicle.path[d]->seq].dist - vehicle.path[d - 2]->dists[vehicle.path[d - 1]->seq].dist) * (size + 1);
+		dift += (vehicle.path[d + 1]->dists[vehicle.path[d - 1]->seq].dist - vehicle.path[d + 1]->dists[vehicle.path[d]->seq].dist) * (size - 1);
+		if (dift < 0) {                                // d的后面
+			out_d += dift;
+			if (out_d > 0) {                           // 不可行
+				for (uint32_t i{d - 1}; i > h; i--) {  // 还原
+					vehicle.path[i] = vehicle.path[i - 1];
+				}
+				vehicle.path[h] = node;
+				return false;
+			}
+			vehicle.path[d - 1] = vehicle.path[d];  // 可行
+			vehicle.path[d] = node;
+			return true;
+		}
+		// d的前面
+		if (out_d > 0) {                           // 不可行
+			for (uint32_t i{d - 1}; i > h; i--) {  // 还原
+				vehicle.path[i] = vehicle.path[i - 1];
+			}
+			vehicle.path[h] = node;
+			return false;
+		}
 		return true;
+	} else {
+		for (uint32_t i{h - 1}; i > d; i--) {  // d的前面
+			vehicle.path[i + 1] = vehicle.path[i];
+		}
+		vehicle.path[d + 1] = node;
+		for (uint64_t i{0}, n{vehicle.path.size() - 2}; i < n; i++) {  // 计算d前面的距离
+			out_d += (n - i) * vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+		}
+		uint32_t size = vehicle.path.size() - 1 - d;  // 0-d-h-a-b-c-0
+		dift = (vehicle.path[d - 1]->dists[vehicle.path[d + 1]->seq].dist - vehicle.path[d - 1]->dists[vehicle.path[d]->seq].dist) * size;
+		dift += (vehicle.path[d + 2]->dists[vehicle.path[d]->seq].dist - vehicle.path[d + 2]->dists[vehicle.path[d + 1]->seq].dist) * (size - 2);
+		if (dift < 0) {                                // d的前面
+			out_d += dift;
+			if (out_d > 0) {                           // 不可行
+				for (uint32_t i{d + 1}; i < h; i++) {  // 还原
+					vehicle.path[i] = vehicle.path[i + 1];
+				}
+				vehicle.path[h] = node;
+				return false;
+			}
+			vehicle.path[d + 1] = vehicle.path[d];  // 可行
+			vehicle.path[d] = node;
+			return true;
+		}
+		// d的后面
+		if (out_d > 0) {                           // 不可行
+			for (uint32_t i{d + 1}; i < h; i++) {  // 还原
+				vehicle.path[i] = vehicle.path[i + 1];
+			}
+			vehicle.path[h] = node;
+			return false;
+		}
+		return true;
+	}
 }
 
 bool CHK::move(Vehicle& vehicle_h, Vehicle& vehicle_d, const uint32_t h, const uint32_t d, double& out_da, double& out_db) {
 	if (vehicle_d.load + vehicle_h.path[h]->demand > vehicle_d.capacity) return false;
 	out_da = (vehicle_h.path.size() - 2 - h) * (vehicle_h.path[h - 1]->dists[vehicle_h.path[h + 1]->seq].dist - vehicle_h.path[h]->dists[vehicle_h.path[h + 1]->seq].dist - vehicle_h.path[h - 1]->dists[vehicle_h.path[h]->seq].dist);
-	out_db = (vehicle_d.path.size() - 2 - d) * (vehicle_d.path[d]->dists[vehicle_h.path[h]->seq].dist + vehicle_d.path[d + 1]->dists[vehicle_h.path[h]->seq].dist - vehicle_d.path[d]->dists[vehicle_d.path[d + 1]->seq].dist);
-	if (h <= d) {
-		uint32_t i = 0;
-		for (; i < h; i++) {
-			out_da -= vehicle_h.path[i]->dists[vehicle_h.path[i + 1]->seq].dist;
-			out_db += vehicle_d.path[i]->dists[vehicle_d.path[i + 1]->seq].dist;
-		}
-		for (; i < d; i++) {
-			out_db += vehicle_d.path[i]->dists[vehicle_d.path[i + 1]->seq].dist;
-		}
-		out_db += vehicle_d.path[d]->dists[vehicle_h.path[h]->seq].dist;
-	} else {
-		uint32_t i = 0;
-		for (; i < d; i++) {
-			out_da -= vehicle_h.path[i]->dists[vehicle_h.path[i + 1]->seq].dist;
-			out_db += vehicle_d.path[i]->dists[vehicle_d.path[i + 1]->seq].dist;
-		}
-		for (; i < h; i++) {
-			out_da -= vehicle_d.path[i]->dists[vehicle_d.path[i + 1]->seq].dist;
-		}
-		out_db += vehicle_d.path[d]->dists[vehicle_h.path[h]->seq].dist;
+	for (uint32_t i{0}; i < h; i++) {  // 计算路径h
+		out_da -= vehicle_h.path[i]->dists[vehicle_h.path[i + 1]->seq].dist;
 	}
-	if (out_da + out_db > 0) return false;
-	/*const Node* node{vehicle_h.path.erase(vehicle_h.path.begin() + h)}; //移动
-	vehicle_d.path.emplace(vehicle_d.path.begin() + d, node);*/
+	uint32_t size = vehicle_d.path.size() - 1 - d;
+	out_db = size * (vehicle_d.path[d]->dists[vehicle_h.path[h]->seq].dist + vehicle_d.path[d - 1]->dists[vehicle_h.path[h]->seq].dist - vehicle_d.path[d]->dists[vehicle_d.path[d - 1]->seq].dist);
+	for (uint32_t i{1}; i < d; i++) {  // 计算路径d前插
+		out_db += vehicle_d.path[i - 1]->dists[vehicle_d.path[i]->seq].dist;
+	}
+	out_db += vehicle_d.path[d - 1]->dists[vehicle_h.path[h]->seq].dist;
+	// 计算路径d后插
+	double dif{(vehicle_d.path[d - 1]->dists[vehicle_d.path[d]->seq].dist - vehicle_d.path[d - 1]->dists[vehicle_h.path[h]->seq].dist) * (size + 1)};
+	dif += (vehicle_d.path[d + 1]->dists[vehicle_h.path[h]->seq].dist - vehicle_d.path[d]->dists[vehicle_d.path[d + 1]->seq].dist) * (size - 1);
+	if (dif < 0) {  // 后插可行
+		out_db += dif;
+		if (out_da + out_db > 0) return false;
+		const Node* node{vehicle_h.path[h]};  // 移动d
+		vehicle_d.path.emplace(vehicle_d.path.begin() + d + 1, node);
+	} else {                                  // 前插可行
+		if (out_da + out_db > 0) return false;
+		const Node* node{vehicle_h.path[h]};  // 移动d
+		vehicle_d.path.emplace(vehicle_d.path.begin() + d, node);
+	}
+	vehicle_h.path.erase(vehicle_h.path.begin() + h);
+	vehicle_d.load += vehicle_h.path[h]->demand, vehicle_h.load -= vehicle_h.path[h]->demand;
 	return true;
 }
 
 bool CHK::swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j, double& out_d) {
-	uint32_t size = vehicle.path.size() - 2;
-	double difa = vehicle.path[pos_i - 1]->dists[vehicle.path[pos_j]->seq].dist + vehicle.path[pos_i + 1]->dists[vehicle.path[pos_j]->seq].dist - vehicle.path[pos_i - 1]->dists[vehicle.path[pos_i]->seq].dist - vehicle.path[pos_i + 1]->dists[vehicle.path[pos_i]->seq].dist;
-	double difb = vehicle.path[pos_j - 1]->dists[vehicle.path[pos_i]->seq].dist + vehicle.path[pos_j + 1]->dists[vehicle.path[pos_i]->seq].dist - vehicle.path[pos_j - 1]->dists[vehicle.path[pos_j]->seq].dist - vehicle.path[pos_j + 1]->dists[vehicle.path[pos_j]->seq].dist;
-	difa *= size - pos_i;
-	difb *= size - pos_j;
-	difa += vehicle.path[pos_i - 1]->dists[vehicle.path[pos_j]->seq].dist - vehicle.path[pos_i - 1]->dists[vehicle.path[pos_i]->seq].dist;
-	difb += vehicle.path[pos_j - 1]->dists[vehicle.path[pos_i]->seq].dist - vehicle.path[pos_j - 1]->dists[vehicle.path[pos_j]->seq].dist;
-	out_d = difa + difb;
+	int flag = pos_i - pos_j;
+	if (flag == -1) {  // 相邻点特殊
+		uint32_t size = vehicle.path.size() - 1 - pos_i;
+		out_d = (vehicle.path[pos_i - 1]->dists[vehicle.path[pos_j]->seq].dist - vehicle.path[pos_i - 1]->dists[vehicle.path[pos_i]->seq].dist) * size;
+		out_d += (vehicle.path[pos_i]->dists[vehicle.path[pos_j + 1]->seq].dist - vehicle.path[pos_j]->dists[vehicle.path[pos_j + 1]->seq].dist) * (size - 2);
+	} else if (flag == 1) {
+		uint32_t size = vehicle.path.size() - 1 - pos_j;
+		out_d = (vehicle.path[pos_j - 1]->dists[vehicle.path[pos_i]->seq].dist - vehicle.path[pos_j - 1]->dists[vehicle.path[pos_j]->seq].dist) * size;
+		out_d += (vehicle.path[pos_j]->dists[vehicle.path[pos_i + 1]->seq].dist - vehicle.path[pos_i]->dists[vehicle.path[pos_i + 1]->seq].dist) * (size - 2);
+	} else {
+		uint32_t size = vehicle.path.size() - 1;
+		out_d = (vehicle.path[pos_i - 1]->dists[vehicle.path[pos_j]->seq].dist - vehicle.path[pos_i - 1]->dists[vehicle.path[pos_i]->seq].dist) * (size - pos_i);
+		out_d += (vehicle.path[pos_j]->dists[vehicle.path[pos_i + 1]->seq].dist - vehicle.path[pos_i]->dists[vehicle.path[pos_i + 1]->seq].dist) * (size - pos_i - 1);
+		out_d += (vehicle.path[pos_j - 1]->dists[vehicle.path[pos_i]->seq].dist - vehicle.path[pos_j - 1]->dists[vehicle.path[pos_j]->seq].dist) * (size - pos_j);
+		out_d += (vehicle.path[pos_i]->dists[vehicle.path[pos_j + 1]->seq].dist - vehicle.path[pos_j]->dists[vehicle.path[pos_j + 1]->seq].dist) * (size - pos_j - 1);
+	}
 	if (out_d > 0)
 		return false;
 	else
@@ -337,12 +377,11 @@ bool CHK::twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, 
 	int difload = vehicle_a.path[pos_a]->demand - vehicle_b.path[pos_b]->demand;
 	if ((vehicle_a.load - difload) > vehicle_a.capacity || (vehicle_b.load + difload) > vehicle_b.capacity) return false;  // 超载
 	vehicle_a.load -= difload, vehicle_b.load += difload;
-	out_da = vehicle_a.path[pos_a - 1]->dists[vehicle_b.path[pos_b]->seq].dist + vehicle_a.path[pos_a + 1]->dists[vehicle_b.path[pos_b]->seq].dist - vehicle_a.path[pos_a - 1]->dists[vehicle_a.path[pos_a]->seq].dist - vehicle_a.path[pos_a + 1]->dists[vehicle_a.path[pos_a]->seq].dist;
-	out_db = vehicle_b.path[pos_b - 1]->dists[vehicle_a.path[pos_a]->seq].dist + vehicle_b.path[pos_b + 1]->dists[vehicle_a.path[pos_a]->seq].dist - vehicle_b.path[pos_b - 1]->dists[vehicle_b.path[pos_b]->seq].dist - vehicle_b.path[pos_b + 1]->dists[vehicle_b.path[pos_b]->seq].dist;
-	out_da *= vehicle_a.path.size() - pos_a - 2;
-	out_db *= vehicle_b.path.size() - pos_b - 2;
-	out_da += vehicle_a.path[pos_a - 1]->dists[vehicle_b.path[pos_b]->seq].dist - vehicle_a.path[pos_a - 1]->dists[vehicle_a.path[pos_a]->seq].dist;
-	out_db += vehicle_b.path[pos_b - 1]->dists[vehicle_a.path[pos_a]->seq].dist - vehicle_b.path[pos_b - 1]->dists[vehicle_b.path[pos_b]->seq].dist;
+	uint32_t size_a = vehicle_a.path.size() - 1, size_b = vehicle_b.path.size() - 1;
+	out_da = (vehicle_a.path[pos_a - 1]->dists[vehicle_b.path[pos_b]->seq].dist - vehicle_a.path[pos_a - 1]->dists[vehicle_a.path[pos_a]->seq].dist) * (size_a - pos_a);
+	out_db = (vehicle_b.path[pos_b - 1]->dists[vehicle_a.path[pos_a]->seq].dist - vehicle_b.path[pos_b - 1]->dists[vehicle_b.path[pos_b]->seq].dist) * (size_b - pos_b);
+	out_da += (vehicle_b.path[pos_b]->dists[vehicle_a.path[pos_a + 1]->seq].dist - vehicle_a.path[pos_a]->dists[vehicle_a.path[pos_a + 1]->seq].dist) * (size_a - pos_a - 1);
+	out_db += (vehicle_a.path[pos_a]->dists[vehicle_b.path[pos_b + 1]->seq].dist - vehicle_b.path[pos_b]->dists[vehicle_b.path[pos_b + 1]->seq].dist) * (size_b - pos_b - 1);
 	if (out_da + out_db > 0)
 		return false;
 	else

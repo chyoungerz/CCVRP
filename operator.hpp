@@ -64,7 +64,9 @@ namespace OP {
 
 	/// @brief 一点移动算子(使用邻域)
 	/// @param sol 解
-	void oneNMove(Solution& sol);
+	/// @param nodes 节点
+	/// @param depot_num 厂站
+	void oneNMove(Solution& sol, std::vector<const Node*>& nodes, const uint32_t depot_num);
 
 	/// @brief 2-opt
 	/// @param sol
@@ -164,12 +166,13 @@ namespace CHK {
 	uint32_t find(std::vector<const Node*>& route, const uint32_t seq);
 	uint32_t find(std::vector<const Node*>& route, const Node* seq);
 
-	/// @brief 计算移动发生在同一路线（车辆）的差值, 开头和末尾为厂站，默认后插
+	/// @brief 计算移动发生在同一路线（车辆）的差值, 开头和末尾为厂站。
 	/// @param vehicle 待移动的路线（车辆）
 	/// @param h 起始位置
 	/// @param d 目标位置
 	/// @param out_d 差值
-	/// @return 是否可行
+	/// @return 是否可行。可行时已移动好
+	/// @note 自动判断目标位置的前边和后边
 	bool move(Vehicle& vehicle, const uint32_t h, const uint32_t d, double& out_d);
 
 	/// @brief 计算移动发生在不同路线（车辆）的差值, 开头和末尾为厂站,默认后插
@@ -179,7 +182,8 @@ namespace CHK {
 	/// @param d 目标位置
 	/// @param out_da 起始路线（车辆）差值
 	/// @param out_db 目标路线（车辆）差值
-	/// @return 是否可行
+	/// @return 是否可行。可行时已移动好
+	/// @note 自动判断目标位置的前边和后边
 	bool move(Vehicle& vehicle_h, Vehicle& vehicle_d, const uint32_t h, const uint32_t d, double& out_da, double& out_db);
 
 	/// @brief 计算交换同一路线（车辆）节点的差值, 开头和末尾为厂站

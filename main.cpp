@@ -13,7 +13,7 @@ int main(int argc, char const *argv[]) {
 	vector<Node *> node;
 	vector<const Node *> nodes;
 	if (argc != 3) {
-		file = "p10";
+		file = "p21";
 		result = "data.txt";
 		cerr << "no enought args" << endl;
 		cerr << "use default: " << file << " " << result << endl;
