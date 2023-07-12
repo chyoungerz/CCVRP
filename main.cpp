@@ -29,10 +29,10 @@ int main(int argc, char const *argv[]) {
 	}
 	init_distance(node, depot_num);  // 计算客户距离
 	for (uint32_t i = 0; i < node.size(); i++) {
-		nodes.emplace_back(static_cast<const Node *>(node[i]));  // why node -\> const node ?
+		nodes.emplace_back(const_cast<const Node *>(node[i]));  // why node -\> const node ?
 	}
 	node.clear();
-	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
+	//  depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
 	SA vrp;
 	vrp.init(nodes, depot_num, maxload);
 	vrp.run();
