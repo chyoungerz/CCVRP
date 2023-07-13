@@ -250,27 +250,26 @@ namespace CHK {
 	bool strSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_b_f, const uint32_t len_t, double& out_da, double& out_db);
 
 	/// @brief 两路径反转交换
-	/// @param vehicle_a
-	/// @param vehicle_b
-	/// @param pos_a_f
-	/// @param pos_a_t
-	/// @param pos_b_f
-	/// @param pos_b_t
-	/// @param out_da
-	/// @param out_db
-	/// @return
-	/// @todo 未实现
-	bool strSwapR(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_a_t, const uint32_t pos_b_f, const uint32_t pos_b_t, double& out_da, double& out_db);
+	/// @param vehicle_a 待交换的路线（车辆） A
+	/// @param vehicle_b 待交换的路线（车辆） B
+	/// @param pos_a_f A的起始位置 [1, size-1)
+	/// @param pos_b_f B的起始位置 [1, size-1)
+	/// @param len_t 交换的长度
+	/// @param out_da A的路径差值
+	/// @param out_db B的路径差值
+	/// @return 是否可行, 可行时已交换好
+	/// @note 必须满足 pos_a_f + len_t < size() - 2 && pos_b_f + len_t < size() - 2
+	bool strSwapR(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_b_f, const uint32_t len_t, double& out_da, double& out_db);
 
-	/// @brief
-	/// @param vehicle
-	/// @param pos_f
-	/// @param pos_t
-	/// @param pos
-	/// @param out_da
-	/// @return
-	/// @todo 未实现
-	bool strMove(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, const uint32_t pos, double& out_da);
+	/// @brief 连续的点移动
+	/// @param vehicle 待移动的路线（车辆）
+	/// @param pos_f 点起始位置
+	/// @param pos_t 点终止位置
+	/// @param pos 到
+	/// @param out_da 路径差值
+	/// @return 是否可行, 可行时已移动好
+	/// @note 必须保证不满足 pos_f < pos < pos_t
+	bool strMove(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, const uint32_t pos, double& out_d);
 
 	/// @brief
 	/// @param vehicle_a
@@ -291,7 +290,7 @@ namespace CHK {
 	/// @param out_d
 	/// @return
 	/// @todo 未实现
-	bool PoEdSwap(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, double& out_d);
+	bool PESwap(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, double& out_d);
 
 	/// @brief 点边交换，不同路线（车辆）
 	/// @param vehicle_a
@@ -302,7 +301,7 @@ namespace CHK {
 	/// @param out_db
 	/// @return
 	/// @todo 未实现
-	bool PoEdSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
+	bool PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
 
 }  // namespace CHK
 #endif

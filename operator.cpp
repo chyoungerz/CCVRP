@@ -494,12 +494,7 @@ bool CHK::reverse(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, 
 		out_d += cumlength;
 	}
 	if (out_d > 0) return false;  // 不合适
-	const Node* node{nullptr};    // 开始移动
-	for (uint32_t i{f}, n{t}; i < n; i++, n--) {
-		node = vehicle.path[i];
-		vehicle.path[i] = vehicle.path[n];
-		vehicle.path[n] = node;
-	}
+	std::reverse(vehicle.path.begin() + f, vehicle.path.begin() + t + 1);  // 反转
 	return true;
 }
 
@@ -519,12 +514,14 @@ bool CHK::strSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f
 	}
 	if (vehicle_a.load + dif_load > vehicle_a.capacity || vehicle_b.load - dif_load > vehicle_b.capacity) return false;  // 超载
 	if (out_da + out_db > 0) return false;                                                                               // 不合适
-	const Node* node{nullptr};                                                                                           // 开始移动
+	// const Node* node{nullptr};                                                                                        // 开始移动
 	for (uint32_t i{0}; i <= len_t; i++) {
-		node = vehicle_a.path[pos_a_f + i];
-		vehicle_a.path[pos_a_f + i] = vehicle_b.path[pos_b_f + i];
-		vehicle_b.path[pos_b_f + i] = node;
+		std::swap(vehicle_a.path[pos_a_f + i], vehicle_b.path[pos_b_f + i]);
+		//	node = vehicle_a.path[pos_a_f + i];
+		//	vehicle_a.path[pos_a_f + i] = vehicle_b.path[pos_b_f + i];
+		//	vehicle_b.path[pos_b_f + i] = node;
 	}
+	vehicle_a.load += dif_load, vehicle_b.load -= dif_load;
 	return true;
 }
 
@@ -532,22 +529,249 @@ bool CHK::strCross(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_
 	return true;
 }
 
-bool CHK::strSwapR(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_a_t, const uint32_t pos_b_f, const uint32_t pos_b_t, double& out_da, double& out_db) {
+bool CHK::strSwapR(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_b_f, const uint32_t len_t, double& out_da, double& out_db) {
+	uint32_t pos_a_t{pos_a_f + len_t}, pos_b_t{pos_b_f + len_t}, size_a = vehicle_a.path.size() - 1 - pos_a_f, size_b = vehicle_b.path.size() - 1 - pos_b_f;
+	out_da = size_a * (vehicle_b.path[pos_b_t]->dists[vehicle_a.path[pos_a_f - 1]->seq].dist - vehicle_a.path[pos_a_f]->dists[vehicle_a.path[pos_a_f - 1]->seq].dist);
+	out_da += (size_a - 1 - len_t) * (vehicle_b.path[pos_b_f]->dists[vehicle_a.path[pos_a_t + 1]->seq].dist - vehicle_a.path[pos_a_t]->dists[vehicle_a.path[pos_a_t + 1]->seq].dist);
+	out_db = size_b * (vehicle_a.path[pos_a_t]->dists[vehicle_b.path[pos_b_f - 1]->seq].dist - vehicle_b.path[pos_b_f]->dists[vehicle_b.path[pos_b_f - 1]->seq].dist);
+	out_db += (size_b - 1 - len_t) * (vehicle_a.path[pos_a_f]->dists[vehicle_b.path[pos_b_t + 1]->seq].dist - vehicle_b.path[pos_b_t]->dists[vehicle_b.path[pos_b_t + 1]->seq].dist);
+	int dif_load = vehicle_b.path[pos_b_f]->demand - vehicle_a.path[pos_a_t]->demand;
+	for (uint32_t i{0}; i < len_t; i++) {
+		dif_load += vehicle_b.path[pos_b_t - i]->demand - vehicle_a.path[pos_a_f + i]->demand;
+		out_da += (size_a - i - 1) * (vehicle_b.path[pos_b_t - i]->dists[vehicle_b.path[pos_b_t - i - 1]->seq].dist - vehicle_a.path[pos_a_f + i]->dists[vehicle_a.path[pos_a_f + i + 1]->seq].dist);
+		out_db += (size_b - i - 1) * (vehicle_a.path[pos_a_t - i]->dists[vehicle_a.path[pos_a_t - i - 1]->seq].dist - vehicle_b.path[pos_b_f + i]->dists[vehicle_b.path[pos_b_f + i + 1]->seq].dist);
+	}
+	if (vehicle_a.load + dif_load > vehicle_a.capacity || vehicle_b.load - dif_load > vehicle_b.capacity) return false;  // 超载
+	if (out_da + out_db > 0) return false;                                                                               // 不合适
+	for (uint32_t i{0}; i <= len_t; i++) {                                                                               // 开始移动
+		std::swap(vehicle_a.path[pos_a_f + i], vehicle_b.path[pos_b_t - i]);
+	}
+	vehicle_a.load += dif_load, vehicle_b.load -= dif_load;
 	return true;
 }
 
-bool CHK::strMove(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, const uint32_t pos, double& out_da) {
-	return true;
+bool CHK::strMove(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, const uint32_t pos, double& out_d) {
+	double dif_h{}, dif_t{}, out_h{-vehicle.cumlength}, out_t{}, tmp{};
+	uint32_t size = vehicle.path.size() - 2;
+	if (pos_t < pos) {
+		if (pos - pos_t == 1) {  // 特殊情况，只更新后插
+			// 这里把out_h 当作out_t
+			for (uint32_t i{1}; i < pos_f; i++) {  // 0 ~ pos_f
+				dif_h += vehicle.path[i - 1]->dists[vehicle.path[i]->seq].dist;
+				out_h += dif_h;
+			}
+			dif_h += vehicle.path[pos_f - 1]->dists[vehicle.path[pos_t + 1]->seq].dist;
+			out_h += dif_h;
+			dif_h += vehicle.path[pos]->dists[vehicle.path[pos_f]->seq].dist;
+			out_h += dif_h;
+			for (uint32_t i{pos_f}; i < pos_t; i++) {  // pos_f ~ pos_t
+				dif_h += vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+				out_h += dif_h;
+			}
+			if (pos != size) {  // 到终点
+				dif_h += vehicle.path[pos_t]->dists[vehicle.path[pos + 1]->seq].dist;
+				out_h += dif_h;
+				for (uint32_t i{pos + 1}; i < size; i++) {  // pos ~ end()
+					dif_h += vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+					out_h += dif_h;
+				}
+			}
+			if (out_h > 0) return false;
+			out_d = out_h;
+			std::rotate(vehicle.path.begin() + pos_f, vehicle.path.begin() + pos_t + 1, vehicle.path.begin() + pos + 1);
+			return true;
+		} else {
+			for (uint32_t i{1}; i < pos_f; i++) {  // 0 ~ pos_f
+				dif_h += vehicle.path[i - 1]->dists[vehicle.path[i]->seq].dist;
+				out_h += dif_h;
+			}
+			dif_h += vehicle.path[pos_f - 1]->dists[vehicle.path[pos_t + 1]->seq].dist;
+			out_h += dif_h;
+			for (uint32_t i{pos_t + 2}; i < pos; i++) {  // pos_t ~ pos
+				dif_h += vehicle.path[i - 1]->dists[vehicle.path[i]->seq].dist;
+				out_h += dif_h;
+			}
+			dif_t = dif_h + vehicle.path[pos - 1]->dists[vehicle.path[pos]->seq].dist;
+			out_t = out_h + dif_t;
+			dif_t += vehicle.path[pos]->dists[vehicle.path[pos_f]->seq].dist;
+			out_t += dif_t;
+			dif_h += vehicle.path[pos - 1]->dists[vehicle.path[pos_f]->seq].dist;
+			out_h += dif_h;
+			for (uint32_t i{pos_f}; i < pos_t; i++) {  // pos_f ~ pos_t
+				tmp = vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+				dif_h += tmp, dif_t += tmp;
+				out_h += dif_h, out_t += dif_t;
+			}
+			dif_h += vehicle.path[pos_t]->dists[vehicle.path[pos]->seq].dist;
+			out_h += dif_h;
+			if (pos != size) {  // 到终点
+				dif_h += vehicle.path[pos]->dists[vehicle.path[pos + 1]->seq].dist;
+				out_h += dif_h;
+				dif_t += vehicle.path[pos_t]->dists[vehicle.path[pos + 1]->seq].dist;
+				out_t += dif_t;
+				for (uint32_t i{pos + 1}; i < size; i++) {  // pos ~ end()
+					tmp = vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+					dif_h += tmp, dif_t += tmp;
+					out_h += dif_h, out_t += dif_t;
+				}
+			}
+		}
+		if (out_h < out_t) {  // 前插
+			out_d = out_h;
+			if ((out_d = out_h) > 0) return false;
+			std::rotate(vehicle.path.begin() + pos_f, vehicle.path.begin() + pos_t + 1, vehicle.path.begin() + pos);
+		} else {  // 后插
+			out_d = out_t;
+			if ((out_d = out_t) > 0) return false;
+			std::rotate(vehicle.path.begin() + pos_f, vehicle.path.begin() + pos_t + 1, vehicle.path.begin() + pos + 1);
+		}
+		return true;
+	} else {
+		if (pos_f - pos == 1) {  // 特殊情况，只更新前插
+			for (uint32_t i{1}; i < pos; i++) {
+				dif_h += vehicle.path[i - 1]->dists[vehicle.path[i]->seq].dist;
+				out_h += dif_h;
+			}
+			dif_h += vehicle.path[pos - 1]->dists[vehicle.path[pos_f]->seq].dist;
+			out_h += dif_h;
+			for (uint32_t i{pos_f}; i < pos_t; i++) {  // pos_f ~ pos_t
+				dif_h += vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+				out_h += dif_h;
+			}
+			dif_h += vehicle.path[pos_t]->dists[vehicle.path[pos]->seq].dist;
+			out_h += dif_h;
+			if (pos_t != size) {  // 到终点
+				dif_h += vehicle.path[pos]->dists[vehicle.path[pos_t + 1]->seq].dist;
+				out_h += dif_h;
+				for (uint32_t i{pos_t + 1}; i < size; i++) {  // pos_t ~ end()
+					dif_h += vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+					out_h += dif_h;
+				}
+			}
+			if (out_h > 0) return false;
+			out_d = out_h;
+			std::rotate(vehicle.path.begin() + pos, vehicle.path.begin() + pos_f, vehicle.path.begin() + pos_t + 1);
+			return true;
+		} else {
+			for (uint32_t i{1}; i < pos; i++) {  // 0 ~ pos
+				dif_h += vehicle.path[i - 1]->dists[vehicle.path[i]->seq].dist;
+				out_h += dif_h;
+			}
+			dif_t = dif_h + vehicle.path[pos]->dists[vehicle.path[pos - 1]->seq].dist;
+			out_t = out_h + dif_t;
+			dif_t += vehicle.path[pos]->dists[vehicle.path[pos_f]->seq].dist;
+			out_t += dif_t;
+			dif_h += vehicle.path[pos - 1]->dists[vehicle.path[pos_f]->seq].dist;
+			out_h += dif_h;
+			for (uint32_t i{pos_f}; i < pos_t; i++) {  // pos_f ~ pos_t
+				tmp = vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+				dif_h += tmp, dif_t += tmp;
+				out_h += dif_h, out_t += dif_t;
+			}
+			dif_h += vehicle.path[pos_t]->dists[vehicle.path[pos]->seq].dist;
+			out_h += dif_h;
+			dif_h += vehicle.path[pos]->dists[vehicle.path[pos + 1]->seq].dist;
+			out_h += dif_h;
+			dif_t += vehicle.path[pos_t]->dists[vehicle.path[pos + 1]->seq].dist;
+			out_t += dif_t;
+			for (uint32_t i{pos + 2}; i < pos_f; i++) {  // pos ~ pos_f
+				tmp = vehicle.path[i - 1]->dists[vehicle.path[i]->seq].dist;
+				dif_h += tmp, dif_t += tmp;
+				out_h += dif_h, out_t += dif_t;
+			}
+			if (pos_t != size) {  // 到终点
+				tmp = vehicle.path[pos_f - 1]->dists[vehicle.path[pos_t + 1]->seq].dist;
+				dif_h += tmp, dif_t += tmp;
+				out_h += dif_h, out_t += dif_t;
+				for (uint32_t i{pos_t + 1}; i < size; i++) {  // pos_f ~ end()
+					tmp = vehicle.path[i]->dists[vehicle.path[i + 1]->seq].dist;
+					dif_h += tmp, dif_t += tmp;
+					out_h += dif_h, out_t += dif_t;
+				}
+			}
+			if (out_h < out_t) {  // 前插
+				out_d = out_h;
+				if (out_d > 0) return false;
+				std::rotate(vehicle.path.begin() + pos, vehicle.path.begin() + pos_f, vehicle.path.begin() + pos_t + 1);
+			} else {  // 后插
+				out_d = out_t;
+				if (out_d > 0) return false;
+				std::rotate(vehicle.path.begin() + pos + 1, vehicle.path.begin() + pos_f, vehicle.path.begin() + pos_t + 1);
+			}
+			return true;
+		}
+	}
 }
 
 bool CHK::strMove(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_a_t, const uint32_t pos_b, double& out_da, double& out_db) {
+	uint32_t dif_load{};
+	for (uint32_t i{pos_a_f}; i <= pos_a_t; i++) {
+		dif_load += vehicle_a.path[i]->demand;
+	}
+	if (vehicle_b.load + dif_load > vehicle_b.capacity) return false;  // 超载
+	out_da = -vehicle_a.cumlength, out_db = -vehicle_b.cumlength;
+	double difa{}, difb_h{}, difb_t{}, out_db_h{}, out_db_t{}, tmp{};
+	uint32_t size_a = vehicle_a.path.size() - 2, size_b = vehicle_b.path.size() - 2;
+	// 计算vehicle_a
+	for (uint32_t i{1}; i < pos_a_f; i++) {  // 0 ~ pos_a_f
+		difa += vehicle_a.path[i - 1]->dists[vehicle_a.path[i]->seq].dist;
+		out_da += difa;
+	}
+	if (pos_a_t != size_a) {  // pos_a_t 在末尾
+		difa += vehicle_a.path[pos_a_f - 1]->dists[vehicle_a.path[pos_a_t + 1]->seq].dist;
+		out_da += difa;
+		for (uint32_t i{pos_a_t + 1}; i < size_a; i++) {  // pos_a_t ~ end()
+			difa += vehicle_a.path[i]->dists[vehicle_a.path[i + 1]->seq].dist;
+			out_da += difa;
+		}
+	}
+	// 计算vehicle_b
+	for (uint32_t i{1}; i < pos_b; i++) {  // 0 ~ pos_b
+		difb_h += vehicle_b.path[i - 1]->dists[vehicle_b.path[i]->seq].dist;
+		out_db_h += difb_h;
+	}
+	difb_t = vehicle_b.path[pos_b - 1]->dists[vehicle_b.path[pos_b]->seq].dist + difb_h;
+	out_db_t = difb_t + out_db_h;
+	difb_h += vehicle_b.path[pos_b - 1]->dists[vehicle_a.path[pos_a_f]->seq].dist;
+	out_db_h += difb_h;
+	difb_t += vehicle_b.path[pos_b]->dists[vehicle_a.path[pos_a_f]->seq].dist;
+	out_db_t += difb_t;
+	for (uint32_t i{pos_a_f}; i < pos_a_t; i++) {  // pos_a_f ~ pos_a_t
+		tmp = vehicle_a.path[i]->dists[vehicle_a.path[i + 1]->seq].dist;
+		difb_h += tmp, difb_t += tmp;
+		out_db_h += difb_h, out_db_t += difb_t;
+	}
+	difb_h += vehicle_b.path[pos_b]->dists[vehicle_a.path[pos_a_t]->seq].dist;
+	out_db_h += difb_h;
+	if (pos_b != size_b) {  // pos_b 在末尾
+		difb_h += vehicle_b.path[pos_b]->dists[vehicle_b.path[pos_b + 1]->seq].dist;
+		out_db_h += difb_h;
+		difb_t += vehicle_b.path[pos_b + 1]->dists[vehicle_a.path[pos_a_t]->seq].dist;
+		out_db_t += difb_t;
+		for (uint32_t i{pos_b + 1}; i < size_b; i++) {  // pos_b ~ end()
+			tmp = vehicle_b.path[i]->dists[vehicle_b.path[i + 1]->seq].dist;
+			difb_h += tmp, difb_t += tmp;
+			out_db_h += difb_h, out_db_t += difb_t;
+		}
+	}
+	if (out_db_h < out_db_t) {  // 前插
+		out_db += out_db_h;
+		if (out_da + out_db > 0) return false;
+		vehicle_b.path.insert(vehicle_b.path.begin() + pos_b, vehicle_a.path.begin() + pos_a_f, vehicle_a.path.begin() + pos_a_t + 1);
+	} else {  // 后插
+		out_db += out_db_t;
+		if (out_da + out_db > 0) return false;
+		vehicle_b.path.insert(vehicle_b.path.begin() + pos_b + 1, vehicle_a.path.begin() + pos_a_f, vehicle_a.path.begin() + pos_a_t + 1);
+	}
+	vehicle_a.load -= dif_load, vehicle_b.load += dif_load;
+	vehicle_a.path.erase(vehicle_a.path.begin() + pos_a_f, vehicle_a.path.begin() + pos_a_t + 1);
 	return true;
 }
 
-bool CHK::PoEdSwap(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, double& out_d) {
+bool CHK::PESwap(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, double& out_d) {
 	return true;
 }
 
-bool CHK::PoEdSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db) {
+bool CHK::PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db) {
 	return true;
 }
