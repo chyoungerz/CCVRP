@@ -268,38 +268,41 @@ namespace CHK {
 	/// @param pos 到
 	/// @param out_da 路径差值
 	/// @return 是否可行, 可行时已移动好
-	/// @note 必须保证不满足 pos_f < pos < pos_t
+	/// @note 必须保证不满足 pos_f < pos < pos_t \n
+	/// @note 自动判断目标位置的前边和后边
 	bool strMove(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, const uint32_t pos, double& out_d);
 
-	/// @brief
-	/// @param vehicle_a
-	/// @param vehicle_b
-	/// @param pos_a_f
-	/// @param pos_a_t
-	/// @param pos_b
-	/// @param out_da
-	/// @param out_db
-	/// @return
-	/// @todo 未实现
+	/// @brief 不同路径（车辆）连续的点移动
+	/// @param vehicle_a 从路线（车辆）A
+	/// @param vehicle_b 到路线（车辆）B
+	/// @param pos_a_f A起始位置
+	/// @param pos_a_t A终止位置
+	/// @param pos_b 到B的位置
+	/// @param out_da 路径差值A
+	/// @param out_db 路径差值A
+	/// @return 是否可行, 可行时已移动好
+	/// @note 自动判断目标位置的前边和后边
 	bool strMove(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_a_t, const uint32_t pos_b, double& out_da, double& out_db);
 
 	/// @brief 点边交换，同路线（车辆）
-	/// @param vehicle
-	/// @param pos_f
-	/// @param pos_t
-	/// @param out_d
-	/// @return
-	/// @todo 未实现
+	/// @param vehicle 待交换的路线（车辆）
+	/// @param pos_f 从 [1, size-1)
+	/// @param pos_t 到 (1, size - 2)
+	/// @param out_d 路径差值
+	/// @return 是否可行, 可行时已移动好
+	/// @note 自动判断目标位置的前边和后边
+	/// @warning 必须满足 1 < pos_t < size - 2 && pos_t - pos_f != 1
 	bool PESwap(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, double& out_d);
 
 	/// @brief 点边交换，不同路线（车辆）
-	/// @param vehicle_a
-	/// @param vehicle_b
-	/// @param pos_a
-	/// @param pos_b
-	/// @param out_da
-	/// @param out_db
-	/// @return
+	/// @param vehicle_a 从路线（车辆）A
+	/// @param vehicle_b 到路线（车辆）B
+	/// @param pos_a 从
+	/// @param pos_b 到
+	/// @param out_da 路径差值A
+	/// @param out_db 路径差值A
+	/// @return 是否可行, 可行时已移动好
+	/// @note 自动判断目标位置的前边和后边
 	/// @todo 未实现
 	bool PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
 

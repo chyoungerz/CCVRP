@@ -24,7 +24,7 @@ void SA::run() {
 	double difa{}, difb{};
 	std::cout << sol.solution[35] << std::endl;
 	// std::cout << sol.solution[34] << std::endl;
-	CHK::strMove(sol.solution[35], 2, 18, 1, difa);
+	CHK::PESwap(sol.solution[35], 14, 16, difa);
 	// std::rotate(sol.solution[35].path.begin() + 4, sol.solution[35].path.begin() + 6, sol.solution[35].path.begin() + 8);
 	sol.solution[35].cumlength += difa;
 	sol.solution[34].cumlength += difb;
