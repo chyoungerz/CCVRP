@@ -22,16 +22,16 @@ void SA::init(std::vector<const Node*>& node, const uint32_t depot_num, uint32_t
 
 void SA::run() {
 	double difa{}, difb{};
+	std::cout << sol.solution[34] << std::endl;
 	std::cout << sol.solution[35] << std::endl;
-	// std::cout << sol.solution[34] << std::endl;
-	CHK::PESwap(sol.solution[35], 14, 16, difa);
+	CHK::PESwap(sol.solution[34], sol.solution[35], 1, 2, difa, difb);
 	// std::rotate(sol.solution[35].path.begin() + 4, sol.solution[35].path.begin() + 6, sol.solution[35].path.begin() + 8);
-	sol.solution[35].cumlength += difa;
-	sol.solution[34].cumlength += difb;
+	sol.solution[34].cumlength += difa;
+	sol.solution[35].cumlength += difb;
+	std::cout << sol.solution[34] << std::endl;
 	std::cout << sol.solution[35] << std::endl;
-	// std::cout << sol.solution[34] << std::endl;
+	std::cout << sol.solution[34].path_length() << std::endl;
 	std::cout << sol.solution[35].path_length() << std::endl;
-	// std::cout << sol.solution[34].path_length() << std::endl;
 	//    sum = 0;
 	//    for (auto& i : sol.solution) {
 	//	sum += i.path.size();
