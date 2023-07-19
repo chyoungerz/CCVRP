@@ -108,7 +108,7 @@ namespace COST {
 	/// @brief 计算前插操作的差值
 	/// @param vehicle 待插入的路线（车辆）
 	/// @param node 插入的节点
-	/// @param pos 位置（之后）[1, size-1)
+	/// @param pos 位置（之前）[1, size-1)
 	/// @return 差值
 	double insertf(std::vector<const Node*>& route, const Node* node, const uint32_t pos);
 
@@ -306,4 +306,20 @@ namespace CHK {
 	bool PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
 
 }  // namespace CHK
+
+/// @brief 扰动算子
+namespace PER {
+	/// @brief 抛射链扰动
+	/// @param sol 解
+	/// @param k k条路径
+	/// @param epoch 扰动最大失败次数
+	void EjecChain(Solution& sol, uint32_t k, uint32_t epoch);
+
+	/// @brief 破坏重建扰动
+	/// @param sol 解
+	/// @param k 破坏的邻域个数
+	/// @param maxnode 最大节点数
+	void RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode);
+}  // namespace PER
+
 #endif

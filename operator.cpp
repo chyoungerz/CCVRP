@@ -1,7 +1,7 @@
 #include "operator.hpp"
 
 #include <algorithm>
-
+#include <random>
 // constexpr int MAXLOAD = 200;  // 定义最大载货
 
 void OP::insertb(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength) {
@@ -183,7 +183,7 @@ double COST::insertb(std::vector<const Node*>& route, const Node* node, const ui
 }
 
 double COST::insertf(std::vector<const Node*>& route, const Node* node, const uint32_t pos) {
-	// 计算插入位置之后的时间（距离）
+	// 计算插入位置之前的时间（距离）
 	double diflength = (route.size() - pos - 1) * (route[pos - 1]->dists[node->seq].dist + route[pos]->dists[node->seq].dist - route[pos - 1]->dists[route[pos]->seq].dist);
 	// 计算插入的节点
 	for (uint32_t i = 0; i < pos - 1; i++) {
@@ -1009,4 +1009,82 @@ bool CHK::PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, c
 		vehicle_b.load -= dif_load + vehicle_b.path[pos_b + 1]->demand;
 	}
 	return true;
+}
+
+void PER::EjecChain(Solution& sol, uint32_t k, uint32_t epoch) {
+	uint32_t size_s = sol.solution.size();
+	if (k >= size_s) k = size_s;
+	std::vector<uint32_t> sol_range(k, 0);
+	std::iota(sol_range.begin() + 1, sol_range.end(), 1);
+	std::random_shuffle(sol_range.begin(), sol_range.end());
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	sol_range.emplace_back(sol_range.front());
+	for (uint32_t i{0}; i < k; i++) {
+		int range_a{static_cast<int>(sol.solution[sol_range[i]].path.size() - 1)};
+		int range_b{static_cast<int>(sol.solution[sol_range[i + 1]].path.size() - 1)};
+		std::uniform_int_distribution<> dis_a(1, range_a);
+		std::uniform_int_distribution<> dis_b(1, range_b);
+		uint32_t n{epoch};
+		while (n) {
+			uint32_t index_a{static_cast<uint32_t>(dis_a(gen))};
+			uint32_t index_b{static_cast<uint32_t>(dis_b(gen))};
+			int difload = sol.solution[sol_range[i]].path[index_a]->demand - sol.solution[sol_range[i + 1]].path[index_b]->demand;
+			if (sol.solution[sol_range[i]].load - difload <= sol.solution[sol_range[i]].capacity && sol.solution[sol_range[i + 1]].load + difload <= sol.solution[sol_range[i + 1]].capacity) {
+				sol.solution[sol_range[i]].load -= difload;
+				sol.solution[sol_range[i + 1]].load += difload;
+				std::swap(sol.solution[sol_range[i + 1]].path[index_b], sol.solution[sol_range[i]].path[index_a]);
+				sol.solution[sol_range[i + 1]].cumlength = sol.solution[sol_range[i + 1]].path_length();
+				sol.solution[sol_range[i]].cumlength = sol.solution[sol_range[i]].path_length();
+				break;
+			}
+			n--;
+		}
+	}
+}
+
+void PER::RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode) {
+	// ruin
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> disceate(0, maxnode - 1);
+	uint32_t index{static_cast<uint32_t>(disceate(gen))};
+	uint32_t locate{CHK::find(sol.solution[sol.shash[index]].path, index)};
+	std::vector<const Node*> near;
+	near.reserve(maxnode);
+	for (uint32_t i{0}; i < k; i++) {
+		near.emplace_back(sol.solution[sol.shash[index]].path[locate]->distsort[i].toNode);
+	}
+	// sol.solution[index].path.erase(sol.solution[index].path.begin() + locate);
+	for (auto& n : near) {
+		index = sol.shash[n->seq];
+		locate = CHK::find(sol.solution[index].path, n);
+		sol.solution[index].load -= sol.solution[index].path[locate]->demand;       // load
+		sol.solution[index].path.erase(sol.solution[index].path.begin() + locate);  // path
+		sol.shash.erase(n->seq);                                                    // hash
+	}
+	// update hash
+	//  recreate
+	for (auto& n : near) {
+		for (uint32_t i{1}; i < n->distsort.size(); i++) {
+			if (sol.shash.contains(n->distsort[i].to)) {                                            // 邻域是否被破坏
+				index = sol.shash[n->distsort[i].to];
+				if (sol.solution[index].load + n->demand > sol.solution[index].capacity) continue;  // 超载
+				locate = CHK::find(sol.solution[index].path, n->distsort[i].toNode);
+				double front{COST::insertf(sol.solution[index].path, n, locate)};
+				double back{COST::insertb(sol.solution[index].path, n, locate)};
+				if (back < front)
+					sol.solution[index].path.emplace(sol.solution[index].path.begin() + locate + 1, n);
+				else
+					sol.solution[index].path.emplace(sol.solution[index].path.begin() + locate, n);
+				sol.solution[index].load += n->demand;             // load
+				sol.shash.emplace(std::make_pair(n->seq, index));  // hash
+				break;
+			}
+		}
+	}
+	// update
+	for (auto& i : sol.solution) {
+		i.update_length();
+	}
 }
