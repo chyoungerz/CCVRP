@@ -32,4 +32,12 @@ namespace LNS {
 	void run(Solution& solution, const std::vector<const Node*>& nodes, uint32_t epoch);
 
 }  // namespace LNS
+
+namespace LS {
+	void one(Solution& solution, bool& flag);
+	void two(Solution& solution, bool& flag);
+	void three(Solution& solution, bool& flag);
+	void arc(Solution& solution, bool& flag);
+	void twoOpt(Solution& solution, bool& flag);
+}  // namespace LS
 #endif

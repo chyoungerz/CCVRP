@@ -96,3 +96,47 @@ void ALNS::destory_rnd(Solution& solution, const float p, std::vector<std::pair<
 
 void LNS::run(Solution& solution, const std::vector<const Node*>& nodes, uint32_t epoch) {
 }
+
+void LS::two(Solution& solution, bool& flag) {
+	for (uint32_t i{0}, n = solution.solution.size(); i < n; i++) {
+		for (uint32_t j{i + 1}; j < n; j++) {
+			if (solution.solution[i].path.size() > 2 && solution.solution[j].path.size() > 2)
+				OP::twoSwap(solution.solution[i], solution.solution[j], flag);
+		}
+	}
+}
+
+void LS::one(Solution& solution, bool& flag) {
+	for (uint32_t i{0}, n = solution.solution.size(); i < n; i++) {
+		for (uint32_t j{0}; j < n; j++) {
+			if (i != j && solution.solution[i].path.size() > 2 && solution.solution[j].path.size() > 1) {
+				OP::oneMove(solution.solution[i], solution.solution[j], flag);
+			}
+		}
+	}
+}
+
+void LS::three(Solution& solution, bool& flag) {
+	for (uint32_t i{0}, n = solution.solution.size(); i < n; i++) {
+		for (uint32_t j{0}; j < n; j++) {
+			if (i != j && solution.solution[i].path.size() > 2 && solution.solution[j].path.size() > 3) {
+				OP::threeSwap(solution.solution[i], solution.solution[j], flag);
+			}
+		}
+	}
+}
+
+void LS::twoOpt(Solution& solution, bool& flag) {
+	double dif{};  // 距离差值
+	for (uint32_t s{0}, size = solution.solution.size(); s < size; s++) {
+		if (solution.solution[s].path.size() <= 4) continue;
+		for (uint32_t i{1}, n = solution.solution[s].path.size() - 3; i < n; i++) {
+			for (uint32_t j{i + 2}, m = n + 2; j < m; j++) {
+				if (CHK::reverse(solution.solution[s], i, j, dif)) {
+					solution.solution[s].cumlength += dif;  // 更新距离
+					flag = true;
+				}
+			}
+		}
+	}
+}

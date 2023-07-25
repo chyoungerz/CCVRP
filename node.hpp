@@ -24,14 +24,17 @@ struct Edge {
 class Node {
   protected:
 	double x, y;                  //(x, y)
+	const Node* head{nullptr};
+	const Node* tail{nullptr};
+
   public:
-	std::vector<Edge> dists;      // 该节点到其他节点的距离(数组编号为节点序号)
-	std::vector<Edge> distsort;   // 该节点到其他节点的距离按从小到大排序
-	uint32_t seq;                 // 序号，从0开始
-	uint32_t duration;        // 服务时间
-	uint32_t demand;          // 需求
-	uint32_t start;           // 开始时间窗
-	uint32_t end;             // 结束时间窗
+	std::vector<Edge> dists;     // 该节点到其他节点的距离(数组编号为节点序号)
+	std::vector<Edge> distsort;  // 该节点到其他节点的距离按从小到大排序
+	uint32_t seq;                // 序号，从0开始
+	uint32_t duration;           // 服务时间
+	uint32_t demand;             // 需求
+	uint32_t start;              // 开始时间窗
+	uint32_t end;                // 结束时间窗
 
 	/**********构造函数************/
 	//_seq序号， （x.axis, y.axis), start开始时间窗， end结束时间窗, duration 服务时间，demand需求
@@ -88,6 +91,11 @@ class Node {
 	friend double dist(const Node* node_x, const Node* node_y) {
 		return sqrt((node_x->x - node_y->x) * (node_x->x - node_y->x) + (node_x->y - node_y->y) * (node_x->y - node_y->y));
 	}
+	// 强制连接节点（友元）
+	friend void link(const Node* a, const Node* b) {
+		const_cast<Node*>(a)->tail = b;
+		const_cast<Node*>(b)->head = a;
+	}
 };
 
 // 车辆或路线
@@ -113,7 +121,9 @@ class Vehicle {
 		// double diflength{0.0};
 		if ((load + dest->demand) > capacity) return false;
 		load += dest->demand;
+		link(path.back(), dest);
 		path.emplace_back(dest);
+
 		/*for (uint32_t i = 0; i + 1 < path.size(); i++) {
 			diflength += path[i]->distances[path[i + 1]->seq].distance;
 		}
@@ -152,9 +162,10 @@ class Vehicle {
 	// 方便输出
 	friend std::ostream& operator<<(std::ostream& out, const Vehicle& car) {
 		out << "length : " << car.cumlength << "  ";
-		for (unsigned int j = 0; j < car.path.size(); j++) {
+		for (unsigned int j{0}, n = car.path.size() - 1; j < n; j++) {
 			out << car.path[j]->seq << "-";
 		}
+		out << car.path.back()->seq;
 		return out;
 	}
 
@@ -203,11 +214,12 @@ class Solution {
 	}
 
 	void show() {
-		uint32_t num{};
-		uint32_t routes = solution.size();
-		for (uint32_t i = 0; i < routes; i++) {
-			std::cout << solution[i] << ":" << solution[i].path.size() - 2 << std::endl;
+		uint32_t num{}, routes{};
+		for (uint32_t i = 0, n = solution.size(); i < n; i++) {
+			if (solution[i].path.size() - 2 == 0) continue;
 			num += solution[i].path.size() - 2;
+			std::cout << solution[i] << " : " << solution[i].path.size() - 2 << std::endl;
+			routes++;
 		}
 		std::cout << "total length: " << allength << "\ttotal customers: " << num << "\ttotal routes: " << routes << std::endl;
 	}
@@ -217,6 +229,23 @@ class Solution {
 		for (auto& i : solution) {
 			// i.cumlength = i.path_length();
 			allength += i.cumlength;
+		}
+	}
+
+	void update_hash() {
+		shash.clear();
+		for (auto& s : solution) {
+			if (s.path.size() - 2 == 0) continue;
+			for (uint32_t i{1}, n = s.path.size() - 1; i < n; i++) {
+				shash.emplace(s.path[i]->seq, s.seq);
+			}
+		}
+	}
+
+	void check() {
+		// allength = 0.0;
+		for (auto& i : solution) {
+			allength -= i.path_length();
 		}
 	}
 };

@@ -13,7 +13,7 @@
 #include "node.hpp"
 
 // 读取文件节点返回向量nodes中
-inline std::vector<Node*> read(const std::string& file, uint32_t& maxload, uint32_t& despot) {
+inline std::vector<Node*> read(const std::string& file, uint32_t& maxload, uint32_t& despot, uint32_t& routes) {
 	std::ifstream config(file);
 	if (config.fail()) {
 		std::vector<Node*> empty;
@@ -22,8 +22,8 @@ inline std::vector<Node*> read(const std::string& file, uint32_t& maxload, uint3
 	// std::vector<Node> nodes;
 	std::vector<Node*> nodes_ptr;
 	// nodes.reserve(100);
-	int temp_x, temp_y, a, b, c, num;
-	config >> a >> b >> num >> despot >> c >> maxload;
+	int temp_x, temp_y, a, b, num;
+	config >> a >> b >> num >> despot >> routes >> maxload;
 	unsigned int temp_duration, temp_demand, temp_start{}, temp_end{}, seq{0};
 	// customer
 	while (config >> a >> temp_x >> temp_y >> temp_duration >> temp_demand) {
@@ -61,11 +61,12 @@ inline void write(const std::string& filename, const Solution& sol) {
 	const time_t now = std::time(nullptr);
 	strftime(chs, 96, "%Y%m%d%H%M", localtime(&now));
 	out << "日期：" << chs << std::endl;
-	uint32_t num{};
-	uint32_t routes = sol.solution.size();
-	for (uint32_t i = 0; i < routes; i++) {
+	uint32_t num{}, routes{};
+	for (uint32_t i = 0, n = sol.solution.size(); i < n; i++) {
+		if (sol.solution[i].path.size() - 2 == 0) continue;
 		out << sol.solution[i] << " : " << sol.solution[i].path.size() - 2 << std::endl;
 		num += sol.solution[i].path.size() - 2;
+		routes++;
 	}
 	out << "总路线长度: " << sol.allength << "\t 总客户数: " << num << "\t 总路线: " << routes << std::endl;
 	out.close();

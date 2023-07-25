@@ -68,17 +68,27 @@ namespace OP {
 	/// @param depot_num 厂站
 	void oneNMove(Solution& sol, std::vector<const Node*>& nodes, const uint32_t depot_num);
 
+	/// @brief 一点移动算子
+	/// @param vehicle_a
+	/// @param vehicle_b
+	/// @param flag
+	void oneMove(Vehicle& vehicle_a, Vehicle& vehicle_b, bool& flag);
+
+	/// @brief 两点交换算子
+	/// @param vehicle_a
+	/// @param vehicle_b
+	/// @param flag
+	void twoSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, bool& flag);
+
 	/// @brief 2-opt
 	/// @param sol
 	void twoOpt(Solution& sol);
 
-	/// @brief 交换不同路线（车辆）两节点, 开头和末尾为厂站
-	/// @param vehicle_a 待交换的路线（车辆）A
-	/// @param vehicle_b 待交换的路线（车辆）B
-	/// @param pos_a 路线（车辆）A 的位置 [1, size-1)
-	/// @param pos_b 路线（车辆）B 的位置 [1, size-1)
-	/// @param diflength pair<路线A差值, 路线B差值>
-	void twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, const std::pair<double, double> diflength);
+	/// @brief
+	/// @param vehicle_a
+	/// @param vehicle_b
+	/// @param flag
+	void threeSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, bool& flag);
 
 	//-------------------- string opt --------------------//
 

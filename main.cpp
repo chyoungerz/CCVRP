@@ -13,7 +13,7 @@ int main(int argc, char const *argv[]) {
 	vector<Node *> node;
 	vector<const Node *> nodes;
 	if (argc != 3) {
-		file = "p21";
+		file = "p01";
 		result = "data.txt";
 		cerr << "no enought args" << endl;
 		cerr << "use default: " << file << " " << result << endl;
@@ -21,8 +21,8 @@ int main(int argc, char const *argv[]) {
 		file = argv[1];
 		result = argv[2];
 	}
-	uint32_t maxload, depot_num;
-	node = read(file, maxload, depot_num);
+	uint32_t maxload, depot_num, routes;
+	node = read(file, maxload, depot_num, routes);
 	if (node.empty()) {
 		cerr << "file: " << file << " open failed" << endl;
 		return 1;
@@ -34,11 +34,11 @@ int main(int argc, char const *argv[]) {
 	node.clear();
 	//  depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
 	SA vrp;
-	vrp.init(nodes, depot_num, maxload);
+	vrp.init(nodes, depot_num, maxload, routes);
 	vrp.run();
 	nodes.clear();
 	// create(result, now);
-	// write(result, vrp.bestSol);
+	// write(result, vrp.sol);
 	release(node);
 	return 0;
 }
