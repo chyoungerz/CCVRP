@@ -14,7 +14,7 @@ void SA::init(std::vector<const Node*>& node, const uint32_t depot_num, uint32_t
 	// std::vector<Node*> depots, custers;
 	// custers.assign(nodes.begin(), nodes.end() - depot_num);
 	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
-	sol = greedynear(node, depot_num, maxload);
+	sol = nassign(node, depot_num, maxload, routes);
 	depotnum = depot_num;
 	nodes = node;
 	vehicles = routes;
@@ -25,7 +25,7 @@ void SA::run() {
 	// uint32_t customer = nodes.size() - depotnum;
 	//  sol.show();
 	bool flag{true};
-	uint32_t epoch{1000};
+	uint32_t epoch{10000};
 	while (flag && epoch) {
 		flag = false;
 		LS::one(sol, flag);
@@ -35,7 +35,6 @@ void SA::run() {
 		epoch--;
 	}
 	sol.update();
-	sol.show();
 	//       sum = 0;
 	//       for (auto& i : sol.solution) {
 	//	sum += i.path.size();

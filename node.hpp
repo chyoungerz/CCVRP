@@ -21,11 +21,12 @@ struct Edge {
 	const Node* toNode{nullptr};  // 指向的节点
 };
 
+/// @brief 节点
 class Node {
   protected:
 	double x, y;                  //(x, y)
-	const Node* head{nullptr};
-	const Node* tail{nullptr};
+	const Node* head{nullptr};    // 节点的前一节点
+	const Node* tail{nullptr};    // 节点的后一节点
 
   public:
 	std::vector<Edge> dists;     // 该节点到其他节点的距离(数组编号为节点序号)
@@ -91,10 +92,20 @@ class Node {
 	friend double dist(const Node* node_x, const Node* node_y) {
 		return sqrt((node_x->x - node_y->x) * (node_x->x - node_y->x) + (node_x->y - node_y->y) * (node_x->y - node_y->y));
 	}
-	// 强制连接节点（友元）
-	friend void link(const Node* a, const Node* b) {
-		const_cast<Node*>(a)->tail = b;
-		const_cast<Node*>(b)->head = a;
+	// 强制连接节点（友元） start -> end
+	friend void link(const Node* start, const Node* end) {
+		const_cast<Node*>(start)->tail = end;
+	}
+	// 强制连接节点（友元） start <-> end
+	friend void connect(const Node* start, const Node* end) {
+		const_cast<Node*>(start)->tail = end;
+		const_cast<Node*>(end)->head = start;
+	}
+	// 交换节点（友元）
+	friend void swap(const Node*& a, const Node*& b) {
+		const_cast<Node*>(a)->tail = b->tail;
+		const_cast<Node*>(b)->head = a->head;
+		std::swap(a, b);
 	}
 };
 
@@ -104,6 +115,7 @@ class Vehicle {
 	std::vector<const Node*> path;  // 走过的路
 	// double diflength;                  // 走过的路(时间）差分数组
 	double cumlength;                  // 所有节点的长度（时间）之和
+	double length;                     // 路径长度（时间）
 	uint32_t capacity;                 // 最大容量
 	uint32_t load;                     // 载重量
 	uint32_t seq;                      // 路线序号
@@ -121,7 +133,6 @@ class Vehicle {
 		// double diflength{0.0};
 		if ((load + dest->demand) > capacity) return false;
 		load += dest->demand;
-		link(path.back(), dest);
 		path.emplace_back(dest);
 
 		/*for (uint32_t i = 0; i + 1 < path.size(); i++) {
@@ -133,20 +144,52 @@ class Vehicle {
 		return true;
 	}
 
+	// 路径节点插入（position > 0)
+	void emplace(const uint32_t pos, const Node* node) {
+		connect(path[pos], node);      // pos <-> node
+		connect(path[pos - 1], node);  // pos - 1 <-> node
+		path.emplace(path.begin() + pos, node);
+	}
+
+	// 路径节点删除（position > 0)
+	const Node* erase(const uint32_t pos) {
+		const Node* node{path[pos]};
+		link(path[pos - 1], path[pos + 1]);  // pos - 1 <-> pos + 1
+		path.erase(path.begin() + pos);
+		return node;
+	}
+
 	// 计算路径长度
 	double path_length(/*const Eigen::MatrixXf& dists*/) {
-		double length{0.0};
+		double _length{0.0};
 		for (uint64_t j{0}, n{path.size() - 2}; j < n; j++) {
-			length += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
+			_length += path[j]->dists[path[j + 1]->seq].dist;
 		}
-		return length;
+		return _length;
+	}
+
+	// 计算路径累积长度
+	double path_cumlength(/*const Eigen::MatrixXf& dists*/) {
+		double _length{0.0};
+		for (uint64_t j{0}, n{path.size() - 2}; j < n; j++) {
+			_length += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
+		}
+		return _length;
 	}
 
 	// 更新路径长度
-	void update_length(/*const Eigen::MatrixXf& dists*/) {
-		cumlength = 0.0;
+	void update_lengths(/*const Eigen::MatrixXf& dists*/) {
+		cumlength = 0.0, length = 0.0;
 		for (uint64_t j{0}, n{path.size() - 2}; j < n; j++) {
-			cumlength += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
+			length += path[j]->dists[path[j + 1]->seq].dist;
+			cumlength += length;
+		}
+	}
+
+	// 连接路径
+	void connect_path() {
+		for (uint64_t j{1}, n{path.size() - 2}; j < n; j++) {
+			connect(path[j], path[j + 1]);
 		}
 	}
 
@@ -213,6 +256,11 @@ class Solution {
 		allength += vehicle.cumlength;
 	}
 
+	// 添加多条路线（车辆）
+	void add(const Vehicle& vehicle, const uint32_t num) {
+		solution.insert(solution.end(), num, vehicle);
+	}
+
 	void show() {
 		uint32_t num{}, routes{};
 		for (uint32_t i = 0, n = solution.size(); i < n; i++) {
@@ -249,6 +297,7 @@ class Solution {
 		}
 	}
 };
+
 /*
 class Ant {
   protected:

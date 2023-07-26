@@ -1083,8 +1083,8 @@ void PER::EjecChain(Solution& sol, uint32_t k, uint32_t epoch) {
 				sol.solution[sol_range[i]].load -= difload;
 				sol.solution[sol_range[i + 1]].load += difload;
 				std::swap(sol.solution[sol_range[i + 1]].path[index_b], sol.solution[sol_range[i]].path[index_a]);
-				sol.solution[sol_range[i + 1]].cumlength = sol.solution[sol_range[i + 1]].path_length();
-				sol.solution[sol_range[i]].cumlength = sol.solution[sol_range[i]].path_length();
+				sol.solution[sol_range[i + 1]].update_lengths();
+				sol.solution[sol_range[i]].update_lengths();
 				break;
 			}
 			n--;
@@ -1149,6 +1149,6 @@ void PER::RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode) {
 	}
 	// update
 	for (auto& i : sol.solution) {
-		i.update_length();
+		i.update_lengths();
 	}
 }

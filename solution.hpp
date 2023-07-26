@@ -13,7 +13,7 @@ Solution cw(const std::vector<Node>& nodes, const std::vector<Node>& station);
 Solution greedynear(std::vector<const Node*>& nodes, const uint32_t depot_num, const uint32_t maxload);
 
 // 基于贪婪策略的客户分配构造初始解
-Solution nassign(const std::vector<Node*>& nodes, const std::vector<Node*>& station, const int maxload);
+Solution nassign(std::vector<const Node*>& nodes, const uint32_t depot_num, const uint32_t maxload, uint32_t routes);
 
 // 扫描法构造初始解
 Solution SweepA(const std::vector<Node>& nodes, const std::vector<Node>& station);

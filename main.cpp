@@ -38,7 +38,7 @@ int main(int argc, char const *argv[]) {
 	vrp.run();
 	nodes.clear();
 	// create(result, now);
-	// write(result, vrp.sol);
+	write(result, vrp.sol);
 	release(node);
 	return 0;
 }
