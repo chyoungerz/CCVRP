@@ -2,8 +2,6 @@
 
 #ifndef _OPTIMIZATION_H_
 #define _OPTIMIZATION_H_
-#include <map>
-#include <string>
 #include <vector>
 
 #include "node.hpp"

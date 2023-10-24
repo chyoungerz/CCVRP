@@ -1,7 +1,7 @@
 #include "solution.hpp"
 
 #include <algorithm>
-#include <set>
+// #include <set>
 
 #include "algorithm.hpp"
 
@@ -214,7 +214,7 @@ Solution nassign(std::vector<const Node*>& nodes, const uint32_t depot_num, cons
 		}
 	}
 	if (solution.solution.size() > routes) {  // 减少车辆
-		if (depot_num != 1) {
+		if (depot_num != 1 && !seq.empty()) {
 			std::sort(seq.begin(), seq.end(), [&solution](uint32_t& a, uint32_t& b) -> bool { return solution.solution[a].path.size() > solution.solution[b].path.size(); });
 			bool flag{true};
 			uint32_t size = solution.solution.size();

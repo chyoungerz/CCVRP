@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <ctime>
 #include <fstream>
-#include <iomanip>
 // #include <ostream>
 #include <string>
 
@@ -64,7 +63,7 @@ inline void write(const std::string& filename, const Solution& sol) {
 	uint32_t num{}, routes{};
 	for (uint32_t i = 0, n = sol.solution.size(); i < n; i++) {
 		if (sol.solution[i].path.size() - 2 == 0) continue;
-		out << sol.solution[i] << " : " << sol.solution[i].path.size() - 2 << std::endl;
+		out << sol.solution[i] << " : " << sol.solution[i].path.size() - 2 << "\n";
 		num += sol.solution[i].path.size() - 2;
 		routes++;
 	}

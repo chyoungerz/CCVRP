@@ -1,19 +1,20 @@
-#include <ctime>
+// #include <ctime>
 #include <vector>
 
 #include "fileio.hpp"
 #include "heuristic.hpp"
 #include "node.hpp"
-#include "operator.hpp"
 
 using namespace std;
+/// @brief
+/// @param argv 文件 结果文件 迭代次数 接受准则等
 int main(int argc, char const *argv[]) {
 	// const time_t now = time(nullptr);  // 以当前时间设置随机数种子
 	string file, result;
 	vector<Node *> node;
 	vector<const Node *> nodes;
 	if (argc != 3) {
-		file = "p01";
+		file = "p02";
 		result = "data.txt";
 		cerr << "no enought args" << endl;
 		cerr << "use default: " << file << " " << result << endl;
@@ -38,7 +39,7 @@ int main(int argc, char const *argv[]) {
 	vrp.run();
 	nodes.clear();
 	// create(result, now);
-	write(result, vrp.sol);
+	write(result, vrp.bestSol);
 	release(node);
 	return 0;
 }

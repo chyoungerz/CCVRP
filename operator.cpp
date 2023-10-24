@@ -1,7 +1,9 @@
 #include "operator.hpp"
 
 #include <algorithm>
+#include <numeric>
 #include <random>
+
 // constexpr int MAXLOAD = 200;  // 定义最大载货
 
 void OP::insertb(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength) {
@@ -425,7 +427,7 @@ bool CHK::twoSwap(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j, 
 
 bool CHK::twoSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db) {
 	int difload = vehicle_a.path[pos_a]->demand - vehicle_b.path[pos_b]->demand;
-	if ((vehicle_b.load + difload) > vehicle_b.capacity) return false;  // 超载
+	if ((vehicle_b.load + difload) > vehicle_b.capacity || (vehicle_a.load - difload) > vehicle_a.capacity) return false;  // 超载
 	uint32_t size_a = vehicle_a.path.size() - 1, size_b = vehicle_b.path.size() - 1;
 	out_da = (vehicle_a.path[pos_a - 1]->dists[vehicle_b.path[pos_b]->seq].dist - vehicle_a.path[pos_a - 1]->dists[vehicle_a.path[pos_a]->seq].dist) * (size_a - pos_a);
 	out_db = (vehicle_b.path[pos_b - 1]->dists[vehicle_a.path[pos_a]->seq].dist - vehicle_b.path[pos_b - 1]->dists[vehicle_b.path[pos_b]->seq].dist) * (size_b - pos_b);
@@ -964,7 +966,8 @@ bool CHK::PESwap(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, d
 
 bool CHK::PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db) {
 	int dif_load = vehicle_b.path[pos_b]->demand - vehicle_a.path[pos_a]->demand;
-	bool flag_h{vehicle_a.load + dif_load + vehicle_b.path[pos_b - 1]->demand > vehicle_a.capacity}, flag_t{vehicle_a.load + dif_load + vehicle_b.path[pos_b + 1]->demand > vehicle_a.capacity};
+	bool flag_h{(vehicle_a.load + dif_load + vehicle_b.path[pos_b - 1]->demand > vehicle_a.capacity) || (vehicle_b.load - dif_load - vehicle_b.path[pos_b - 1]->demand > vehicle_b.capacity)};
+	bool flag_t{(vehicle_a.load + dif_load + vehicle_b.path[pos_b + 1]->demand > vehicle_a.capacity) || (vehicle_b.load - dif_load - vehicle_b.path[pos_b + 1]->demand > vehicle_b.capacity)};
 	if (flag_h && flag_t) return false;
 	uint32_t size_a = vehicle_a.path.size() - 2, size_b = vehicle_b.path.size() - 2;
 	// 先交换
@@ -988,11 +991,11 @@ bool CHK::PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, c
 		out_da += dif_a, out_db += dif_b;
 		if (out_da + out_db > 0) return false;
 		//  交换
+		vehicle_a.load += dif_load + vehicle_b.path[pos_b + 1]->demand;
+		vehicle_b.load -= dif_load + vehicle_b.path[pos_b + 1]->demand;
 		std::swap(vehicle_a.path[pos_a], vehicle_b.path[pos_b]);
 		vehicle_a.path.emplace(vehicle_a.path.begin() + pos_a + 1, vehicle_b.path[pos_b + 1]);
 		vehicle_b.path.erase(vehicle_b.path.begin() + pos_b + 1);
-		vehicle_a.load += dif_load + vehicle_b.path[pos_b + 1]->demand;
-		vehicle_b.load -= dif_load + vehicle_b.path[pos_b + 1]->demand;
 		return true;
 	}
 	if (flag_t) {  // 前插
@@ -1011,11 +1014,11 @@ bool CHK::PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, c
 		out_da += dif_a, out_db += dif_b;
 		if (out_da + out_db > 0) return false;
 		//  交换
+		vehicle_a.load += dif_load + vehicle_b.path[pos_b - 1]->demand;
+		vehicle_b.load -= dif_load + vehicle_b.path[pos_b - 1]->demand;
 		std::swap(vehicle_a.path[pos_a], vehicle_b.path[pos_b]);
 		vehicle_a.path.emplace(vehicle_a.path.begin() + pos_a, vehicle_b.path[pos_b - 1]);
 		vehicle_b.path.erase(vehicle_b.path.begin() + pos_b - 1);
-		vehicle_a.load += dif_load + vehicle_b.path[pos_b - 1]->demand;
-		vehicle_b.load -= dif_load + vehicle_b.path[pos_b - 1]->demand;
 		return true;
 	}
 	// 全计算
@@ -1042,20 +1045,20 @@ bool CHK::PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, c
 		out_da = dif_a + out_a_h, out_db = dif_b + out_b_h;
 		if (out_da + out_db > 0) return false;
 		//  交换
+		vehicle_a.load += dif_load + vehicle_b.path[pos_b - 1]->demand;
+		vehicle_b.load -= dif_load + vehicle_b.path[pos_b - 1]->demand;
 		std::swap(vehicle_a.path[pos_a], vehicle_b.path[pos_b]);
 		vehicle_a.path.emplace(vehicle_a.path.begin() + pos_a, vehicle_b.path[pos_b - 1]);
 		vehicle_b.path.erase(vehicle_b.path.begin() + pos_b - 1);
-		vehicle_a.load += dif_load + vehicle_b.path[pos_b - 1]->demand;
-		vehicle_b.load -= dif_load + vehicle_b.path[pos_b - 1]->demand;
 	} else {  // 后插
 		out_da = dif_a + out_a_t, out_db = dif_b + out_b_t;
 		if (out_da + out_db > 0) return false;
 		//  交换
+		vehicle_a.load += dif_load + vehicle_b.path[pos_b + 1]->demand;
+		vehicle_b.load -= dif_load + vehicle_b.path[pos_b + 1]->demand;
 		std::swap(vehicle_a.path[pos_a], vehicle_b.path[pos_b]);
 		vehicle_a.path.emplace(vehicle_a.path.begin() + pos_a + 1, vehicle_b.path[pos_b + 1]);
 		vehicle_b.path.erase(vehicle_b.path.begin() + pos_b + 1);
-		vehicle_a.load += dif_load + vehicle_b.path[pos_b + 1]->demand;
-		vehicle_b.load -= dif_load + vehicle_b.path[pos_b + 1]->demand;
 	}
 	return true;
 }
@@ -1065,9 +1068,9 @@ void PER::EjecChain(Solution& sol, uint32_t k, uint32_t epoch) {
 	if (k >= size_s) k = size_s;
 	std::vector<uint32_t> sol_range(k, 0);
 	std::iota(sol_range.begin() + 1, sol_range.end(), 1);
-	std::random_shuffle(sol_range.begin(), sol_range.end());
 	std::random_device rd;
 	std::mt19937 gen(rd());
+	std::shuffle(sol_range.begin(), sol_range.end(), gen);
 	sol_range.emplace_back(sol_range.front());
 	for (uint32_t i{0}; i < k; i++) {
 		int range_a{static_cast<int>(sol.solution[sol_range[i]].path.size() - 1)};
@@ -1104,6 +1107,7 @@ void PER::RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode) {
 	for (uint32_t i{0}; i < k; i++) {
 		near.emplace_back(sol.solution[sol.shash[index]].path[locate]->distsort[i].toNode);
 	}
+	std::sort(near.begin(), near.end(), [](const Node* a, const Node* b) -> bool { return a->demand > b->demand; });
 	// sol.solution[index].path.erase(sol.solution[index].path.begin() + locate);
 	for (auto& n : near) {
 		index = sol.shash[n->seq];
@@ -1123,19 +1127,14 @@ void PER::RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode) {
 					continue;
 				}
 				locate = CHK::find(sol.solution[index].path, n->distsort[i].toNode);
-				double front{COST::insertf(sol.solution[index].path, n, locate)};
-				double back{COST::insertb(sol.solution[index].path, n, locate)};
-				if (back < front)
-					sol.solution[index].path.emplace(sol.solution[index].path.begin() + locate + 1, n);
-				else
-					sol.solution[index].path.emplace(sol.solution[index].path.begin() + locate, n);
+				sol.solution[index].path.emplace(sol.solution[index].path.begin() + locate + 1, n);  // 插到后面
 				sol.solution[index].load += n->demand;             // load
 				sol.shash.emplace(std::make_pair(n->seq, index));  // hash
 				break;
 			}
-			if (i != n->distsort.size() - 1) {
+			if (i != n->distsort.size() - 1) {  // 都满了
 				continue;
-			} else {
+			} else {  // 插入空的路线
 				for (auto& s : sol.solution) {
 					if (s.path.size() == 2) {
 						s.path.emplace(s.path.end() - 1, n);
@@ -1150,5 +1149,60 @@ void PER::RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode) {
 	// update
 	for (auto& i : sol.solution) {
 		i.update_lengths();
+	}
+}
+
+void PER::RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode, uint32_t epoch) {
+	// ruin
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> disceate(0, maxnode - 1);
+	uint32_t index{static_cast<uint32_t>(disceate(gen))};
+	uint32_t locate{CHK::find(sol.solution[sol.shash[index]].path, index)};
+	std::vector<const Node*> near;
+	near.reserve(maxnode);
+	for (uint32_t i{0}; i < k; i++) {
+		near.emplace_back(sol.solution[sol.shash[index]].path[locate]->distsort[i].toNode);
+	}
+	// 移除hash表
+	for (auto& n : near) {
+		index = sol.shash[n->seq];
+		locate = CHK::find(sol.solution[index].path, n);
+		sol.solution[index].load -= sol.solution[index].path[locate]->demand;       // load
+		sol.solution[index].path.erase(sol.solution[index].path.begin() + locate);  // path
+		sol.shash.erase(n->seq);                                                    // hash
+	}
+	// 插入
+	while (epoch) {
+		std::shuffle(near.begin(), near.end(), gen);  // 打乱
+		for (auto& n : near) {
+			for (uint32_t i{1}; i < n->distsort.size(); i++) {
+				if (sol.shash.contains(n->distsort[i].to)) {  // 邻域是否被破坏
+					index = sol.shash[n->distsort[i].to];
+					if (sol.solution[index].load + n->demand > sol.solution[index].capacity) {  // 超载
+						continue;
+					}
+					locate = CHK::find(sol.solution[index].path, n->distsort[i].toNode);
+					sol.solution[index].path.emplace(sol.solution[index].path.begin() + locate + 1, n);  // 插到后面
+					sol.solution[index].load += n->demand;                                               // load
+					sol.shash.emplace(std::make_pair(n->seq, index));                                    // hash
+					break;
+				}
+				if (i != n->distsort.size() - 1) {  // 都满了
+					continue;
+				} else {  // 插入空的路线
+					for (auto& s : sol.solution) {
+						if (s.path.size() == 2) {
+							s.path.emplace(s.path.end() - 1, n);
+							s.load += n->demand;
+							sol.shash.emplace(std::make_pair(n->seq, s.seq));
+							break;
+						}
+					}
+				}
+			}
+		}
+		if (sol.evaluate()) break;
+		///@todo 还原
 	}
 }

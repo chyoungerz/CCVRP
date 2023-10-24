@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef _OPERATOR_HPP
-#define _OPERATOR_HPP
+#ifndef _OPERATOR_HPP_
+#define _OPERATOR_HPP_
 
 #include "node.hpp"
 
@@ -318,6 +318,7 @@ namespace CHK {
 }  // namespace CHK
 
 /// @brief 扰动算子
+/// @todo 破坏后的重建使用随机插入顺序，找到最好的插入顺序（重复大概50次），然后插入。
 namespace PER {
 	/// @brief 抛射链扰动
 	/// @param sol 解
@@ -330,6 +331,13 @@ namespace PER {
 	/// @param k 破坏的邻域个数
 	/// @param maxnode 最大节点数
 	void RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode);
+
+	/// @brief 破坏重建优化扰动
+	/// @param sol 解
+	/// @param k 破坏的邻域个数
+	/// @param maxnode 最大节点数
+	/// @param epoch 最大停止次数
+	void RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode, uint32_t epoch);
 }  // namespace PER
 
 #endif

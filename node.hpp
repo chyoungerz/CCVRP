@@ -53,7 +53,8 @@ class Node {
 	// 方便输出
 	friend std::ostream& operator<<(std::ostream& _out, const Node _node) {
 		_out << _node.seq << " : "
-			 << "(" << _node.x << ", " << _node.y << ")" << std::endl;
+		     << "(" << _node.x << ", " << _node.y << ")"
+		     << "\n";
 		return _out;
 	}
 	// Node operator+ (const Node& node_);
@@ -159,6 +160,12 @@ class Vehicle {
 		return node;
 	}
 
+	const Node* remove(const uint32_t pos) {
+		const Node* node{path[pos]};
+		path.erase(path.begin() + pos);
+		return node;
+	}
+
 	// 计算路径长度
 	double path_length(/*const Eigen::MatrixXf& dists*/) {
 		double _length{0.0};
@@ -215,40 +222,20 @@ class Vehicle {
 	Vehicle& operator=(const Vehicle&) = default;  // 允许赋值
 };
 
-// 厂站
-class Station : public Node {
-  public:
-	Station() {
-		x = 0;
-		y = 0;
-		seq = 0;
-		start = 0;
-		end = 0;
-	}
-	//(x_axis, y_axis) _seq 序号
-	Station(const int x_axis, const int y_axis, const uint32_t _seq) {
-		x = x_axis;
-		y = y_axis;
-		seq = _seq;
-		start = 0;
-		end = 0;
-	}
-};
-
 // 一个解
 class Solution {
   public:
-	std::vector<Vehicle> solution;
-	// 总路径长度
-	double allength{0.0};
-	// hash查找表，key为节点序号，value为所在路线
-	std::unordered_map<uint32_t, uint32_t> shash;
+	std::vector<Vehicle> solution;                 // 解决方案
+	std::unordered_map<uint32_t, uint32_t> shash;  // hash查找表，key为节点序号，value为所在路线
+	double allength{0.0};                          // 总路径长度
 
 	// 无参初始化
 	Solution() {
 		allength = 0.0;
 		solution.reserve(5);
 	}
+
+	// double length() const { return allength; }
 
 	// 添加一条路线（车辆）
 	void add(const Vehicle& vehicle) {
@@ -280,21 +267,38 @@ class Solution {
 		}
 	}
 
-	void update_hash() {
+	void update_hash(bool update) {
 		shash.clear();
-		for (auto& s : solution) {
-			if (s.path.size() - 2 == 0) continue;
-			for (uint32_t i{1}, n = s.path.size() - 1; i < n; i++) {
-				shash.emplace(s.path[i]->seq, s.seq);
+		if (update) {
+			for (auto& s : solution) {
+				if (s.path.size() - 2 == 0) continue;
+				for (uint32_t i{1}, n = s.path.size() - 1; i < n; i++) {
+					shash.emplace(s.path[i]->seq, s.seq);
+				}
 			}
 		}
 	}
 
-	void check() {
-		// allength = 0.0;
-		for (auto& i : solution) {
-			allength -= i.path_length();
+	///@brief 约束目标
+	bool evaluate() {
+		return true;
+	}
+
+	void customer() {
+		uint32_t num{};
+		for (uint32_t i = 0, n = solution.size(); i < n; i++) {
+			num += solution[i].path.size() - 2;
 		}
+		std::cout << "total customers: " << num << std::endl;
+	}
+
+	// 删除路径节点
+	const Node* erase(const uint32_t where, const uint32_t pos) {
+		const Node* node{solution[where].remove(pos)};
+		if (shash.contains(node->seq)) {
+			shash.erase(node->seq);
+		}
+		return node;
 	}
 };
 

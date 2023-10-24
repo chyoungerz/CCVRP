@@ -4,3 +4,4 @@
 *.bike
 /build
 /CCVRP
+/.cache
