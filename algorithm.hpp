@@ -23,6 +23,7 @@ namespace ALG {
 	/// @param low_index 开始位置
 	/// @param high_index 结束位置
 	/// @param k 最大的个数
+	/// @note 已死，使用std::partial_sort代替
 	template <typename T>
 	inline void topK(std::vector<T>& vec, unsigned int low_index, unsigned int high_index, unsigned int k) {
 		if (high_index <= low_index) return;
@@ -49,6 +50,7 @@ namespace ALG {
 	/// @param high_index 结束位置
 	/// @param k 最大的个数
 	/// @param cmp 比较函数(<)
+	/// @note 已死，使用std::partial_sort代替
 	template <typename T, typename Fn>
 	inline void topK(std::vector<T>& vec, unsigned int low_index, unsigned int high_index, unsigned int k, Fn cmp) {
 		if (high_index <= low_index) return;

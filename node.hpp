@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #ifndef _NODE_HPP_
 #define _NODE_HPP_
 
@@ -10,14 +11,14 @@
 #include <unordered_map>
 #include <vector>
 
-typedef unsigned int uint32_t;
-typedef unsigned long long int uint64_t;
+typedef unsigned int u32;
+typedef unsigned long long int u64;
 
 class Node;
 // 边长度，Node的一部分
 struct Edge {
 	double dist;      // 长度
-	uint32_t to;      // 指向
+	u32 to;           // 指向
 	const Node* toNode{nullptr};  // 指向的节点
 };
 
@@ -31,16 +32,17 @@ class Node {
   public:
 	std::vector<Edge> dists;     // 该节点到其他节点的距离(数组编号为节点序号)
 	std::vector<Edge> distsort;  // 该节点到其他节点的距离按从小到大排序
-	uint32_t seq;                // 序号，从0开始
-	uint32_t duration;           // 服务时间
-	uint32_t demand;             // 需求
-	uint32_t start;              // 开始时间窗
-	uint32_t end;                // 结束时间窗
+	u32 seq;                     // 序号，从0开始
+	u32 duration;                // 服务时间
+	u32 demand;                  // 需求
+	u32 start;                   // 开始时间窗
+	u32 end;                     // 结束时间窗
+	bool isdepot;                // 是否为厂站
 
 	/**********构造函数************/
 	//_seq序号， （x.axis, y.axis), start开始时间窗， end结束时间窗, duration 服务时间，demand需求
 	Node() : x(0), y(0), seq(0), duration(0), demand(0), start(0), end(0) {}
-	Node(const uint32_t _seq, const int x_axis, const int y_axis, const uint32_t _duration, const uint32_t _demand, const uint32_t _start, const uint32_t _end) {
+	Node(const u32 _seq, const int x_axis, const int y_axis, const u32 _duration, const u32 _demand, const u32 _start, const u32 _end) {
 		x = x_axis;
 		y = y_axis;
 		seq = _seq;
@@ -117,96 +119,100 @@ class Vehicle {
 	// double diflength;                  // 走过的路(时间）差分数组
 	double cumlength;                  // 所有节点的长度（时间）之和
 	double length;                     // 路径长度（时间）
-	uint32_t capacity;                 // 最大容量
-	uint32_t load;                     // 载重量
-	uint32_t seq;                      // 路线序号
+	u32 capacity;                      // 最大容量
+	u32 load;                          // 载重量
+	u32 seq;                           // 路线序号
+	const Node* depot;                 // 场站
 
 	// 无参构造,默认0
 	Vehicle() = delete;
 	// loc是位置, max代表车的最大容量
-	Vehicle(const Node* loc, const uint32_t maxload, const uint32_t seq_) : cumlength(0.0), capacity(maxload), load(0), seq(seq_) {
+	Vehicle(const Node* loc, const u32 maxload, const u32 seq_) : cumlength(0.0), capacity(maxload), load(0), seq(seq_), depot(loc) {
 		path.reserve(100);
-		path.emplace_back(loc);
+	}
+
+	// 检查是否满足约束条件
+	bool check(const Node* dest) {
+		if (load + dest->demand > capacity)
+			return false;
+		else
+			return true;
 	}
 
 	// 移动到dest节点，并计算距离 (往返距离一样)
-	bool move(const Node* dest /*,const Eigen::MatrixXf& dists*/) {
+	bool move(const Node* dest) {
 		// double diflength{0.0};
-		if ((load + dest->demand) > capacity) return false;
-		load += dest->demand;
-		path.emplace_back(dest);
-
-		/*for (uint32_t i = 0; i + 1 < path.size(); i++) {
-			diflength += path[i]->distances[path[i + 1]->seq].distance;
+		if (check(dest)) {
+			load += dest->demand;
+			path.emplace_back(dest);
+			return true;
 		}
-		cumlength += diflength;*/
-		// diflength.push_back(diflength.back() + dists(locate, dest.seq));
-		// diflength.push_back(diflength.back() + dest->distances[locate].distance);  // from a to b == from b to a
-		return true;
+		return false;
 	}
 
 	// 路径节点插入（position > 0)
-	void emplace(const uint32_t pos, const Node* node) {
+	void emplace(const u32 pos, const Node* node) {
 		connect(path[pos], node);      // pos <-> node
 		connect(path[pos - 1], node);  // pos - 1 <-> node
 		path.emplace(path.begin() + pos, node);
 	}
 
 	// 路径节点删除（position > 0)
-	const Node* erase(const uint32_t pos) {
+	const Node* erase(const u32 pos) {
 		const Node* node{path[pos]};
 		link(path[pos - 1], path[pos + 1]);  // pos - 1 <-> pos + 1
 		path.erase(path.begin() + pos);
 		return node;
 	}
 
-	const Node* remove(const uint32_t pos) {
+	const Node* remove(const u32 pos) {
 		const Node* node{path[pos]};
 		path.erase(path.begin() + pos);
 		return node;
 	}
 
-	// 计算路径长度
-	double path_length(/*const Eigen::MatrixXf& dists*/) {
+	/// @brief 计算路径长度
+	/// @param update 是否更新，默认否
+	/// @return 路径长度
+	double path_length(bool update = false) {
+		if (path.empty()) return 0.0;
 		double _length{0.0};
-		for (uint64_t j{0}, n{path.size() - 2}; j < n; j++) {
+		for (u64 j{0}, n{path.size() - 1}; j < n; j++) {
 			_length += path[j]->dists[path[j + 1]->seq].dist;
 		}
+		if (update) length = _length;
 		return _length;
 	}
 
-	// 计算路径累积长度
-	double path_cumlength(/*const Eigen::MatrixXf& dists*/) {
-		double _length{0.0};
-		for (uint64_t j{0}, n{path.size() - 2}; j < n; j++) {
+	/// @brief 计算累计路径长度
+	/// @param update 是否更新，默认否
+	/// @return 累计路径长度
+	double path_cumlength(bool update = false) {
+		if (path.empty()) return 0.0;
+		double _length{depot->dists[path.front()->seq].dist * path.size()};
+		for (u64 j{0}, n{path.size() - 1}; j < n; j++) {
 			_length += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
 		}
+		if (update) cumlength = _length;
 		return _length;
-	}
-
-	// 更新路径长度
-	void update_lengths(/*const Eigen::MatrixXf& dists*/) {
-		cumlength = 0.0, length = 0.0;
-		for (uint64_t j{0}, n{path.size() - 2}; j < n; j++) {
-			length += path[j]->dists[path[j + 1]->seq].dist;
-			cumlength += length;
-		}
 	}
 
 	// 连接路径
 	void connect_path() {
-		for (uint64_t j{1}, n{path.size() - 2}; j < n; j++) {
+		for (u64 j{1}, n{path.size() - 2}; j < n; j++) {
 			connect(path[j], path[j + 1]);
 		}
 	}
 
-	// 清空, 并初始化位置
-	void clear(const Node* node0, uint32_t seq_) {
+	/// @brief 清空
+	/// @param node0 初始化位置
+	/// @param seq_ 路线序号
+	void clear(const Node* node0, u32 seq_) {
 		load = 0;
 		cumlength = 0.0;
 		seq = seq_;
+		depot = node0;
 		path.clear();
-		path.emplace_back(node0);
 	}
 
 	// 方便输出
@@ -226,8 +232,11 @@ class Vehicle {
 class Solution {
   public:
 	std::vector<Vehicle> solution;                 // 解决方案
-	std::unordered_map<uint32_t, uint32_t> shash;  // hash查找表，key为节点序号，value为所在路线
+	std::unordered_map<u32, u32> shash;            // hash查找表，key为节点序号，value为所在路线
 	double allength{0.0};                          // 总路径长度
+	double limit{-1.0};                            // 最大路径长度
+	bool multi{false};                             // 算法多场站
+	bool valid{false};                             // 是否可行
 
 	// 无参初始化
 	Solution() {
@@ -240,60 +249,93 @@ class Solution {
 	// 添加一条路线（车辆）
 	void add(const Vehicle& vehicle) {
 		solution.emplace_back(vehicle);
-		allength += vehicle.cumlength;
 	}
 
 	// 添加多条路线（车辆）
-	void add(const Vehicle& vehicle, const uint32_t num) {
+	void add(const Vehicle& vehicle, const u32 num) {
 		solution.insert(solution.end(), num, vehicle);
 	}
 
 	void show() {
-		uint32_t num{}, routes{};
-		for (uint32_t i = 0, n = solution.size(); i < n; i++) {
-			if (solution[i].path.size() - 2 == 0) continue;
-			num += solution[i].path.size() - 2;
-			std::cout << solution[i] << " : " << solution[i].path.size() - 2 << std::endl;
+		u32 num{}, routes{};
+		for (u32 i = 0, n = solution.size(); i < n; i++) {
+			if (solution[i].path.empty()) continue;
+			num += solution[i].path.size();
+			std::cout << solution[i] << " : " << solution[i].path.size() << std::endl;
 			routes++;
 		}
 		std::cout << "total length: " << allength << "\ttotal customers: " << num << "\ttotal routes: " << routes << std::endl;
 	}
 
-	void update() {
+	/// @brief 更新累计路径长度
+	/// @param update 是否重新计算，1:全部重新计算，0：不重新计算（默认）
+	void update(u32 update = 0) {
 		allength = 0.0;
-		for (auto& i : solution) {
-			// i.cumlength = i.path_length();
-			allength += i.cumlength;
+		if (update == 0) {
+			for (auto& i : solution) {
+				allength += i.cumlength;
+			}
+		} else {
+			for (auto& i : solution) {
+				allength += i.path_cumlength(true);
+			}
+		}
+	}
+	// 更新序号
+	void update_seq() {
+		for (u32 i{0}, n = solution.size(); i < n; i++) {
+			solution[i].seq = i;
 		}
 	}
 
-	void update_hash(bool update) {
+	/// @brief 清空哈希表
+	/// @param update 是否更新，默认否
+	void update_hash(bool update = false) {
 		shash.clear();
 		if (update) {
-			for (auto& s : solution) {
-				if (s.path.size() - 2 == 0) continue;
-				for (uint32_t i{1}, n = s.path.size() - 1; i < n; i++) {
-					shash.emplace(s.path[i]->seq, s.seq);
+			for (u32 s{0}, n = solution.size(); s < n; s++) {
+				solution[s].seq = s;
+				if (solution[s].path.empty()) continue;
+				for (auto& i : solution[s].path) {
+					shash.emplace(i->seq, s);
 				}
 			}
 		}
 	}
 
+	/// @brief 删除空路径
+	void remove_void() {
+		solution.erase(std::remove_if(solution.begin(), solution.end(), [](const Vehicle& v) { return v.path.empty(); }), solution.end());
+	}
+
 	///@brief 约束目标
 	bool evaluate() {
-		return true;
+		valid = true;
+		for (auto& s : solution) {
+			s.load = 0;
+			for (u32 i{0}, n = s.path.size() - 1; i < n; i++) {  // 优先级
+				s.load += s.path[i]->demand;
+				if (s.path[i]->end > s.path[i + 1]->end) {
+					valid = false;
+				}
+			}
+			if (s.load > s.capacity) {  // 容量
+				valid = false;
+			}
+		}
+		return valid;
 	}
 
 	void customer() {
-		uint32_t num{};
-		for (uint32_t i = 0, n = solution.size(); i < n; i++) {
+		u32 num{};
+		for (u32 i = 0, n = solution.size(); i < n; i++) {
 			num += solution[i].path.size() - 2;
 		}
 		std::cout << "total customers: " << num << std::endl;
 	}
 
 	// 删除路径节点
-	const Node* erase(const uint32_t where, const uint32_t pos) {
+	const Node* erase(const u32 where, const u32 pos) {
 		const Node* node{solution[where].remove(pos)};
 		if (shash.contains(node->seq)) {
 			shash.erase(node->seq);

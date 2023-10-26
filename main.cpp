@@ -9,6 +9,7 @@ using namespace std;
 /// @brief
 /// @param argv 文件 结果文件 迭代次数 接受准则等
 int main(int argc, char const *argv[]) {
+	ios::sync_with_stdio(false);
 	// const time_t now = time(nullptr);  // 以当前时间设置随机数种子
 	string file, result;
 	vector<Node *> node;

@@ -12,7 +12,7 @@
 #include "node.hpp"
 
 // 读取文件节点返回向量nodes中
-inline std::vector<Node*> read(const std::string& file, uint32_t& maxload, uint32_t& despot, uint32_t& routes) {
+inline std::vector<Node*> read(const std::string& file, u32& maxload, u32& despot, u32& routes) {
 	std::ifstream config(file);
 	if (config.fail()) {
 		std::vector<Node*> empty;
@@ -60,8 +60,8 @@ inline void write(const std::string& filename, const Solution& sol) {
 	const time_t now = std::time(nullptr);
 	strftime(chs, 96, "%Y%m%d%H%M", localtime(&now));
 	out << "日期：" << chs << std::endl;
-	uint32_t num{}, routes{};
-	for (uint32_t i = 0, n = sol.solution.size(); i < n; i++) {
+	u32 num{}, routes{};
+	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
 		if (sol.solution[i].path.size() - 2 == 0) continue;
 		out << sol.solution[i] << " : " << sol.solution[i].path.size() - 2 << "\n";
 		num += sol.solution[i].path.size() - 2;
@@ -72,8 +72,8 @@ inline void write(const std::string& filename, const Solution& sol) {
 }
 
 // 计算节点距离矩阵
-inline void init_distance(std::vector<Node*>& nodes, uint32_t depot_num) {
-	uint32_t size = nodes.size();
+inline void init_distance(std::vector<Node*>& nodes, u32 depot_num) {
+	u32 size = nodes.size();
 	// Eigen::MatrixXf dists(size, size);
 	std::vector<Edge> temp_edges(size);
 	for (unsigned int i = 0; i < size; i++) {

@@ -14,21 +14,21 @@ namespace OP {
 	/// @param node 插入节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @param diflength 差值
-	void insertb(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength);
+	void insertb(Vehicle& vehicle, const Node* node, const u32 pos, const double diflength);
 
 	/// @brief 插入节点前
 	/// @param vehicle 待插入的路线（车辆）
 	/// @param node 插入节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @param diflength 差值
-	void insertf(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength);
+	void insertf(Vehicle& vehicle, const Node* node, const u32 pos, const double diflength);
 
 	/// @brief 插入节点,非开头末尾
 	/// @param vehicle 待插入的路线（车辆）
 	/// @param node 插入节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @param diflength 差值
-	void insert(Vehicle& vehicle, const Node* node, const uint32_t pos, const double diflength);
+	void insert(Vehicle& vehicle, const Node* node, const u32 pos, const double diflength);
 
 	/// @brief 末尾删除
 	/// @param vehicle 待删除的路线（车辆）
@@ -45,7 +45,7 @@ namespace OP {
 	/// @param pos 位置 [1, size-1)
 	/// @param diflength 差值
 	/// @return 删除的节点指针
-	const Node* erase(Vehicle& vehicle, const uint32_t pos, const double diflength);
+	const Node* erase(Vehicle& vehicle, const u32 pos, const double diflength);
 
 	/// @brief 删除无用节点，配合remove使用
 	/// @param vehicle 待去除的路线（车辆）
@@ -56,7 +56,7 @@ namespace OP {
 	/// @param pos 位置 [1, size-1)
 	/// @param diflength 差值
 	/// @return 删除的节点指针
-	const Node* remove(Vehicle& vehicle, const uint32_t pos, const double diflength);
+	const Node* remove(Vehicle& vehicle, const u32 pos, const double diflength);
 
 	/// @brief 两点交换算子(使用邻域)
 	/// @param sol 解
@@ -66,7 +66,7 @@ namespace OP {
 	/// @param sol 解
 	/// @param nodes 节点
 	/// @param depot_num 厂站
-	void oneNMove(Solution& sol, std::vector<const Node*>& nodes, const uint32_t depot_num);
+	void oneNMove(Solution& sol, std::vector<const Node*>& nodes, const u32 depot_num);
 
 	/// @brief 一点移动算子
 	/// @param vehicle_a
@@ -97,7 +97,7 @@ namespace OP {
 	/// @param from_pos 开始位置 [1, size-1)
 	/// @param to_pos 结束位置 [1, size-1)
 	/// @return true，false
-	bool reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t to_pos);
+	bool reverse(Vehicle& vehicle, const u32 from_pos, const u32 to_pos);
 
 	/// @brief 交换两路线（车辆）
 	/// @param vehicle_a 待交换的路线（车辆）A
@@ -107,7 +107,7 @@ namespace OP {
 	/// @param from_b_pos 路线（车辆）B 开始位置 [1, size-1)
 	/// @param to_b_pos 路线（车辆）B 结束位置 [1, size-1)
 	/// @return true，false
-	bool twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_a_pos, const uint32_t to_a_pos, const uint32_t from_b_pos, const uint32_t to_b_pos);
+	bool twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 from_a_pos, const u32 to_a_pos, const u32 from_b_pos, const u32 to_b_pos);
 
 }  // namespace OP
 
@@ -120,27 +120,27 @@ namespace COST {
 	/// @param node 插入的节点
 	/// @param pos 位置（之前）[1, size-1)
 	/// @return 差值
-	double insertf(std::vector<const Node*>& route, const Node* node, const uint32_t pos);
+	double insertf(std::vector<const Node*>& route, const Node* node, const u32 pos);
 
 	/// @brief 计算后插操作的差值
 	/// @param vehicle 待插入的路线（车辆）
 	/// @param node 插入的节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @return 差值
-	double insertb(std::vector<const Node*>& route, const Node* node, const uint32_t pos);
+	double insertb(std::vector<const Node*>& route, const Node* node, const u32 pos);
 
 	/// @brief 计算删除操作的差值
 	/// @param vehicle 待删除的路线（车辆）
 	/// @param pos 位置（之后）[1, size-1)
 	/// @return 差值
-	double erase(std::vector<const Node*>& route, const uint32_t pos);
+	double erase(std::vector<const Node*>& route, const u32 pos);
 
 	/// @brief 计算交换同一路线（车辆）节点的差值, 开头和末尾为厂站
 	/// @param vehicle 待交换的路线（车辆）
 	/// @param pos_i 位置 i [1, size-1)
 	/// @param pos_j 位置 j [1, size-1)
 	/// @return 差值
-	double swaptwo(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j);
+	double swaptwo(Vehicle& vehicle, const u32 pos_i, const u32 pos_j);
 
 	/// @brief 计算交换不同路线（车辆）两节点的差值, 开头和末尾为厂站
 	/// @param vehicle_a 待交换的路线（车辆） A
@@ -148,14 +148,14 @@ namespace COST {
 	/// @param pos_a A的位置 [1, size-1)
 	/// @param pos_b B的位置 [1, size-1)
 	/// @return pair<差值A, 差值B>
-	std::pair<double, double> twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b);
+	std::pair<double, double> twoswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 pos_a, const u32 pos_b);
 
 	/// @brief 计算反转路线（车辆）的差值（未实现）
 	/// @param vehicle
 	/// @param from_pos
 	/// @param to_pos
 	/// @return 差值
-	double reverse(Vehicle& vehicle, const uint32_t from_pos, const uint32_t to_pos);
+	double reverse(Vehicle& vehicle, const u32 from_pos, const u32 to_pos);
 
 	/// @brief 计算交换两路线（车辆）的差值（未实现）
 	/// @param vehicle_a
@@ -165,7 +165,7 @@ namespace COST {
 	/// @param from_b_pos
 	/// @param to_b_pos
 	/// @return pair<差值A, 差值B>
-	std::pair<double, double> twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t from_a_pos, const uint32_t to_a_pos, const uint32_t from_b_pos, const uint32_t to_b_pos);
+	std::pair<double, double> twostrswap(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 from_a_pos, const u32 to_a_pos, const u32 from_b_pos, const u32 to_b_pos);
 }  // namespace COST
 
 namespace CHK {
@@ -174,8 +174,8 @@ namespace CHK {
 	/// @param route
 	/// @param seq(序号或指针)
 	/// @return 位置
-	uint32_t find(std::vector<const Node*>& route, const uint32_t seq);
-	uint32_t find(std::vector<const Node*>& route, const Node* seq);
+	u32 find(std::vector<const Node*>& route, const u32 seq);
+	u32 find(std::vector<const Node*>& route, const Node* seq);
 
 	/// @brief 计算移动一个节点到同一路线（车辆）的差值, 开头和末尾为厂站。
 	/// @param vehicle 待移动的路线（车辆）
@@ -184,7 +184,7 @@ namespace CHK {
 	/// @param out_d 差值
 	/// @return 是否可行。可行时已移动好
 	/// @note 自动判断目标位置的前边和后边
-	bool oneMove(Vehicle& vehicle, const uint32_t h, const uint32_t d, double& out_d);
+	bool oneMove(Vehicle& vehicle, const u32 h, const u32 d, double& out_d);
 
 	/// @brief 计算移动一个节点到不同路线（车辆）的差值, 开头和末尾为厂站。
 	/// @param vehicle_h 待移动的起始路线（车辆）
@@ -195,7 +195,7 @@ namespace CHK {
 	/// @param out_db 目标路线（车辆）差值
 	/// @return 是否可行。可行时已移动好
 	/// @note 自动判断目标位置的前边和后边
-	bool oneMove(Vehicle& vehicle_h, Vehicle& vehicle_d, const uint32_t h, const uint32_t d, double& out_da, double& out_db);
+	bool oneMove(Vehicle& vehicle_h, Vehicle& vehicle_d, const u32 h, const u32 d, double& out_da, double& out_db);
 
 	/// @brief 计算交换同一路线（车辆）节点的差值, 开头和末尾为厂站
 	/// @param vehicle 待交换的路线（车辆）
@@ -203,7 +203,7 @@ namespace CHK {
 	/// @param pos_j 位置 j [1, size-1)
 	/// @param out_d 路径差值
 	/// @return 是否可行
-	bool twoSwap(Vehicle& vehicle, const uint32_t pos_i, const uint32_t pos_j, double& out_d);
+	bool twoSwap(Vehicle& vehicle, const u32 pos_i, const u32 pos_j, double& out_d);
 
 	/// @brief 计算交换不同路线（车辆）两节点的差值, 开头和末尾为厂站
 	/// @param vehicle_a 待交换的路线（车辆） A
@@ -213,7 +213,7 @@ namespace CHK {
 	/// @param out_da A的路径差值
 	/// @param out_db B的路径差值
 	/// @return 是否可行
-	bool twoSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
+	bool twoSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 pos_a, const u32 pos_b, double& out_da, double& out_db);
 
 	/// @brief 2-opt-cross
 	/// @param vehicle_a 待交换的路线（车辆） A
@@ -223,7 +223,7 @@ namespace CHK {
 	/// @param out_da A的路径差值
 	/// @param out_db B的路径差值
 	/// @return 是否可行, 可行时已交换好
-	bool twoCross(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
+	bool twoCross(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 pos_a, const u32 pos_b, double& out_da, double& out_db);
 
 	/// @brief
 	/// @param vehicle_a
@@ -236,7 +236,7 @@ namespace CHK {
 	/// @param out_db
 	/// @return
 	/// @todo 未实现
-	bool strCross(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_a_t, const uint32_t pos_b_f, const uint32_t pos_b_t, double& out_da, double& out_db);
+	bool strCross(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 pos_a_f, const u32 pos_a_t, const u32 pos_b_f, const u32 pos_b_t, double& out_da, double& out_db);
 
 	/// @brief 反转路径
 	/// @param vehicle 待反转的路线
@@ -245,7 +245,7 @@ namespace CHK {
 	/// @param out_d 差值
 	/// @return 是否可行, 可行时已交换好
 	/// @todo 待优化
-	bool reverse(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, double& out_d);
+	bool reverse(Vehicle& vehicle, const u32 pos_f, const u32 pos_t, double& out_d);
 
 	/// @brief 两路径交换
 	/// @param vehicle_a 待交换的路线（车辆） A
@@ -257,7 +257,7 @@ namespace CHK {
 	/// @param out_db B的路径差值
 	/// @return 是否可行, 可行时已交换好
 	/// @note 必须满足 pos_a_f + len_t < size() - 2 && pos_b_f + len_t < size() - 2
-	bool strSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_b_f, const uint32_t len_t, double& out_da, double& out_db);
+	bool strSwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 pos_a_f, const u32 pos_b_f, const u32 len_t, double& out_da, double& out_db);
 
 	/// @brief 两路径反转交换
 	/// @param vehicle_a 待交换的路线（车辆） A
@@ -269,7 +269,7 @@ namespace CHK {
 	/// @param out_db B的路径差值
 	/// @return 是否可行, 可行时已交换好
 	/// @note 必须满足 pos_a_f + len_t < size() - 2 && pos_b_f + len_t < size() - 2
-	bool strSwapR(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_b_f, const uint32_t len_t, double& out_da, double& out_db);
+	bool strSwapR(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 pos_a_f, const u32 pos_b_f, const u32 len_t, double& out_da, double& out_db);
 
 	/// @brief 连续的点移动
 	/// @param vehicle 待移动的路线（车辆）
@@ -280,7 +280,7 @@ namespace CHK {
 	/// @return 是否可行, 可行时已移动好
 	/// @note 必须保证不满足 pos_f < pos < pos_t \n
 	/// @note 自动判断目标位置的前边和后边
-	bool strMove(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, const uint32_t pos, double& out_d);
+	bool strMove(Vehicle& vehicle, const u32 pos_f, const u32 pos_t, const u32 pos, double& out_d);
 
 	/// @brief 不同路径（车辆）连续的点移动
 	/// @param vehicle_a 从路线（车辆）A
@@ -292,7 +292,7 @@ namespace CHK {
 	/// @param out_db 路径差值A
 	/// @return 是否可行, 可行时已移动好
 	/// @note 自动判断目标位置的前边和后边
-	bool strMove(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a_f, const uint32_t pos_a_t, const uint32_t pos_b, double& out_da, double& out_db);
+	bool strMove(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 pos_a_f, const u32 pos_a_t, const u32 pos_b, double& out_da, double& out_db);
 
 	/// @brief 点边交换，同路线（车辆）
 	/// @param vehicle 待交换的路线（车辆）
@@ -302,7 +302,7 @@ namespace CHK {
 	/// @return 是否可行, 可行时已移动好
 	/// @note 自动判断目标位置的前边和后边
 	/// @warning 必须满足 1 < pos_t < size - 2 && pos_t - pos_f != 1
-	bool PESwap(Vehicle& vehicle, const uint32_t pos_f, const uint32_t pos_t, double& out_d);
+	bool PESwap(Vehicle& vehicle, const u32 pos_f, const u32 pos_t, double& out_d);
 
 	/// @brief 点边交换，不同路线（车辆）
 	/// @param vehicle_a 从路线（车辆）A
@@ -313,7 +313,7 @@ namespace CHK {
 	/// @param out_db 路径差值A
 	/// @return 是否可行, 可行时已移动好
 	/// @note 自动判断目标位置的前边和后边
-	bool PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const uint32_t pos_a, const uint32_t pos_b, double& out_da, double& out_db);
+	bool PESwap(Vehicle& vehicle_a, Vehicle& vehicle_b, const u32 pos_a, const u32 pos_b, double& out_da, double& out_db);
 
 }  // namespace CHK
 
@@ -324,20 +324,20 @@ namespace PER {
 	/// @param sol 解
 	/// @param k k条路径
 	/// @param epoch 扰动最大失败次数
-	void EjecChain(Solution& sol, uint32_t k, uint32_t epoch);
+	void EjecChain(Solution& sol, u32 k, u32 epoch);
 
 	/// @brief 破坏重建扰动
 	/// @param sol 解
 	/// @param k 破坏的邻域个数
 	/// @param maxnode 最大节点数
-	void RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode);
+	void RuinCreate(Solution& sol, u32 k, u32 maxnode);
 
 	/// @brief 破坏重建优化扰动
 	/// @param sol 解
 	/// @param k 破坏的邻域个数
 	/// @param maxnode 最大节点数
 	/// @param epoch 最大停止次数
-	void RuinCreate(Solution& sol, uint32_t k, uint32_t maxnode, uint32_t epoch);
+	void RuinCreate(Solution& sol, u32 k, u32 maxnode, u32 epoch);
 }  // namespace PER
 
 #endif

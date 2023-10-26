@@ -11,11 +11,11 @@ class SA {
 	Solution bestSol;  // 最好解
 	Solution sol;      // 当前解
 	std::vector<const Node*> nodes;  // 节点
-	uint32_t depotnum;               // 厂站
-	uint32_t vehicles;               // 最大车辆
+	u32 depotnum;                    // 厂站
+	u32 vehicles;                    // 最大车辆
 
 	/// @brief
-	void init(std::vector<const Node*>& node, const uint32_t depot_num, uint32_t maxload, uint32_t routes);
+	void init(std::vector<const Node*>& node, const u32 depot_num, u32 maxload, u32 routes);
 	/// @todo 参数 迭代次数30-50次， 没有提升次数20，
 	void run();
 };
@@ -70,24 +70,43 @@ class TPM {
 	 }*/
 };
 
+class GA {
+  public:
+	Solution bestSol;                // 最好解
+	Solution sol;                    // 当前解
+	std::vector<const Node*> nodes;  // 节点
+	u32 depotnum;                    // 厂站
+	u32 maxvehicles;                 // 最大车辆
+	u32 maxload;                     // 最大载重
+
+	void init(std::vector<const Node*>& node, const u32 depot_num, u32 max_load, u32 routes);
+	// 编码
+	void encode(Solution& sol, std::vector<const Node*>& code);
+	// 解码
+	void decode(std::vector<const Node*>& code, Solution& sol);
+};
+
 class SWO {
   public:
 	std::vector<Solution> solutions;  // 解群
 	Solution bestSol;                 // 最好解
-	std::vector<const Node*> nodes;   // 节点
-	std::vector<uint32_t> codes;      // 编码
-	uint32_t depotnum;                // 厂站
-	uint32_t vehicles;                // 最大车辆
+	std::vector<const Node*> nodes;   // 顾客节点
+	std::vector<const Node*> depots;  // 场站节点
+	u32 depotnum;                     // 厂站
+	u32 maxvehicles;                  // 最大车辆
+	u32 maxload;                      // 最大载重
 
 	// 初始化算法
-	void init(std::vector<const Node*>& node, const uint32_t depot_num, uint32_t maxload, uint32_t routes);
-
+	void init(std::vector<const Node*>& node, const u32 depot_num, u32 max_load, u32 routes);
 	// 编码
-	void encode(Solution& sol, std::vector<uint32_t>& code);
+	void encode(Solution& sol, std::vector<const Node*>& code);
 	// 解码
-	void decode(std::vector<uint32_t>& code, Solution& sol);
-
-	// 交叉
+	void decode(std::vector<const Node*>& code, Solution& sol);
+	/// @brief
+	/// @param sol1
+	/// @param sol2
+	/// @param cr
+	/// @return Solution
 	Solution cross(Solution& sol1, Solution& sol2, float cr);
 
 	/// @brief
@@ -95,6 +114,6 @@ class SWO {
 	/// @param epoch 迭代次数
 	/// @param tr 狩猎和繁衍行为行为控制
 	/// @param cr 繁衍交叉概率
-	void run(uint32_t min_n, int epoch, float tr, float cr);
+	void run(u32 min_n, int epoch, float tr, float cr);
 };
 #endif

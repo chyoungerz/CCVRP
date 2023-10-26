@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.27.0)
 project(CCVRP VERSION 0.1.0)
 
 # 为当前路径以及子目录的源文件加入由-D预编译定义
