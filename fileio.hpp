@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #ifndef _FILEIO_HPP_
 #define _FILEIO_HPP_
 
@@ -21,11 +22,11 @@ inline std::vector<Node*> read(const std::string& file, u32& maxload, u32& despo
 	// std::vector<Node> nodes;
 	std::vector<Node*> nodes_ptr;
 	// nodes.reserve(100);
-	int temp_x, temp_y, a, b, num;
-	config >> a >> b >> num >> despot >> routes >> maxload;
-	unsigned int temp_duration, temp_demand, temp_start{}, temp_end{}, seq{0};
+	int temp_x, temp_y, num, a;
+	config >> num >> despot >> routes >> maxload;
+	unsigned int temp_duration{}, temp_demand{}, temp_start{}, temp_end{}, seq{0};
 	// customer
-	while (config >> a >> temp_x >> temp_y >> temp_duration >> temp_demand) {
+	while (config >> a >> temp_x >> temp_y >> temp_demand) {
 		// Node temp(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end);
 		// Node* node = new Node(seq, temp_x, temp_y, temp_duration, temp_demand, temp_start, temp_end);
 		// nodes.push_back(temp);
@@ -72,17 +73,38 @@ inline void write(const std::string& filename, const Solution& sol) {
 }
 
 // 计算节点距离矩阵
-inline void init_distance(std::vector<Node*>& nodes, u32 depot_num) {
-	u32 size = nodes.size();
+inline void init_distance(std::vector<Node*>& nodes, const u32 depot_num, std::vector<Node*>& depots, std::vector<Node*>& customers) {
+	depots.assign(nodes.begin(), nodes.begin() + depot_num);
+	customers.assign(nodes.begin() + depot_num, nodes.end());
+	u32 size = customers.size();
+	std::for_each(depots.begin(), depots.end(), [](Node* node) { node->isdepot = true; });
 	// Eigen::MatrixXf dists(size, size);
-	std::vector<Edge> temp_edges(size);
-	for (unsigned int i = 0; i < size; i++) {
-		for (unsigned int j = 0; j < size; j++) {
+	std::vector<Edge> temp_edges(size + depot_num);
+	// 总距离矩阵
+	for (u32 i = 0, n{size + depot_num}; i < n; i++) {
+		for (u32 j = 0; j < n; j++) {
 			temp_edges[j] = {dist(nodes[i], nodes[j]), j, nodes[j]};  // i行-j列（row, col)
 		}
 		nodes[i]->dists.assign(temp_edges.begin(), temp_edges.end());
-		std::sort(temp_edges.begin(), temp_edges.end() - depot_num, [](Edge& a, Edge& b) { return a.dist < b.dist; });
-		nodes[i]->distsort.assign(temp_edges.begin(), temp_edges.end());
+	}
+	temp_edges.resize(size);
+	// 客户->客户
+	for (u32 i = 0; i < size; i++) {
+		for (u32 j = 0; j < size; j++) {
+			if (i == j) continue;
+			temp_edges[j] = {dist(customers[i], customers[j]), j, customers[j]};  // i行-j列（row, col)
+		}
+		std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist < b.dist; });
+		customers[i]->distsort.assign(temp_edges.begin(), temp_edges.end());
+	}
+	// 客户->场站
+	temp_edges.resize(depot_num);
+	for (u32 i = 0; i < size; i++) {
+		for (u32 j = 0; j < depot_num; j++) {
+			temp_edges[j] = {dist(customers[i], depots[j]), j, depots[j]};  // i行-j列（row, col)
+		}
+		if (depot_num > 1) std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist < b.dist; });
+		customers[i]->depotsort.assign(temp_edges.begin(), temp_edges.end());
 	}
 	// return dists;
 }

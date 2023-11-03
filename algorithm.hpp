@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #ifndef _ALGORITHM_HPP
 #define _ALGORITHM_HPP
 
@@ -72,17 +73,14 @@ namespace ALG {
 
 	/// @brief K聚类算法
 	/// @param nodes 节点
-	/// @param K K 同时也是初始群
+	/// @param depots K 同时也是初始群
 	/// @param epoch_max 最大迭代次数
 	/// @param classfy 结果
 	/// @return 若超过最大迭代次数则false，否则true
-	inline bool Kmean(std::vector<const Node*>& nodes, std::vector<Node>& K, unsigned int epoch_max, std::vector<std::vector<const Node*>>& classfy) {
-		// std::vector<Node> K(k);
-		uint32_t k = K.size();
-		std::vector<const Node*> vec;
-		vec.assign(nodes.begin(), nodes.end() - k);
+	inline bool Kmean(std::vector<Node*>& customers, std::vector<Node*>& depots, std::vector<Node>& K, unsigned int epoch_max, std::vector<std::vector<Node*>>& classfy) {
+		u32 k = depots.size();
 		while (epoch_max--) {
-			for (auto& v : vec) {
+			for (auto& v : customers) {  // 将customers分为k类
 				double min_dist = 1000000.0;
 				unsigned int min_index = 10000;
 				for (unsigned int i{0}; i < k; ++i) {
@@ -113,8 +111,6 @@ namespace ALG {
 				j.clear();
 			}
 		}
-		K.clear();
-		vec.clear();
 		if (epoch_max) return true;
 		else
 			return false;

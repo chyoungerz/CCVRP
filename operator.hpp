@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #ifndef _OPERATOR_HPP_
 #define _OPERATOR_HPP_
 
@@ -14,38 +15,38 @@ namespace OP {
 	/// @param node 插入节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @param diflength 差值
-	void insertb(Vehicle& vehicle, const Node* node, const u32 pos, const double diflength);
+	void insertb(Vehicle& vehicle, Node* node, const u32 pos, const double diflength);
 
 	/// @brief 插入节点前
 	/// @param vehicle 待插入的路线（车辆）
 	/// @param node 插入节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @param diflength 差值
-	void insertf(Vehicle& vehicle, const Node* node, const u32 pos, const double diflength);
+	void insertf(Vehicle& vehicle, Node* node, const u32 pos, const double diflength);
 
 	/// @brief 插入节点,非开头末尾
 	/// @param vehicle 待插入的路线（车辆）
 	/// @param node 插入节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @param diflength 差值
-	void insert(Vehicle& vehicle, const Node* node, const u32 pos, const double diflength);
+	void insert(Vehicle& vehicle, Node* node, const u32 pos, const double diflength);
 
 	/// @brief 末尾删除
 	/// @param vehicle 待删除的路线（车辆）
 	/// @return true -> 删除的节点指针，false -> nullptr
-	const Node* removeback(Vehicle& vehicle);
+	Node* removeback(Vehicle& vehicle);
 
 	/// @brief 开头删除
 	/// @param vehicle 待删除的路线（车辆）
 	/// @return true -> 删除的节点指针，false -> nullptr
-	const Node* removefront(Vehicle& vehicle);
+	Node* removefront(Vehicle& vehicle);
 
 	/// @brief 删除节点, 非开头和末尾
 	/// @param vehicle 待删除的路线（车辆）
 	/// @param pos 位置 [1, size-1)
 	/// @param diflength 差值
 	/// @return 删除的节点指针
-	const Node* erase(Vehicle& vehicle, const u32 pos, const double diflength);
+	Node* erase(Vehicle& vehicle, const u32 pos, const double diflength);
 
 	/// @brief 删除无用节点，配合remove使用
 	/// @param vehicle 待去除的路线（车辆）
@@ -56,7 +57,7 @@ namespace OP {
 	/// @param pos 位置 [1, size-1)
 	/// @param diflength 差值
 	/// @return 删除的节点指针
-	const Node* remove(Vehicle& vehicle, const u32 pos, const double diflength);
+	Node* remove(Vehicle& vehicle, const u32 pos, const double diflength);
 
 	/// @brief 两点交换算子(使用邻域)
 	/// @param sol 解
@@ -66,7 +67,7 @@ namespace OP {
 	/// @param sol 解
 	/// @param nodes 节点
 	/// @param depot_num 厂站
-	void oneNMove(Solution& sol, std::vector<const Node*>& nodes, const u32 depot_num);
+	void oneNMove(Solution& sol, std::vector<Node*>& nodes, const u32 depot_num);
 
 	/// @brief 一点移动算子
 	/// @param vehicle_a
@@ -120,20 +121,20 @@ namespace COST {
 	/// @param node 插入的节点
 	/// @param pos 位置（之前）[1, size-1)
 	/// @return 差值
-	double insertf(std::vector<const Node*>& route, const Node* node, const u32 pos);
+	double insertf(std::vector<Node*>& route, Node* node, const u32 pos);
 
 	/// @brief 计算后插操作的差值
 	/// @param vehicle 待插入的路线（车辆）
 	/// @param node 插入的节点
 	/// @param pos 位置（之后）[1, size-1)
 	/// @return 差值
-	double insertb(std::vector<const Node*>& route, const Node* node, const u32 pos);
+	double insertb(std::vector<Node*>& route, Node* node, const u32 pos);
 
 	/// @brief 计算删除操作的差值
 	/// @param vehicle 待删除的路线（车辆）
 	/// @param pos 位置（之后）[1, size-1)
 	/// @return 差值
-	double erase(std::vector<const Node*>& route, const u32 pos);
+	double erase(std::vector<Node*>& route, const u32 pos);
 
 	/// @brief 计算交换同一路线（车辆）节点的差值, 开头和末尾为厂站
 	/// @param vehicle 待交换的路线（车辆）
@@ -174,8 +175,8 @@ namespace CHK {
 	/// @param route
 	/// @param seq(序号或指针)
 	/// @return 位置
-	u32 find(std::vector<const Node*>& route, const u32 seq);
-	u32 find(std::vector<const Node*>& route, const Node* seq);
+	u32 find(std::vector<Node*>& route, const u32 seq);
+	u32 find(std::vector<Node*>& route, Node* seq);
 
 	/// @brief 计算移动一个节点到同一路线（车辆）的差值, 开头和末尾为厂站。
 	/// @param vehicle 待移动的路线（车辆）
@@ -340,4 +341,14 @@ namespace PER {
 	void RuinCreate(Solution& sol, u32 k, u32 maxnode, u32 epoch);
 }  // namespace PER
 
+namespace OPS {
+	bool remove(std::vector<Node*> r, const u32 k, double& saving);
+	bool remove(std::vector<Node*> r, const u32 k, const u32 len, double& saving);
+	bool insert(std::vector<Node*> r1, std::vector<Node*> r2, const u32 k, const u32 len, double& saving, bool& location);
+	bool insert(std::vector<Node*> r, const u32 k, Node* node, double& saving, bool& location);
+	bool reverse(Vehicle& r, const u32 f, const u32 t, double& saving);
+	bool swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, double& saving);
+	bool onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, double& saving, bool& location);
+	bool oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 len, double& saving, bool& location);
+};  // namespace OPS
 #endif

@@ -10,12 +10,12 @@ class SA {
   public:
 	Solution bestSol;  // 最好解
 	Solution sol;      // 当前解
-	std::vector<const Node*> nodes;  // 节点
+	std::vector<Node*> nodes;        // 节点
 	u32 depotnum;                    // 厂站
 	u32 vehicles;                    // 最大车辆
 
 	/// @brief
-	void init(std::vector<const Node*>& node, const u32 depot_num, u32 maxload, u32 routes);
+	void init(std::vector<Node*>& node, const u32 depot_num, u32 maxload, u32 routes);
 	/// @todo 参数 迭代次数30-50次， 没有提升次数20，
 	void run();
 };
@@ -74,34 +74,34 @@ class GA {
   public:
 	Solution bestSol;                // 最好解
 	Solution sol;                    // 当前解
-	std::vector<const Node*> nodes;  // 节点
+	std::vector<Node*> nodes;        // 节点
 	u32 depotnum;                    // 厂站
 	u32 maxvehicles;                 // 最大车辆
 	u32 maxload;                     // 最大载重
 
-	void init(std::vector<const Node*>& node, const u32 depot_num, u32 max_load, u32 routes);
+	void init(std::vector<Node*>& node, const u32 depot_num, u32 max_load, u32 routes);
 	// 编码
-	void encode(Solution& sol, std::vector<const Node*>& code);
+	void encode(Solution& sol, std::vector<Node*>& code);
 	// 解码
-	void decode(std::vector<const Node*>& code, Solution& sol);
+	void decode(std::vector<Node*>& code, Solution& sol);
 };
 
 class SWO {
   public:
 	std::vector<Solution> solutions;  // 解群
 	Solution bestSol;                 // 最好解
-	std::vector<const Node*> nodes;   // 顾客节点
-	std::vector<const Node*> depots;  // 场站节点
+	std::vector<Node*> nodes;         // 顾客节点
+	std::vector<Node*> depots;        // 场站节点
 	u32 depotnum;                     // 厂站
 	u32 maxvehicles;                  // 最大车辆
 	u32 maxload;                      // 最大载重
 
 	// 初始化算法
-	void init(std::vector<const Node*>& node, const u32 depot_num, u32 max_load, u32 routes);
+	void init(std::vector<Node*>& node, const u32 depot_num, u32 max_load, u32 routes);
 	// 编码
-	void encode(Solution& sol, std::vector<const Node*>& code);
+	void encode(Solution& sol, std::vector<Node*>& code);
 	// 解码
-	void decode(std::vector<const Node*>& code, Solution& sol);
+	void decode(std::vector<Node*>& code, Solution& sol);
 	/// @brief
 	/// @param sol1
 	/// @param sol2

@@ -13,11 +13,11 @@
 #include "solution.hpp"
 
 // SA算法
-void SA::init(std::vector<const Node*>& node, const u32 depot_num, u32 maxload, u32 routes) {
+void SA::init(std::vector<Node*>& node, const u32 depot_num, u32 maxload, u32 routes) {
 	// std::vector<Node*> depots, custers;
 	// custers.assign(nodes.begin(), nodes.end() - depot_num);
 	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
-	sol = nassign(node, depot_num, maxload, routes);
+	// sol = nassign(node, depot_num, maxload, routes);
 	depotnum = depot_num;
 	nodes = node;
 	vehicles = routes;
@@ -67,9 +67,9 @@ void SA::run() {
 /*
 --------------------GA start-------------------
 */
-void GA::encode(Solution& sol, std::vector<const Node*>& code) {}
+void GA::encode(Solution& sol, std::vector<Node*>& code) {}
 
-void GA::decode(std::vector<const Node*>& code, Solution& sol) {}
+void GA::decode(std::vector<Node*>& code, Solution& sol) {}
 /*
 --------------------GA end-------------------
 */
@@ -78,10 +78,18 @@ void GA::decode(std::vector<const Node*>& code, Solution& sol) {}
 --------------------SWO start-------------------
 */
 
-void SWO::init(std::vector<const Node*>& node, const u32 depot_num, u32 maxload, u32 routes) {
+/// @brief 蜘蛛蜂优化算法初始化
+/// @param node
+/// @param depot_num
+/// @param maxload
+/// @param routes
+void SWO::init(std::vector<Node*>& node, const u32 depot_num, u32 maxload, u32 routes) {
 }
 
-void SWO::encode(Solution& sol, std::vector<const Node*>& code) {
+/// @brief 编码
+/// @param code
+/// @param sol
+void SWO::encode(Solution& sol, std::vector<Node*>& code) {
 	std::vector<Vehicle> temp(sol.solution);
 	if (!sol.multi) {
 		// 单场站
@@ -103,11 +111,14 @@ void SWO::encode(Solution& sol, std::vector<const Node*>& code) {
 	}
 }
 
-void SWO::decode(std::vector<const Node*>& code, Solution& sol) {
+/// @brief 解码
+/// @param code
+/// @param sol
+void SWO::decode(std::vector<Node*>& code, Solution& sol) {
 	Vehicle v(code.front(), maxload, 0);
-	for (u32 i{1}, n = code.size(); i < n; i++) {
-		if (!code[i]->isdepot) {
-			v.path.emplace_back(code[i]);
+	for (auto i{code.begin() + 1}; i != code.end(); i++) {
+		if (!(*i)->isdepot) {
+			v.path.emplace_back(*i);
 		} else {
 			sol.add(v);
 			v.clear(nodes.front(), 0);  // 下一个车辆
@@ -116,17 +127,22 @@ void SWO::decode(std::vector<const Node*>& code, Solution& sol) {
 	sol.add(v);  // z最后一个车辆
 }
 
+/// @brief 在两个解决方案之间执行交叉操作，生成一个新的解决方案。
+/// @param sol1 要进行交叉的第一个解决方案。
+/// @param sol2 要进行交叉的第二个解决方案。
+/// @param cr 交叉率，确定从每个解决方案中选择的节点比例。
+/// @return Solution 通过交叉操作生成的新解决方案。
 Solution SWO::cross(Solution& sol1, Solution& sol2, float cr) {
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	Solution child_sol;
 	u64 num{nodes.size()};
-	std::vector<const Node*> code1, code2, child_code;
+	std::vector<Node*> code1, code2, child_code;
 	code1.reserve(num), code2.reserve(num), child_code.reserve(num);
 	encode(sol1, code1), encode(sol2, code2);
 	std::vector<u32> range;
 	range.reserve(maxvehicles);
-	std::set<const Node*> tabu;
+	std::set<Node*> tabu;
 	for (u32 i{0}, n = code1.size(); i < n; i++) {
 		if (code1[i]->isdepot) {
 			range.emplace_back(i);
@@ -155,6 +171,11 @@ Solution SWO::cross(Solution& sol1, Solution& sol2, float cr) {
 	return child_sol;
 }
 
+/// @brief SWO主体（包括路径首位不包括厂站）
+/// @param min_n 最小种群数
+/// @param epoch 迭代次数
+/// @param tr 狩猎筑巢 : 繁殖
+/// @param cr 交叉率
 void SWO::run(u32 min_n, int epoch, float tr, float cr) {
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -163,7 +184,7 @@ void SWO::run(u32 min_n, int epoch, float tr, float cr) {
 	u32 num = solutions.size();
 	u32 custer = nodes.size() - depotnum;
 	while (t < epoch) {
-		float k{1 - t / (float)epoch};
+		float k{1 - t / static_cast<float>(epoch)};
 		if (dis(gen) < tr) {     // 狩猎筑巢
 			if (dis(gen) < k) {  // 狩猎(扰动)
 				for (auto& sol : solutions) {
@@ -187,7 +208,6 @@ void SWO::run(u32 min_n, int epoch, float tr, float cr) {
 			}
 		} else {  // 繁衍(交叉)
 			std::sort(solutions.begin(), solutions.end(), [](const Solution& a, const Solution& b) { return a.allength <= b.allength; });
-			u32 num = solutions.size();
 			for (u32 i{0}, n = num * cr; i < n; i++) {
 				solutions.emplace_back(SWO::cross(solutions[i], solutions[i + 1], cr / 2));
 			}
@@ -208,5 +228,16 @@ void SWO::run(u32 min_n, int epoch, float tr, float cr) {
 	}
 }
 /*
---------------------SWO start-------------------
+--------------------SWO end-------------------
+*/
+
+/*
+-------------------RL start-------------------
+*/
+
+class RL {
+};
+
+/*
+-------------------RL end-------------------
 */

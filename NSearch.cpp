@@ -6,8 +6,8 @@
 #include "algorithm.hpp"
 #include "operator.hpp"
 
-void ALNS::repair(Solution& solution, std::vector<std::pair<u32, const Node*>>& rest) {
-	std::sort(rest.begin(), rest.end(), [](std::pair<u32, const Node*>& a, std::pair<u32, const Node*>& b) { return a.first < b.first; });
+void ALNS::repair(Solution& solution, std::vector<std::pair<u32, Node*>>& rest) {
+	std::sort(rest.begin(), rest.end(), [](const std::pair<u32, Node*>& a, const std::pair<u32, Node*>& b) { return a.first < b.first; });
 	for (auto& r : rest) {
 		for (auto near = r.second->distsort.begin() + 1; near != r.second->distsort.end(); near++) {                                                               // 查找所在路径
 			if (solution.shash.find((*near).to) != solution.shash.end()) {                                                                                         // 邻域是否也被破坏
@@ -34,7 +34,7 @@ void ALNS::repair(Solution& solution, std::vector<std::pair<u32, const Node*>>& 
 	rest.clear();
 }
 
-void ALNS::destory_wst(Solution& solution, const float p, std::vector<std::pair<u32, const Node*>>& rest) {
+void ALNS::destory_wst(Solution& solution, const float p, std::vector<std::pair<u32, Node*>>& rest) {
 	std::vector<std::pair<u32, double>> cost;  // （路线节点，长度差值）
 	for (auto& r : solution.solution) {
 		if (r.path.size() == 2) continue;
@@ -78,7 +78,7 @@ void ALNS::destory_wst(Solution& solution, const float p, std::vector<std::pair<
 	}
 }
 
-void ALNS::destory_rnd(Solution& solution, const float p, std::vector<std::pair<u32, const Node*>>& rest) {
+void ALNS::destory_rnd(Solution& solution, const float p, std::vector<std::pair<u32, Node*>>& rest) {
 	std::random_device device_seed;
 	std::mt19937 gen(device_seed());
 	for (auto& r : solution.solution) {
@@ -94,7 +94,7 @@ void ALNS::destory_rnd(Solution& solution, const float p, std::vector<std::pair<
 	}
 }
 
-void LNS::run(Solution& solution, const std::vector<const Node*>& nodes, u32 epoch) {
+void LNS::run(Solution& solution, const std::vector<Node*>& nodes, u32 epoch) {
 }
 
 void LS::two(Solution& solution, bool& flag) {
@@ -135,6 +135,22 @@ void LS::twoOpt(Solution& solution, bool& flag) {
 				if (CHK::reverse(solution.solution[s], i, j, dif)) {
 					solution.solution[s].cumlength += dif;  // 更新距离
 					flag = true;
+				}
+			}
+		}
+	}
+}
+
+void VNS::relocate(Solution& solution, bool& flag) {
+	Node* near{};
+	u32 to{};
+	for (auto r : solution.solution) {
+		if (r.path.size() <= 2) continue;
+		for (u32 c{1}, n = r.path.size() - 1; c < n; c++) {
+			for (u32 i{0}, m = r.path[c]->distsort.size() * 0.2; i < m; i++) {
+				near = r.path[c]->depotsort[i].toNode;
+				to = CHK::find(solution.solution[solution.shash[near->seq]].path, near);
+				if (to != r.seq) {
 				}
 			}
 		}
