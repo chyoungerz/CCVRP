@@ -1,6 +1,6 @@
 #pragma once
 
-#include <algorithm>
+// #include <algorithm>
 #ifndef _NODE_HPP_
 #define _NODE_HPP_
 
@@ -86,6 +86,10 @@ class Node {
 		this->x = node->x;
 		this->y = node->y;
 	}
+	void set(const double x_, const double y_) {
+		x = x_;
+		y = y_;
+	}
 	// 计算距离（友元）
 	friend const double dist(const Node& node_x, const Node& node_y) {
 		return sqrt((node_x.x - node_y.x) * (node_x.x - node_y.x) + (node_x.y - node_y.y) * (node_x.y - node_y.y));
@@ -103,7 +107,7 @@ class Vehicle {
 	// double diflength;                  // 走过的路(时间）差分数组
 	double cumlength;                  // 所有节点的长度（时间）之和
 	double length;                     // 路径长度（时间）
-	Node* depot;                       // 场站
+	Node* depot{nullptr};              // 场站
 	u32 capacity;                      // 最大容量
 	u32 load;                          // 载重量
 	u32 seq;                           // 路线序号
@@ -111,8 +115,13 @@ class Vehicle {
 	// 无参构造,默认0
 	Vehicle() = delete;
 	// loc是位置, max代表车的最大容量
-	Vehicle(Node* loc, const u32 maxload, const u32 seq_) : cumlength(0.0), capacity(maxload), load(0), seq(seq_), depot(loc) {
+	Vehicle(Node* loc, const u32 maxload, const u32 seq_) : cumlength(0.0), depot(loc), capacity(maxload), load(0), seq(seq_) {
 		path.reserve(100);
+		path.emplace_back(loc);
+	}
+	Vehicle(Node* loc, const u32 maxload) : cumlength(0.0), depot(loc), capacity(maxload), load(0), seq(0) {
+		path.reserve(100);
+		path.emplace_back(loc);
 		path.emplace_back(loc);
 	}
 
@@ -141,7 +150,7 @@ class Vehicle {
 	double path_length(bool update = false) {
 		if (path.empty()) return 0.0;
 		double _length{0.0};
-		for (u64 j{0}, n{path.size() - 1}; j < n; j++) {
+		for (u64 j{0}, n{path.size() - 2}; j < n; j++) {
 			_length += path[j]->dists[path[j + 1]->seq].dist;
 		}
 		if (update) length = _length;
@@ -152,9 +161,9 @@ class Vehicle {
 	/// @param update 是否更新，默认否
 	/// @return 累计路径长度
 	double path_cumlength(bool update = false) {
-		if (path.empty()) return 0.0;
+		if (path.size() <= 2) return 0.0;
 		double _length{0.0};
-		for (u64 j{0}, n{path.size() - 1}; j < n; j++) {
+		for (u64 j{0}, n{path.size() - 2}; j < n; j++) {
 			_length += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
 		}
 		if (update) cumlength = _length;
@@ -233,7 +242,7 @@ class Solution {
 		for (u32 i = 0, n = solution.size(); i < n; i++) {
 			if (solution[i].path.empty()) continue;
 			num += solution[i].path.size() - 2;
-			std::cout << solution[i] << " : " << solution[i].path.size() << std::endl;
+			std::cout << solution[i] << " : " << solution[i].path.size() - 2 << std::endl;
 			routes++;
 		}
 		std::cout << "total length: " << allength << "\ttotal customers: " << num << "\ttotal routes: " << routes << std::endl;
@@ -277,7 +286,35 @@ class Solution {
 
 	/// @brief 删除空路径
 	void remove_void() {
-		solution.erase(std::remove_if(solution.begin(), solution.end(), [](const Vehicle& v) { return v.path.size() <= 2; }), solution.end());
+		bool flag{0};
+		if (multi) {  // 多场站
+			while (solution.size() != maxvehicle && flag) {
+				flag = 0;
+			}
+			if (solution.size() != maxvehicle && flag) {
+				update_seq();
+			}
+		} else {
+			if (solution.size() != maxvehicle) {
+				if (solution.size() > maxvehicle) {
+					int v = solution.size() - maxvehicle;
+					for (auto it = solution.begin(); it != solution.end(); it++) {
+						if (it->path.size() <= 2) {
+							solution.erase(it);
+							v--;
+							if (v <= 0)
+								break;
+						}
+					}
+				} else {
+					solution.resize(maxvehicle, Vehicle(solution.front().depot, 0));
+					flag = 1;
+				}
+			}
+			if (flag) {
+				update_seq();
+			}
+		}
 	}
 
 	///@brief 约束目标

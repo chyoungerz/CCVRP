@@ -350,5 +350,7 @@ namespace OPS {
 	bool swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, double& saving);
 	bool onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, double& saving, bool& location);
 	bool oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 len, double& saving, bool& location);
+	bool oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& saving, bool& location);
+	bool arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, double& saving);
 };  // namespace OPS
 #endif

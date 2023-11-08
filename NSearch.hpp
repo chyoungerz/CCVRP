@@ -40,11 +40,14 @@ namespace LS {
 }  // namespace LS
 
 namespace VNS {
+	void neighbor(std::vector<Node*> node, u32 size, std::vector<Node*>& neighbor);
 	void relocate(Solution& solution, bool& flag);
 	void twoopt(Solution& solution, bool& flag);
 	void exchange(Solution& solution, bool& flag);
 	void arcnode(Solution& solution, bool& flag);
-	void oropt(Solution& solution, bool& flag);
+	void oropt2(Solution& solution, bool& flag);
+	void oropt3(Solution& solution, bool& flag);
+	void oropt4(Solution& solution, bool& flag);
 	void cross(Solution& solution, bool& flag);
 };  // namespace VNS
 #endif

@@ -36,17 +36,89 @@ inline std::vector<Node*> read(const std::string& file, u32& maxload, u32& despo
 	return nodes_ptr;
 }
 
+/// @brief 读取VRP文件
+/// @param file 文件路径
+/// @param maxload 最大负载
+/// @param despot 仓库数量
+/// @param routes 路线数量
+/// @param nodes 节点列表
+/// @return true | false
+inline bool read_vrp(const std::string& file, u32& maxload, u32& despot, u32& routes, std::vector<Node*>& nodes) {
+	std::ifstream config(file);
+	if (config.fail()) {
+		return false;
+	}
+	std::string line;
+	u32 max_node{}, demand{};
+	int seq{};
+	double x{}, y{};
+	while (std::getline(config, line)) {
+		// 忽略包含特定关键字的行
+		if (line.find("NAME") != std::string::npos ||
+		    line.find("COMMENT") != std::string::npos ||
+		    line.find("TYPE") != std::string::npos ||
+		    line.find("EDGE_WEIGHT_TYPE") != std::string::npos) {
+			continue;
+		}
+		// 读取最大节点数
+		if (line.find("DIMENSION") != std::string::npos) {
+			max_node = std::stoi(line.substr(line.find(":") + 1));
+			continue;
+		}
+		// 读取容量
+		if (line.find("CAPACITY") != std::string::npos) {
+			maxload = std::stoi(line.substr(line.find(":") + 1));
+			continue;
+		}
+		// 读取NODE_COORD_SECTION
+		if (line.find("NODE_COORD_SECTION") != std::string::npos) {
+			for (u32 i{0}; i < max_node; i++) {
+				config >> seq >> x >> y;
+				nodes.emplace_back(new Node(i, x, y, 0, 0, 0, 0));
+			}
+			std::getline(config, line);
+			continue;
+		}
+		// 读取DEMAND_SECTION
+		if (line.find("DEMAND_SECTION") != std::string::npos) {
+			for (u32 i{0}; i < max_node; i++) {
+				config >> seq >> demand;
+				nodes[i]->demand = demand;
+			}
+			std::getline(config, line);
+			continue;
+		}
+		// 读取DEPOT_SECTION
+		if (line.find("DEPOT_SECTION") != std::string::npos) {
+			config >> seq;
+			while (seq != -1) {
+				despot++;
+				nodes[seq - 1]->isdepot = true;
+				config >> seq;
+			}
+			std::getline(config, line);
+			continue;
+		}
+		// 结束
+		if (line.find("EOF") != std::string::npos) {
+			break;
+		}
+	}
+	return true;
+}
+
 // 创建保存结果的文件，按日期命名，并设置随机数种子。
-inline void create(const std::string& filename, const time_t now) {
+inline void create(const std::string& filename) {
 	char str[12];
-	strftime(str, 96, "%Y%m%d%H%M", localtime(&now));
+	std::time_t now = std::time(nullptr);
+	strftime(str, 96, "%Y%m%d%H%M", std::localtime(&now));
 	std::ofstream out(filename, std::ios::app);  // 输出, 追加末尾
 	if (out.fail()) {
 		std::cerr << "Error! cannot write to file: " << filename << std::endl;
 		return;
 	}
 	out << "日期：" << str << "\n";
-	out << "随机数种子：" << now << "\n";
+	// out << "随机数种子：" << 0 << "\n";
 	out.close();
 }
 

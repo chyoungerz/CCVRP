@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <random>
+#include <set>
+#include <vector>
 
 #include "algorithm.hpp"
 #include "operator.hpp"
@@ -141,18 +143,305 @@ void LS::twoOpt(Solution& solution, bool& flag) {
 	}
 }
 
-void VNS::relocate(Solution& solution, bool& flag) {
+void VNS::relocate(Solution& s, bool& flag) {
 	Node* near{};
-	u32 to{};
-	for (auto r : solution.solution) {
-		if (r.path.size() <= 2) continue;
-		for (u32 c{1}, n = r.path.size() - 1; c < n; c++) {
-			for (u32 i{0}, m = r.path[c]->distsort.size() * 0.2; i < m; i++) {
-				near = r.path[c]->depotsort[i].toNode;
-				to = CHK::find(solution.solution[solution.shash[near->seq]].path, near);
-				if (to != r.seq) {
+	std::vector<Node*> p;
+	u32 tr{}, tp{};  // to_route;to_path;from_route;from_path
+	double saving{};
+	bool location{};
+	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
+		if (s.solution[fr].path.size() <= 2) continue;
+		p.assign(s.solution[fr].path.begin() + 1, s.solution[fr].path.end() - 1);
+		for (u32 fp{0}, n = p.size(); fp < n; fp++) {
+			for (u32 i{0}, m = p[fp]->distsort.size() * 0.2; i < m; i++) {
+				near = p[fp]->distsort[i].toNode;
+				tr = s.shash[near->seq];
+				tp = CHK::find(s.solution[tr].path, near);
+				if (OPS::onepointmove(s.solution[fr], s.solution[tr], fp, tp, saving, location)) {
+					s.shash[p[fp]->seq] = tr;
+					flag = 1;
+					break;
 				}
 			}
 		}
+	}
+	s.remove_void();
+}
+
+void VNS::twoopt(Solution& s, bool& flag) {
+	double saving{};
+	for (auto& r : s.solution) {
+		if (r.path.size() < 5) continue;
+		for (u32 i{1}, n = r.path.size() - 1; i + 2 < n; i++) {
+			for (u32 j{i + 2}; j < n; j++) {
+				if (OPS::reverse(r, i, j, saving)) flag = 1;
+			}
+		}
+	}
+}
+
+void VNS::exchange(Solution& s, bool& flag) {
+	Node* near{};
+	std::vector<Node*> p;
+	u32 tr{}, tp{};  // to_route;to_path;from_route;from_path
+	double saving{};
+	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
+		if (s.solution[fr].path.size() <= 2) continue;
+		p.assign(s.solution[fr].path.begin() + 1, s.solution[fr].path.end() - 1);
+		for (u32 fp{0}, n = p.size(); fp < n; fp++) {
+			for (u32 i{0}, m = p[fp]->distsort.size() * 0.2; i < m; i++) {
+				near = p[fp]->distsort[i].toNode;
+				tr = s.shash[near->seq];
+				tp = CHK::find(s.solution[tr].path, near);
+				if (OPS::swapmove(s.solution[fr], s.solution[tr], fp, tp, saving)) {
+					s.shash[p[fp]->seq] = tr;
+					s.shash[near->seq] = fr;
+					flag = 1;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void VNS::oropt2(Solution& s, bool& flag) {
+	Node *p1{}, *p2{};
+	std::set<u32> tabu;
+	std::vector<Node*> p, neighbors;
+	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
+	double saving{};
+	bool location{};
+	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
+		if (s.solution[fr].path.size() <= 4) continue;
+		u32 index{1};
+		size = s.solution[fr].path[index]->depotsort.size() * 0.2;
+		while (index < s.solution[fr].path.size() - 2) {
+			p1 = s.solution[fr].path[index];
+			p2 = s.solution[fr].path[index + 1];
+			if (tabu.find((p1->seq << 10) + p2->seq) != tabu.end()) {
+				index += 2;
+				continue;
+			}
+			VNS::neighbor({p1, p2}, size, neighbors);
+			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
+				tr = s.shash[neighbors[i]->seq];
+				tp = CHK::find(s.solution[tr].path, neighbors[i]->seq);
+				fp = CHK::find(s.solution[fr].path, p1);
+				if (tr == fr) {
+					if (OPS::oropt(s.solution[fr], fp, tp, 2, saving, location)) {
+						flag = 1;
+						if (fp < tp) {
+							tabu.emplace((p1->seq << 10) + p2->seq);
+							break;
+						}
+					} else {
+						if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 2, saving, location)) {
+							flag = 1;
+							break;
+						}
+					}
+				}
+				index++;
+			}
+			tabu.clear();
+		}
+	}
+}
+
+void VNS::arcnode(Solution& s, bool& flag) {
+	Node *p1{}, *p2{};
+	std::set<u32> tabu;
+	std::vector<Node*> p, neighbors;
+	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
+	double saving{};
+	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
+		if (s.solution[fr].path.size() <= 4) continue;
+		u32 index{1};
+		size = s.solution[fr].path[index]->depotsort.size() * 0.2;
+		while (index < s.solution[fr].path.size() - 2) {
+			p1 = s.solution[fr].path[index];
+			p2 = s.solution[fr].path[index + 1];
+			if (tabu.find((p1->seq << 10) + p2->seq) != tabu.end()) {
+				index += 2;
+				continue;
+			}
+			VNS::neighbor({p1, p2}, size, neighbors);
+			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
+				tr = s.shash[neighbors[i]->seq];
+				tp = CHK::find(s.solution[tr].path, neighbors[i]->seq);
+				fp = CHK::find(s.solution[fr].path, p1);
+				if (tr == fr) {
+					if (OPS::arcnode(s.solution[fr], s.solution[fr], fp, tp, saving)) {
+						flag = 1;
+						if (fp < tp)
+							tabu.emplace((p1->seq << 10) + p2->seq);
+						break;
+					}
+				} else {
+					if (OPS::arcnode(s.solution[fr], s.solution[tr], fp, tp, saving)) {
+						flag = 1;
+						break;
+					}
+				}
+			}
+			index++;
+		}
+		tabu.clear();
+	}
+}
+
+void VNS::oropt3(Solution& s, bool& flag) {
+	Node *p1{}, *p2{}, *p3;
+	std::set<u32> tabu;
+	std::vector<Node*> p, neighbors;
+	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
+	double saving{};
+	bool location{};
+	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
+		if (s.solution[fr].path.size() <= 5) continue;
+		u32 index{1};
+		size = s.solution[fr].path[index]->depotsort.size() * 0.2;
+		while (index < s.solution[fr].path.size() - 3) {
+			p1 = s.solution[fr].path[index];
+			p2 = s.solution[fr].path[index + 1];
+			p3 = s.solution[fr].path[index + 2];
+			if (tabu.find((p1->seq << 20) + (p2->seq << 10) + p3->seq) != tabu.end()) {
+				index += 3;
+				continue;
+			}
+			VNS::neighbor({p1, p2, p3}, size, neighbors);
+			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
+				tr = s.shash[neighbors[i]->seq];
+				tp = CHK::find(s.solution[tr].path, neighbors[i]->seq);
+				fp = CHK::find(s.solution[fr].path, p1);
+				if (tr == fr) {
+					if (OPS::oropt(s.solution[fr], fp, tp, 3, saving, location)) {
+						flag = 1;
+						if (fp < tp)
+							tabu.emplace((p1->seq << 20) + (p2->seq << 10) + p3->seq);
+						break;
+					}
+				} else {
+					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 3, saving, location)) {
+						flag = 1;
+						break;
+					}
+				}
+			}
+			index++;
+		}
+		tabu.clear();
+	}
+}
+
+void VNS::oropt4(Solution& s, bool& flag) {
+	Node *p1{}, *p2{}, *p3{}, *p4{};
+	std::set<u32> tabu;
+	std::vector<Node*> p, neighbors;
+	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
+	double saving{};
+	bool location{};
+	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
+		if (s.solution[fr].path.size() <= 6) continue;
+		u32 index{1};
+		size = s.solution[fr].path[index]->depotsort.size() * 0.2;
+		while (index < s.solution[fr].path.size() - 4) {
+			p1 = s.solution[fr].path[index];
+			p2 = s.solution[fr].path[index + 1];
+			p3 = s.solution[fr].path[index + 2];
+			p4 = s.solution[fr].path[index + 3];
+			if (tabu.find((p1->seq << 20) + (p2->seq << 10)) != tabu.end() && tabu.find((p3->seq << 10) + p4->seq) != tabu.end()) {
+				index += 4;
+				continue;
+			}
+			VNS::neighbor({p1, p2, p3, p4}, size, neighbors);
+			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
+				tr = s.shash[neighbors[i]->seq];
+				tp = CHK::find(s.solution[tr].path, neighbors[i]->seq);
+				fp = CHK::find(s.solution[fr].path, p1);
+				if (tr == fr) {
+					if (OPS::oropt(s.solution[fr], fp, tp, 4, saving, location)) {
+						flag = 1;
+						if (fp < tp)
+							tabu.emplace((p1->seq << 20) + (p2->seq << 10));
+						tabu.emplace((p3->seq << 10) + p4->seq);
+						break;
+					}
+
+				} else {
+					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 4, saving, location)) {
+						flag = 1;
+						break;
+					}
+				}
+			}
+			index++;
+		}
+		tabu.clear();
+	}
+}
+
+/// @brief 计算节点的邻域
+/// @param node  输入节点
+/// @param size 大小参数
+/// @param neighbor  存储邻域的节点
+void VNS::neighbor(std::vector<Node*> node, u32 size, std::vector<Node*>& neighbor) {
+	std::set<Node*> neighbor_set;
+	if (node.size() == 2) {
+		Node *n1{node[0]}, *n2{node[1]};
+		// 将节点添加到邻居集合中
+		for (u32 i{0}; i <= size; i++) {
+			neighbor_set.emplace(n1->distsort[i].toNode), neighbor_set.emplace(n2->distsort[i].toNode);
+		}
+		// 从邻居集合中移除 n1 和 n2
+		neighbor_set.erase(n1), neighbor_set.erase(n2);
+		// 将邻居集合分配给邻居向量
+		neighbor.assign(neighbor_set.begin(), neighbor_set.end());
+		// 根据距离对邻居向量进行部分排序
+		std::partial_sort(neighbor.begin(), neighbor.begin() + size, neighbor.end(), [n1, n2](Node* a, Node* b) {
+			return a->dists[n1->seq].dist + a->dists[n2->seq].dist < b->dists[n1->seq].dist + b->dists[n2->seq].dist;
+		});
+		// 调整邻居向量大小为 size
+		neighbor.resize(size);
+		return;
+	}
+	if (node.size() == 3) {
+		Node *n1{node[0]}, *n2{node[1]}, *n3{node[1]};
+		// 将节点添加到邻居集合中
+		for (u32 i{0}; i <= size; i++) {
+			neighbor_set.emplace(n1->distsort[i].toNode);
+			neighbor_set.emplace(n2->distsort[i].toNode);
+			neighbor_set.emplace(n3->distsort[i].toNode);
+		}
+		// 从邻居集合中移除 n1、n2 和 n3
+		neighbor_set.erase(n1), neighbor_set.erase(n2), neighbor_set.erase(n3);
+		// 将邻居集合分配给邻居向量
+		neighbor.assign(neighbor_set.begin(), neighbor_set.end());
+		// 根据距离对邻居向量进行部分排序
+		std::partial_sort(neighbor.begin(), neighbor.begin() + size, neighbor.end(), [n1, n2, n3](Node* a, Node* b) {
+			return a->dists[n1->seq].dist + a->dists[n2->seq].dist + a->dists[n3->seq].dist < b->dists[n1->seq].dist + b->dists[n2->seq].dist + b->dists[n3->seq].dist;
+		});
+		// 调整邻居向量大小为 size
+		neighbor.resize(size);
+		return;
+	}
+	if (node.size() == 4) {
+		Node *n1{node[0]}, *n2{node[1]}, *n3{node[1]}, *n4{node[1]};
+		// 将节点添加到邻居集合中
+		for (u32 i{0}; i <= size; i++) {
+			neighbor_set.emplace(n1->distsort[i].toNode), neighbor_set.emplace(n2->distsort[i].toNode);
+			neighbor_set.emplace(n3->distsort[i].toNode), neighbor_set.emplace(n4->distsort[i].toNode);
+		}
+		// 从邻居集合中移除 n1、n2、n3 和 n4
+		neighbor_set.erase(n1), neighbor_set.erase(n2), neighbor_set.erase(n3), neighbor_set.erase(n4);
+		// 将邻居集合分配给邻居向量
+		neighbor.assign(neighbor_set.begin(), neighbor_set.end());
+		// 根据距离对邻居向量进行部分排序
+		std::partial_sort(neighbor.begin(), neighbor.begin() + size, neighbor.end(), [n1, n2, n3, n4](Node* a, Node* b) {
+			return a->dists[n1->seq].dist + a->dists[n2->seq].dist + a->dists[n3->seq].dist + a->dists[n4->seq].dist < b->dists[n1->seq].dist + b->dists[n2->seq].dist + b->dists[n3->seq].dist + b->dists[n4->seq].dist;
+		});
+		// 调整邻居向量大小为 size
+		neighbor.resize(size);
+		return;
 	}
 }

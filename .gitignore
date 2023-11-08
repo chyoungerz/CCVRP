@@ -1,7 +1,5 @@
-*.exe
 /.vscode
-*.mm
 *.bike
 /build
 /CCVRP
-/.cache
+.clang-format
