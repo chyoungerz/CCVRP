@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <iterator>
 #ifndef _ALGORITHM_HPP
 #define _ALGORITHM_HPP
 
@@ -24,7 +25,6 @@ namespace ALG {
 	/// @param low_index 开始位置
 	/// @param high_index 结束位置
 	/// @param k 最大的个数
-	/// @note 已死，使用std::partial_sort代替
 	template <typename T>
 	inline void topK(std::vector<T>& vec, unsigned int low_index, unsigned int high_index, unsigned int k) {
 		if (high_index <= low_index) return;
@@ -51,7 +51,6 @@ namespace ALG {
 	/// @param high_index 结束位置
 	/// @param k 最大的个数
 	/// @param cmp 比较函数(<)
-	/// @note 已死，使用std::partial_sort代替
 	template <typename T, typename Fn>
 	inline void topK(std::vector<T>& vec, unsigned int low_index, unsigned int high_index, unsigned int k, Fn cmp) {
 		if (high_index <= low_index) return;
@@ -69,6 +68,41 @@ namespace ALG {
 			topK(vec, left + 1, high_index, k);
 		else
 			topK(vec, low_index, left - 1, k);
+	}
+
+	/**
+	 * @brief 这个函数使用快速选择算法，用于在一系列元素中找到最大的k个元素
+	 * @warning 比较函数必须是（<=）。最大k个元素在末尾。
+	 * @tparam _FwdIt 前向迭代器类型。
+	 * @tparam _Fn 函数对象类型。
+	 * @param _first 指向范围中第一个元素的迭代器。
+	 * @param _last 指向范围中最后一个元素的迭代器。
+	 * @param _k k 的值。
+	 * @param _cmp 用于比较元素的函数对象。
+	 * @return void
+	 */
+	template <class _FwdIt, class _Fn>
+	inline void topk(_FwdIt _first, _FwdIt _last, unsigned int _k, _Fn _cmp) {
+		if (_last <= _first || _k == 0) return;
+		if (_k >= _last - _first) return;
+		_FwdIt _left{_first}, _right{_last};
+		auto _size = std::distance(_first, _last);
+		_FwdIt _pivot{_first + _size / 2};
+		while (_left < _right) {
+			while (_left < _right && _cmp(*_pivot, *_right)) --_right;
+			while (_left < _right && _cmp(*_left, *_pivot)) ++_left;
+			if (_left < _right) {
+				std::iter_swap(_left, _right);
+				--_right, ++_left;
+			}
+		}
+		std::iter_swap(_left, _pivot);
+		auto _len = _last - _left;
+		if (_k == _len || _k == _len + 1) return;
+		if (_k < _len)
+			topk(_left + 1, _last, _k, _cmp);
+		else
+			topk(_first, _left, _k - _len, _cmp);
 	}
 
 	/// @brief K聚类算法
@@ -114,6 +148,30 @@ namespace ALG {
 		if (epoch_max) return true;
 		else
 			return false;
+	}
+
+	/**
+	 * 将范围[first, last)中的元素旋转k个位置。
+	 *
+	 * @tparam _FwdIt 前向迭代器类型。
+	 * @param _first 范围中第一个元素的迭代器。
+	 * @param _last 范围中最后一个元素的迭代器。
+	 * @param k 旋转元素的位置数。如果为正数，则向右旋转元素。如果为负数，则向左旋转元素。
+	 */
+	template <class _FwdIt>
+	inline void rotate(_FwdIt _first, _FwdIt _last, int k) {
+		if (_last <= _first || k == 0) return;
+		if (k > 0) {  // 向右旋转
+			_FwdIt _mid{_last - k};
+			std::reverse(_first, _mid);
+			std::reverse(_mid + 1, _last);
+			std::reverse(_first, _last);
+		} else {  // 向左旋转
+			_FwdIt _mid{_first - k};
+			std::reverse(_first, _mid - 1);
+			std::reverse(_mid, _last);
+			std::reverse(_first, _last);
+		}
 	}
 
 }  // namespace ALG

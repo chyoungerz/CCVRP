@@ -4,7 +4,6 @@
 #include "fileio.hpp"
 #include "heuristic.hpp"
 #include "node.hpp"
-#include "solution.hpp"
 
 using namespace std;
 /// @brief
@@ -23,7 +22,7 @@ int main(int argc, char const *argv[]) {
 		file = argv[1];
 		result = argv[2];
 	}
-	u32 maxload, depot_num, routes;
+	u32 maxload{}, depot_num{}, routes{23};
 	// nodes = read(file, maxload, depot_num, routes);
 	read_vrp(file, maxload, depot_num, routes, nodes);
 	if (nodes.empty()) {
@@ -31,8 +30,9 @@ int main(int argc, char const *argv[]) {
 		return 1;
 	}
 	init_distance(nodes, depot_num, depots, customers);  // 计算客户距离
-	Solution s = nassign(customers, depots, maxload, routes);
-	s.show();
+	SA vrp;
+	vrp.init(nodes, depots, customers, depot_num, maxload, routes);
+	vrp.run();
 	//  depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
 	// create(result, now);
 	// write(result, vrp.bestSol);

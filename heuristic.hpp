@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #ifndef _HEURISTICS_HPP_
 #define _HEURISTICS_HPP_
 
@@ -10,12 +11,15 @@ class SA {
   public:
 	Solution bestSol;  // 最好解
 	Solution sol;      // 当前解
-	std::vector<Node*> nodes;        // 节点
-	u32 depotnum;                    // 厂站
-	u32 vehicles;                    // 最大车辆
+	std::vector<Node*> nodes;  // 全部节点
+	std::vector<Node*> depots;
+	std::vector<Node*> customers;
+	std::vector<Info> infos;
+	u32 depotnum;  // 厂站数
+	u32 vehicles;  // 最大车辆数
 
 	/// @brief
-	void init(std::vector<Node*>& node, const u32 depot_num, u32 maxload, u32 routes);
+	void init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<Node*>& customer, const u32 depot_num, u32 maxload, u32 routes);
 	/// @todo 参数 迭代次数30-50次， 没有提升次数20，
 	void run();
 };

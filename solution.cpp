@@ -136,7 +136,8 @@ Solution greedynear(std::vector<Node*>& nodes, const u32 depot_num, const u32 ma
 Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const u32 maxload, const u32 routes) {
 	Solution solution;
 	if (depots.size() == 1) {  // 单厂站
-		solution.multi = true;
+		solution.multi = false;
+		solution.maxvehicle = routes;
 		Node* depot{depots.front()};
 		Vehicle vehicle(depot, maxload, 0);  // 初始路线
 		// 按离厂站距离排序
@@ -163,6 +164,7 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 		}
 	} else {  // 多厂站(未测试)
 		solution.multi = true;
+		solution.maxvehicle = routes;
 		u32 depot_num = depots.size();
 		std::vector<std::vector<Node*>> classfy(depot_num);
 		std::vector<Node> K;

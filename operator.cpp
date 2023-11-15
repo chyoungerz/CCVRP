@@ -5,6 +5,8 @@
 #include <random>
 #include <utility>
 
+#include "algorithm.hpp"
+
 // constexpr int MAXLOAD = 200;  // 定义最大载货
 
 void OP::insertb(Vehicle& vehicle, Node* node, const u32 pos, const double diflength) {
@@ -1211,80 +1213,78 @@ void PER::RuinCreate(Solution& sol, u32 k, u32 maxnode, u32 epoch) {
 bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, double& saving, bool& location) {
 	Node* temp{r1.path[a]};                           // 保存要插入的节点
 	double saving0{10000000.0}, saving1{10000000.0};  // 初始化保存插入前面和后面的节省距离
-	double r1_path{r1.cumlength}, r1_newpath{}, r2_front_path{}, r2_back_path{};
+	double r1_newpath{}, r2_front_path{}, r2_back_path{};
 	if (r1.seq == r2.seq) {  // 同一条路线
-		if (a - b == 1) {    // 0 - b - a - 0
-			std::swap(r1.path[a], r1.path[b]);
-			if (r1.evaluate()) {
-				r2_front_path = r1.path_cumlength();
-				saving0 = r2_front_path - r1_path;
+		if (a < b) {
+			ALG::rotate(r2.path.begin() + a, r2.path.begin() + b + 1, -1);
+			if (r2.evaluate()) {  // 评估插入r2的前面
+				r2_front_path = r2.path_cumlength();
+				saving0 = r2_front_path - r2.cumlength;
 			}
-			if (saving0 <= 0.0) {
-				saving = saving0;
-				r1.cumlength = r2_front_path;
+			std::swap(r2.path[b], r2.path[b - 1]);
+			if (r2.evaluate()) {  // 评估插入r2的后面
+				r2_back_path = r2.path_cumlength();
+				saving1 = r2_back_path - r2.cumlength;
+			}
+			if (saving0 < saving1) {
+				// 插入前面更优
 				location = false;
+				saving = saving0;
+				if (saving0 > 0) {  // 如果节省距离大于0，说明前插入不可行，需要还原
+					ALG::rotate(r2.path.begin() + a, r2.path.begin() + b + 2, 1);
+					return false;  // 返回不可行
+				}
+				// 可行，撤销交换
+				std::swap(r2.path[b], r2.path[b - 1]);
+				r2.cumlength = r2_front_path;
 				return true;
 			} else {
-				saving = 0.0;
-				location = 1;
-				std::swap(r1.path[a], r1.path[b]);
-				return false;
-			}
-		}
-		if (a - b == 4294967295) {  // 0 - a - b - 0
-			std::swap(r1.path[a], r1.path[b]);
-			if (r1.evaluate()) {
-				r2_back_path = r1.path_cumlength();
-				saving1 = r2_back_path - r1_path;
-			}
-			if (saving1 < 0.0) {
-				saving = saving1;
-				r1.cumlength = r2_back_path;
+				// 插入后面更优
 				location = true;
+				saving = saving1;
+				if (saving1 > 0) {  // 如果节省距离大于0，说明后插入不可行，需要还原
+					ALG::rotate(r2.path.begin() + a, r2.path.begin() + b + 2, 1);
+					return false;  // 返回不可行
+				}
+				// 可行
+				r2.cumlength = r2_back_path;
+				return true;
+			}
+		} else {
+			ALG::rotate(r2.path.rbegin() + b, r2.path.rbegin() + a + 2, 1);
+			if (r2.evaluate()) {  // 评估插入r2的前面
+				r2_front_path = r2.path_cumlength();
+				saving0 = r2_front_path - r2.cumlength;
+			}
+			std::swap(r2.path[b], r2.path[b + 1]);
+			if (r2.evaluate()) {  // 评估插入r2的后面
+				r2_back_path = r2.path_cumlength();
+				saving1 = r2_back_path - r2.cumlength;
+			}
+			if (saving0 < saving1) {
+				// 插入前面更优
+				location = false;
+				saving = saving0;
+				if (saving0 > 0) {  // 如果节省距离大于0，说明前插入不可行，需要还原
+					ALG::rotate(r2.path.begin() + b + 1, r2.path.begin() + a + 2, -1);
+					return false;  // 返回不可行
+				}
+				// 可行，撤销交换
+				std::swap(r2.path[b], r2.path[b + 1]);
+				r2.cumlength = r2_front_path;
 				return true;
 			} else {
-				saving = 0.0;
-				location = 0;
-				std::swap(r1.path[a], r1.path[b]);
-				return false;
+				// 插入后面更优
+				location = true;
+				saving = saving1;
+				if (saving1 > 0) {  // 如果节省距离大于0，说明后插入不可行，需要还原
+					ALG::rotate(r2.path.begin() + b + 1, r2.path.begin() + a + 2, -1);
+					return false;  // 返回不可行
+				}
+				// 可行
+				r2.cumlength = r2_back_path;
+				return true;
 			}
-		}
-		r1.path.erase(r1.path.begin() + a);          // 从r1中删除要插入的节点
-		r1.path.emplace(r1.path.begin() + b, temp);  // 在r1中插入节点
-		if (r1.evaluate()) {                         // 评估插入前面
-			r2_front_path = r1.path_cumlength();
-			saving0 = r2_front_path - r1_path;
-		}
-		std::swap(r1.path[b], r1.path[b + 1]);  // 交换插入的节点和后面的节点
-		if (r1.evaluate()) {                    // 评估插入后面
-			r2_back_path = r1.path_cumlength();
-			saving1 = r2_back_path - r1_path;
-		}
-		if (saving0 < saving1) {
-			// 插入前面更优
-			location = false;
-			saving = saving0;
-			if (saving0 > 0) {                               // 如果节省距离大于0，说明前插入不可行，需要还原
-				r1.path.emplace(r1.path.begin() + a, temp);  // 还原路径
-				r1.path.erase(r1.path.begin() + b + 1);
-				return false;  // 返回不可行
-			}
-			// 可行，撤销交换
-			std::swap(r1.path[b], r1.path[b + 1]);
-			r1.cumlength = r2_front_path;
-			return true;
-		} else {
-			// 插入后面更优
-			location = true;
-			saving = saving1;
-			if (saving1 > 0) {                               // 如果节省距离大于0，说明后插入不可行，需要还原
-				r1.path.emplace(r1.path.begin() + a, temp);  // 还原r1路径
-				r1.path.erase(r1.path.begin() + b + 1);      // 还原r2路径
-				return false;                                // 返回不可行
-			}
-			// 可行
-			r1.cumlength = r2_back_path;
-			return true;
 		}
 	}
 	// 不在同路径
@@ -1332,7 +1332,7 @@ bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, doubl
 
 bool OPS::reverse(Vehicle& r, const u32 f, const u32 t, double& saving) {
 	// 倒转路径中从f到t之间的元素
-	std::reverse(r.path.begin() + f, r.path.begin() + t);
+	std::reverse(r.path.begin() + f, r.path.begin() + t + 1);
 	// 如果倒转后的路径评估成功
 	if (r.evaluate()) {
 		// 计算节省的距离
@@ -1345,7 +1345,7 @@ bool OPS::reverse(Vehicle& r, const u32 f, const u32 t, double& saving) {
 		return false;
 	} else {
 		// 如果评估失败，还原路径的倒转
-		std::reverse(r.path.begin() + f, r.path.begin() + t);
+		std::reverse(r.path.begin() + f, r.path.begin() + t + 1);
 		return false;
 	}
 }
@@ -1386,7 +1386,7 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& sav
 	double saving0{10000000.0}, saving1{10000000.0}, r_front{}, r_back{};
 	if (f < t) {
 		if (t - f1 == 1) {                                                                     // 相邻
-			std::rotate(r.path.rbegin() + f, r.path.rbegin() + f1, r.path.rbegin() + f1 + 1);  // 将路径中f到f1的部分旋转
+			ALG::rotate(r.path.begin() + f, r.path.begin() + t + 1, 1);                        // 将路径中f到f1的部分旋转
 			r_back = r.path_cumlength();
 			// 如果路径评估成功，则计算节约值
 			if (r.evaluate()) {
@@ -1396,6 +1396,7 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& sav
 			if (saving1 > 0.0) {
 				location = false;
 				saving = 0.0;
+				ALG::rotate(r.path.begin() + f, r.path.begin() + t + 1, -1);  //  还原
 				return false;
 			}
 			location = 1;
@@ -1403,13 +1404,13 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& sav
 			return true;
 		}
 		// 向左旋转r的路径
-		std::rotate(r.path.begin() + f, r.path.begin() + f1 + 1, r.path.begin() + t);
+		ALG::rotate(r.path.begin() + f, r.path.begin() + t, -len);
 		r_front = r.path_cumlength();
 		// 前插
 		if (r.evaluate()) {
 			saving0 = r_front - r.cumlength;
 		}
-		std::rotate(r.path.rbegin() + t - len, r.path.rbegin() + t, r.path.rbegin() + t + 1);
+		ALG::rotate(r.path.rbegin() + t - len, r.path.rbegin() + t + 1, 1);
 		r_back = r.path_cumlength();
 		// 后插
 		if (r.evaluate()) {
@@ -1418,11 +1419,11 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& sav
 		if (saving0 < saving1) {
 			saving = saving0;
 			if (saving < 0.0) {
-				std::rotate(r.path.begin() + t - len, r.path.begin() + t - len + 1, r.path.begin() + t + 1);
+				ALG::rotate(r.path.rbegin() + t - len, r.path.rbegin() + t + 1, -1);
 				r.cumlength = r_front;
 				return true;
 			}
-			std::rotate(r.path.rbegin() + f, r.path.rbegin() + t - len, r.path.rbegin() + t + 1);
+			ALG::rotate(r.path.begin() + f, r.path.begin() + t + 1, len);
 			return false;
 		} else {
 			saving = saving1;
@@ -1430,17 +1431,18 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& sav
 				r.cumlength = r_back;
 				return true;
 			}
-			std::rotate(r.path.rbegin() + f, r.path.rbegin() + t - len, r.path.rbegin() + t + 1);
+			ALG::rotate(r.path.begin() + f, r.path.begin() + t + 1, len);
 			return false;
 		}
 	} else {
 		if (f - t == 1) {  // 相邻
-			std::rotate(r.path.begin() + t, r.path.begin() + f, r.path.begin() + f1 + 1);
+			ALG::rotate(r.path.begin() + t, r.path.begin() + f + len, -1);
 			r_front = r.path_cumlength();
 			if (r.evaluate()) {
 				saving0 = r_front - r.cumlength;
 			}
 			if (saving0 > 0.0) {
+				ALG::rotate(r.path.begin() + t, r.path.begin() + f + len, 1);
 				location = 1;
 				saving = 0.0;
 				return false;
@@ -1450,12 +1452,12 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& sav
 			return true;
 		}
 		// 向右旋转r的路径
-		std::rotate(r.path.rbegin() + t, r.path.rbegin() + f - 1, r.path.rbegin() + f1 + 1);
+		ALG::rotate(r.path.rbegin() + t, r.path.rbegin() + f + len, len);
 		r_front = r.path_cumlength();
 		if (r.evaluate()) {
 			saving0 = r_front - r.cumlength;
 		}
-		std::rotate(r.path.rbegin() + t, r.path.rbegin() + t + len, r.path.rbegin() + t + len + 1);
+		ALG::rotate(r.path.rbegin() + t, r.path.rbegin() + t + len + 1, 1);
 		r_back = r.path_cumlength();
 		if (r.evaluate()) {
 			saving1 = r_back - r.cumlength;
@@ -1463,11 +1465,11 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& sav
 		if (saving0 < saving1) {
 			saving = saving0;
 			if (saving < 0.0) {
-				std::rotate(r.path.begin() + t, r.path.begin() + t + 1, r.path.begin() + t + len + 1);
+				ALG::rotate(r.path.rbegin() + t, r.path.rbegin() + t + len + 1, -1);
 				r.cumlength = r_front;
 				return true;
 			}
-			std::rotate(r.path.begin() + t + 1, r.path.begin() + t + len + 1, r.path.begin() + f1 + 1);
+			ALG::rotate(r.path.begin() + t + 1, r.path.begin() + f + len, -len);
 			return false;
 		} else {
 			saving = saving1;
@@ -1475,7 +1477,7 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, double& sav
 				r.cumlength = r_back;
 				return true;
 			}
-			std::rotate(r.path.begin() + t + 1, r.path.begin() + t + len + 1, r.path.begin() + f1 + 1);
+			ALG::rotate(r.path.begin() + t + 1, r.path.begin() + f + len, -len);
 			return false;
 		}
 	}
@@ -1499,7 +1501,7 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 		saving0 = r2_front + r1_new - r2.cumlength - r1.cumlength;
 	}
 	// 向右旋转r2的路径
-	std::rotate(r2.path.rbegin() + t, r2.path.rbegin() + t + 1, r2.path.rbegin() + t1 + 1);
+	ALG::rotate(r2.path.rbegin() + t, r2.path.rbegin() + t + len + 1, 1);
 	// 计算r2的路径长度后
 	r2_front = r2.path_cumlength();
 	// 评估将节点插入r2的后面的情况
@@ -1517,7 +1519,7 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 			return false;
 		}
 		// 可行，撤销旋转
-		std::rotate(r2.path.begin() + t, r2.path.begin() + t + 1, r2.path.begin() + t1 + 1);
+		ALG::rotate(r2.path.begin() + t, r2.path.begin() + t + len + 1, -1);
 		r1.cumlength = r1_new;
 		r2.cumlength = r2_front;
 		return true;
@@ -1538,81 +1540,88 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 	}
 }
 
+/// @brief 判断两个车辆的路径是否可以交换其中的三个节点，计算路径长度变化
+/// @param r1
+/// @param r2
+/// @param a
+/// @param b
+/// @param saving
+/// @return
 bool OPS::arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, double& saving) {
-	double r1new{}, r2new{};
-	Node* node{r1.path[a + 1]};
-	if (r1.seq == r2.seq) {
-		if (a < b) {
-			std::swap(r1.path[a], r1.path[b]);
-			for (auto it{a + 1}; it < b; it++) {
+	double r1new{}, r2new{};                      // 保存交换节点后的路径长度
+	Node* node{r1.path[a + 1]};                   // 保存需要交换的节点
+	if (r1.seq == r2.seq) {                       // 如果两个车辆的路径相同
+		if (a < b) {                              // 如果需要交换的节点在路径上是连续的
+			std::swap(r1.path[a], r1.path[b]);    // 交换节点
+			for (auto it{a + 1}; it < b; it++) {  // 调整路径
 				std::swap(r1.path[it], r1.path[it + 1]);
 			}
-			if (r1.evaluate()) {
-				r1new = r1.path_cumlength();
-				saving = r1new - r1.cumlength;
-			} else {
-				std::swap(r1.path[a], r1.path[b]);
+			if (r1.evaluate()) {                    // 如果路径合法
+				r1new = r1.path_cumlength();        // 计算新路径长度
+				saving = r1new - r1.cumlength;      // 计算路径长度变化
+			} else {                                // 如果路径不合法
+				std::swap(r1.path[a], r1.path[b]);  // 恢复节点交换前的路径
 				for (auto it{b - 1}; it > a; it--) {
 					std::swap(r1.path[it], r1.path[it - 1]);
 				}
-				return false;
+				return false;  // 返回交换失败
 			}
-			if (saving > 0.0) {
-				std::swap(r1.path[a], r1.path[b]);
+			if (saving > 0.0) {                     // 如果路径长度变化为正
+				std::swap(r1.path[a], r1.path[b]);  // 恢复节点交换前的路径
 				for (auto it{b - 1}; it > a; it--) {
 					std::swap(r1.path[it], r1.path[it - 1]);
 				}
-				return false;
+				return false;  // 返回交换失败
 			}
-			return true;
-		} else {
-			std::swap(r1.path[a], r1.path[b]);
-			for (auto it{a}; it > b; it--) {
+			return true;                        // 返回交换成功
+		} else {                                // 如果需要交换的节点在路径上不是连续的
+			std::swap(r1.path[a], r1.path[b]);  // 交换节点
+			for (auto it{a}; it > b; it--) {    // 调整路径
 				std::swap(r1.path[it], r1.path[it + 1]);
 			}
-			if (r1.evaluate()) {
-				r1new = r1.path_cumlength();
-				saving = r1new - r1.cumlength;
-			} else {
-				std::swap(r1.path[a + 1], r1.path[b + 1]);
+			if (r1.evaluate()) {                            // 如果路径合法
+				r1new = r1.path_cumlength();                // 计算新路径长度
+				saving = r1new - r1.cumlength;              // 计算路径长度变化
+			} else {                                        // 如果路径不合法
+				std::swap(r1.path[a + 1], r1.path[b + 1]);  // 恢复节点交换前的路径
 				for (auto it{b}; it < a; it++) {
 					std::swap(r1.path[it], r1.path[it + 1]);
 				}
-				return false;
+				return false;  // 返回交换失败
 			}
-			if (saving > 0.0) {
-				std::swap(r1.path[a + 1], r1.path[b + 1]);
+			if (saving > 0.0) {                             // 如果路径长度变化为正
+				std::swap(r1.path[a + 1], r1.path[b + 1]);  // 恢复节点交换前的路径
 				for (auto it{b}; it < a; it++) {
 					std::swap(r1.path[it], r1.path[it + 1]);
 				}
-				return false;
+				return false;  // 返回交换失败
 			}
-			return true;
+			return true;  // 返回交换成功
 		}
-	} else {
-		std::swap(r1.path[a], r2.path[b]);
-		r1.path.erase(r1.path.begin() + a + 1);
-		if (!r1.evaluate()) {
-			std::swap(r1.path[a], r2.path[b]);
+	} else {                                     // 如果两个车辆的路径不同
+		std::swap(r1.path[a], r2.path[b]);       // 交换节点
+		r1.path.erase(r1.path.begin() + a + 1);  // 调整路径
+		if (!r1.evaluate()) {                    // 如果路径不合法
+			std::swap(r1.path[a], r2.path[b]);   // 恢复节点交换前的路径
 			r1.path.emplace(r1.path.begin() + a + 1, node);
-			return false;
+			return false;  // 返回交换失败
 		}
-		r2.path.emplace(r2.path.begin() + b + 1, node);
-		if (!r2.evaluate()) {
-			std::swap(r1.path[a], r2.path[b]);
-			r1.path.emplace(r1.path.begin() + a + 1, node);
-			r2.path.erase(r2.path.begin() + b + 1);
-			return false;
-		}
-		r1new = r1.path_cumlength();
-		r2new = r2.path_cumlength();
-		saving = r1new + r2new - r1.cumlength - r2.cumlength;
-		if (saving > 0.0) {
-			std::swap(r1.path[a], r2.path[b]);
+		r2.path.emplace(r2.path.begin() + b + 1, node);  // 调整路径
+		if (!r2.evaluate()) {                            // 如果路径不合法
+			std::swap(r1.path[a], r2.path[b]);           // 恢复节点交换前的路径
 			r1.path.emplace(r1.path.begin() + a + 1, node);
 			r2.path.erase(r2.path.begin() + b + 1);
-			return false;
+			return false;  // 返回交换失败
 		}
-		return true;
+		r1new = r1.path_cumlength();                           // 计算新路径长度
+		r2new = r2.path_cumlength();                           // 计算新路径长度
+		saving = r1new + r2new - r1.cumlength - r2.cumlength;  // 计算路径长度变化
+		if (saving > 0.0) {                                    // 如果路径长度变化为正
+			std::swap(r1.path[a], r2.path[b]);                 // 恢复节点交换前的路径
+			r1.path.emplace(r1.path.begin() + a + 1, node);
+			r2.path.erase(r2.path.begin() + b + 1);
+			return false;  // 返回交换失败
+		}
+		return true;  // 返回交换成功
 	}
 }

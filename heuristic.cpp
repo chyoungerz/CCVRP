@@ -13,55 +13,110 @@
 #include "solution.hpp"
 
 // SA算法
-void SA::init(std::vector<Node*>& node, const u32 depot_num, u32 maxload, u32 routes) {
+void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<Node*>& customer, const u32 depot_num, u32 maxload, u32 routes) {
 	// std::vector<Node*> depots, custers;
 	// custers.assign(nodes.begin(), nodes.end() - depot_num);
 	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
 	// sol = nassign(node, depot_num, maxload, routes);
 	depotnum = depot_num;
-	nodes = node;
 	vehicles = routes;
-	// sol.show();
+	customers = std::move(customer);
+	depots = std::move(depot);
+	nodes = node;
+	sol = nassign(customers, depots, maxload, routes);
+	infos.reserve(50);
+	sol.show();
 }
 
 void SA::run() {
 	// u32 customer = nodes.size() - depotnum;
 	//  sol.show();
-	bool flag{true};
-	u32 epoch{10};
-	u32 nodesize = nodes.size();
-	u32 custer{nodesize - depotnum};
-	while (flag) {
-		flag = false;
-		LS::one(sol, flag);
-		LS::two(sol, flag);
-		LS::twoOpt(sol, flag);
-		LS::three(sol, flag);
-	}
-	sol.update();
-	bestSol = sol;
+	bool improved{0}, flag{0};
+	int epoch = 1;
 	while (epoch) {
-		flag = true;
-		sol.update_hash(true);
-		PER::RuinCreate(sol, custer / 10, custer);
-		while (flag) {
-			flag = false;
-			LS::one(sol, flag);
-			LS::two(sol, flag);
-			LS::twoOpt(sol, flag);
-			LS::three(sol, flag);
+		Info info;
+		for (u32 n{0}; n < 7; n++) {
+			improved = 0;
+			switch (n) {
+			case 0:
+				while (1) {
+					VNS::relocate(sol, info.one, improved);
+					if (!improved) {
+						flag = 1;
+						break;
+					}
+				}
+				break;
+			case 1:
+				while (1) {
+					VNS::exchange(sol, info.two, improved);
+					if (!improved) {
+						flag = 1;
+						break;
+					}
+				}
+				break;
+			case 2:
+				while (1) {
+					VNS::arcnode(sol, info.three, improved);
+					if (!improved) {
+						flag = 1;
+						break;
+					}
+				}
+				break;
+			case 3:
+				while (1) {
+					VNS::oropt2(sol, info.or2, improved);
+					if (!improved) {
+						flag = 1;
+						break;
+					}
+				}
+				break;
+			case 4:
+				while (1) {
+					VNS::oropt3(sol, info.or3, improved);
+					if (!improved) {
+						flag = 1;
+						break;
+					}
+				}
+				break;
+			case 5:
+				while (1) {
+					VNS::oropt4(sol, info.or4, improved);
+					if (!improved) {
+						flag = 1;
+						break;
+					}
+				}
+				break;
+			case 6:
+				while (1) {
+					VNS::twoopt(sol, info.opt2, improved);
+					if (!improved) {
+						flag = 1;
+						break;
+					}
+				}
+			}
+			if (flag) n = 0;
 		}
-		sol.update();
-		if (sol.allength <= bestSol.allength) {
-			bestSol = sol;
-			epoch = 10;
-		}
+		infos.emplace_back(info);
+		epoch--;
 	}
-	//       sum = 0;
-	//       for (auto& i : sol.solution) {
-	//	sum += i.path.size();
-	//       }
-	//       std::cout << sum << std::endl;
+	sol.show();
+	for (u32 i{0}, n = infos.size(); i < n; i++) {
+		std::cout << "第" << i << "次："
+		          << "one：" << infos[i].one
+		          << "two：" << infos[i].two
+		          << "three：" << infos[i].three
+		          << "or2：" << infos[i].or2
+		          << "or3：" << infos[i].or3
+		          << "or4：" << infos[i].or4
+		          << "2-opt：" << infos[i].opt2 << "\n";
+	}
 }
 
 /*

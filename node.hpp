@@ -22,6 +22,16 @@ struct Edge {
 	Node* toNode{nullptr};  // 指向的节点
 };
 
+struct Info {
+	u32 one{};
+	u32 two{};
+	u32 three{};
+	u32 or2{};
+	u32 or3{};
+	u32 or4{};
+	u32 opt2{};
+};
+
 /// @brief 节点
 class Node {
   protected:
@@ -222,7 +232,8 @@ class Solution {
 	// 无参初始化
 	Solution() {
 		allength = 0.0;
-		solution.reserve(5);
+		solution.reserve(20);
+		shash.reserve(256);
 	}
 
 	// double length() const { return allength; }
