@@ -41,30 +41,30 @@ namespace LS {
 
 namespace VNS {
 	/// @brief 计算节点的邻域
-	void neighbor(std::vector<Node*> node, u32 size, std::vector<Node*>& neighbor);
+	void neighbor(std::vector<Node*>& node, u32 size);
 
 	/// @brief 点重定位操作
-	void relocate(Solution& solution, u32& num, bool& flag);
+	void relocate(Solution& solution, u32& num, float size_near, bool& flag);
 
 	/// @brief 2-opt操作
 	void twoopt(Solution& solution, u32& num, bool& flag);
 
 	/// @brief 两点交换操作
-	void exchange(Solution& solution, u32& num, bool& flag);
+	void exchange(Solution& solution, u32& num, float size_near, bool& flag);
 
 	/// @brief 点边交换操作
-	void arcnode(Solution& solution, u32& num, bool& flag);
+	void arcnode(Solution& solution, u32& num, float size_near, bool& flag);
 
 	/// @brief oropt 2 操作
-	void oropt2(Solution& solution, u32& num, bool& flag);
+	void oropt2(Solution& solution, u32& num, float size_near, bool& flag);
 
 	/// @brief oropt 3 操作
-	void oropt3(Solution& solution, u32& num, bool& flag);
+	void oropt3(Solution& solution, u32& num, float size_near, bool& flag);
 
 	/// @brief oropt 4 操作
-	void oropt4(Solution& solution, u32& num, bool& flag);
+	void oropt4(Solution& solution, u32& num, float size_near, bool& flag);
 
 	/// @brief 交叉扰动优化操作
-	void cross(Solution& solution, u32& num, bool& flag);
+	void cross(Solution& solution, u32& num, float size_near, bool& flag);
 };  // namespace VNS
 #endif

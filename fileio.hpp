@@ -166,7 +166,7 @@ inline void init_distance(std::vector<Node*>& nodes, const u32 depot_num, std::v
 			if (i == j) continue;
 			temp_edges[j] = {dist(customers[i], customers[j]), j, customers[j]};  // i行-j列（row, col)
 		}
-		std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist < b.dist; });
+		std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist <= b.dist; });
 		customers[i]->distsort.assign(temp_edges.begin(), temp_edges.end());
 	}
 	// 客户->场站

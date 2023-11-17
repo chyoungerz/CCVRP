@@ -33,90 +33,102 @@ void SA::run() {
 	//  sol.show();
 	bool improved{0}, flag{0};
 	int epoch = 1;
+	float size_near{0.1};
+	Info info;
 	while (epoch) {
-		Info info;
-		for (u32 n{0}; n < 7; n++) {
-			improved = 0;
+		for (u32 n{1}; n <= 7;) {
+			flag = 0;
 			switch (n) {
-			case 0:
-				while (1) {
-					VNS::relocate(sol, info.one, improved);
-					if (!improved) {
-						flag = 1;
-						break;
-					}
-				}
-				break;
 			case 1:
 				while (1) {
-					VNS::exchange(sol, info.two, improved);
-					if (!improved) {
-						flag = 1;
-						break;
+					VNS::twoopt(sol, info.opt2, improved);
+					if (improved) {
+						continue;
 					}
+					break;
 				}
 				break;
 			case 2:
 				while (1) {
-					VNS::arcnode(sol, info.three, improved);
-					if (!improved) {
+					VNS::exchange(sol, info.two, size_near, improved);
+					if (improved) {
 						flag = 1;
-						break;
+						continue;
 					}
+					break;
 				}
 				break;
 			case 3:
 				while (1) {
-					VNS::oropt2(sol, info.or2, improved);
-					if (!improved) {
+					VNS::relocate(sol, info.one, size_near, improved);
+					if (improved) {
 						flag = 1;
-						break;
+						continue;
 					}
+					break;
 				}
 				break;
 			case 4:
 				while (1) {
-					VNS::oropt3(sol, info.or3, improved);
-					if (!improved) {
+					VNS::oropt2(sol, info.or2, size_near, improved);
+					if (improved) {
 						flag = 1;
-						break;
+						continue;
 					}
+					break;
 				}
 				break;
 			case 5:
 				while (1) {
-					VNS::oropt4(sol, info.or4, improved);
-					if (!improved) {
+					VNS::oropt2(sol, info.three, size_near, improved);
+					if (improved) {
 						flag = 1;
-						break;
+						continue;
 					}
+					break;
 				}
 				break;
 			case 6:
 				while (1) {
-					VNS::twoopt(sol, info.opt2, improved);
-					if (!improved) {
+					VNS::oropt3(sol, info.three, size_near, improved);
+					if (improved) {
 						flag = 1;
-						break;
+						continue;
 					}
+					break;
 				}
+				break;
+			case 7:
+				while (1) {
+					VNS::oropt4(sol, info.three, size_near, improved);
+					if (improved) {
+						flag = 1;
+						continue;
+					}
+					break;
+				}
+				break;
 			}
-			if (flag) n = 0;
+			if (flag)
+				n = 1;
+			else
+				n++;
 		}
-		infos.emplace_back(info);
 		epoch--;
 	}
+
+	// infos.emplace_back(info);
+	sol.update();
 	sol.show();
-	for (u32 i{0}, n = infos.size(); i < n; i++) {
-		std::cout << "第" << i << "次："
-		          << "one：" << infos[i].one
-		          << "two：" << infos[i].two
-		          << "three：" << infos[i].three
-		          << "or2：" << infos[i].or2
-		          << "or3：" << infos[i].or3
-		          << "or4：" << infos[i].or4
-		          << "2-opt：" << infos[i].opt2 << "\n";
-	}
+	// for (u32 i{0}, n = infos.size(); i < n; i++) {
+	std::cout << "one: " << info.one
+	          << " two: " << info.two
+	          << " three: " << info.three
+	          << " or2: " << info.or2
+	          << " or3: " << info.or3
+	          << " or4: " << info.or4
+	          << " 2-opt: " << info.opt2 << "\n";
+	//}
 }
 
 /*

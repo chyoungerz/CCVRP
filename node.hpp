@@ -180,16 +180,16 @@ class Vehicle {
 		return _length;
 	}
 
-	bool evaluate() {
-		u32 loads{0};
+	bool evaluate(double& length_) {
+		// u32 loads{0};
 		for (u32 i{1}, n = path.size() - 1; i < n; i++) {  // 优先级
-			loads += path[i]->demand;
+			// loads += path[i]->demand;
+			length_ += path[i]->dists[path[i - 1]->seq].dist * (n - i);
 			if (path[i]->end > path[i + 1]->end) {
 				return false;
 			}
 		}
-		load = loads;
-		if (loads > capacity) return false;
+		// if (loads > capacity) return false;
 		return true;
 	}
 
@@ -253,7 +253,7 @@ class Solution {
 		for (u32 i = 0, n = solution.size(); i < n; i++) {
 			if (solution[i].path.empty()) continue;
 			num += solution[i].path.size() - 2;
-			std::cout << solution[i] << " : " << solution[i].path.size() - 2 << std::endl;
+			std::cout << solution[i] << " : " << solution[i].load << std::endl;
 			routes++;
 		}
 		std::cout << "total length: " << allength << "\ttotal customers: " << num << "\ttotal routes: " << routes << std::endl;
@@ -324,6 +324,7 @@ class Solution {
 			}
 			if (flag) {
 				update_seq();
+				// update_hash(1);
 			}
 		}
 	}
