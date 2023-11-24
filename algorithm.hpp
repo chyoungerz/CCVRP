@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <iterator>
 #ifndef _ALGORITHM_HPP
 #define _ALGORITHM_HPP
 
@@ -73,7 +72,7 @@ namespace ALG {
 	/**
 	 * @brief 这个函数使用快速选择算法，用于在一系列元素中找到最大的k个元素
 	 * @warning 比较函数必须是（<=）。最大k个元素在末尾。
-	 * @tparam _FwdIt 前向迭代器类型。
+	 * @tparam _RanIt 随机迭代器类型。
 	 * @tparam _Fn 函数对象类型。
 	 * @param _first 指向范围中第一个元素的迭代器。
 	 * @param _last 指向范围中最后一个元素的迭代器。
@@ -81,13 +80,13 @@ namespace ALG {
 	 * @param _cmp 用于比较元素的函数对象。
 	 * @return void
 	 */
-	template <class _FwdIt, class _Fn>
-	inline void topk(_FwdIt _first, _FwdIt _last, unsigned int _k, _Fn _cmp) {
+	template <class _RanIt, class _Fn>
+	inline void topk(_RanIt _first, _RanIt _last, unsigned int _k, _Fn _cmp) {
 		if (_last <= _first || _k == 0) return;
 		if (_k >= _last - _first) return;
-		_FwdIt _left{_first}, _right{_last};
-		auto _size = std::distance(_first, _last);
-		_FwdIt _pivot{_first + _size / 2};
+		_RanIt _left{_first}, _right{_last};
+		// auto _size = std::distance(_first, _last);
+		_RanIt _pivot{_first + ((_first, _last) >> 1)};
 		while (_left < _right) {
 			while (_left < _right && _cmp(*_pivot, *_right)) --_right;
 			while (_left < _right && _cmp(*_left, *_pivot)) ++_left;
@@ -160,7 +159,7 @@ namespace ALG {
 	 */
 	template <class _FwdIt>
 	inline void rotate(_FwdIt _first, _FwdIt _last, int k) {
-		if (_last <= _first || k == 0) return;
+		if (_last <= _first + 1 || k == 0) return;
 		if (k > 0) {  // 向右旋转
 			_FwdIt _mid{_last - k};
 			std::reverse(_first, _mid);

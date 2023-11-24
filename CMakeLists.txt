@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.27.0)
 project(CCVRP VERSION 0.1.0)
 
 # 为当前路径以及子目录的源文件加入由-D预编译定义
-add_definitions(-DWINDOWS)
+IF (CMAKE_BUILD_TYPE STREQUAL Debug)
+    ADD_DEFINITIONS(-DDEBUG)
+ENDIF()
 
 # 设置C++编译参数(CMAKE_CXX_FLAGS是全局变量)
 set(CMAKE_CXX_FLAGS "-Wall -std=gnu++23")
@@ -11,11 +13,11 @@ set(CMAKE_CXX_FLAGS "-Wall -std=gnu++23")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 指定为C++23 版本
-set(CMAKE_CXX_STANDARD 23)
+# set(CMAKE_CXX_STANDARD 23)
 
 #编译选项
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g")
-set(CMAKE_CXX_FLAGS_Release "${CMAKE_C_FLAGS_Release} -O3")
+set(CMAKE_CXX_FLAGS_Debug "${CMAKE_CXX_FLAGS} -DDEBUG -O0 -g")
+set(CMAKE_CXX_FLAGS_Release "${CMAKE_CXX_FLAGS} -O3")
 
 #头文件目录
 #include_directories()

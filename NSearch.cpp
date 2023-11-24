@@ -1,101 +1,96 @@
 #include "NSearch.hpp"
 
 #include <algorithm>
-#include <random>
+// #include <random>
 #include <unordered_set>
 #include <vector>
 
-#include "algorithm.hpp"
+// #include "algorithm.hpp"
 #include "operator.hpp"
-
+/*
 void ALNS::repair(Solution& solution, std::vector<std::pair<u32, Node*>>& rest) {
-	std::sort(rest.begin(), rest.end(), [](const std::pair<u32, Node*>& a, const std::pair<u32, Node*>& b) { return a.first < b.first; });
-	for (auto& r : rest) {
-		for (auto near = r.second->distsort.begin() + 1; near != r.second->distsort.end(); near++) {                                                               // 查找所在路径
-			if (solution.shash.find((*near).to) != solution.shash.end()) {                                                                                         // 邻域是否也被破坏
-				if (solution.solution[solution.shash[(*near).to]].path.front()->seq == r.first) {                                                                  // 邻域是否在同厂站
-					if (solution.solution[solution.shash[(*near).to]].load + r.second->demand > solution.solution[solution.shash[(*near).to]].capacity) continue;  // 容量已满
-					for (u32 i = 1; i < solution.solution[solution.shash[(*near).to]].path.size() - 1; i++) {                                                      // 查找所在路径中的位置
-						if (solution.solution[solution.shash[(*near).to]].path[i]->seq == (*near).to) {                                                            // 找到开始插入
-							double db = COST::insertb(solution.solution[solution.shash[(*near).to]].path, r.second, i);
-							double df = COST::insertf(solution.solution[solution.shash[(*near).to]].path, r.second, i);
-							if (db < df) {
-								OP::insertb(solution.solution[solution.shash[(*near).to]], r.second, i, 0.0);
-							} else {
-								OP::insertf(solution.solution[solution.shash[(*near).to]], r.second, i, 0.0);
-							}
-							solution.shash.emplace(std::make_pair(r.second->seq, solution.shash[(*near).to]));  // 更新查找表
-							break;
-						}
-					}
-					break;  // 跳出二层循环
-				}
-			}
-		}
-	}
-	rest.clear();
+    std::sort(rest.begin(), rest.end(), [](const std::pair<u32, Node*>& a, const std::pair<u32, Node*>& b) { return a.first < b.first; });
+    for (auto& r : rest) {
+        for (auto near = r.second->distsort.begin() + 1; near != r.second->distsort.end(); near++) {                                                               // 查找所在路径
+            if (solution.shash.find((*near).to) != solution.shash.end()) {                                                                                         // 邻域是否也被破坏
+                if (solution.solution[solution.shash[(*near).to]].path.front()->seq == r.first) {                                                                  // 邻域是否在同厂站
+                    if (solution.solution[solution.shash[(*near).to]].load + r.second->demand > solution.solution[solution.shash[(*near).to]].capacity) continue;  // 容量已满
+                    for (u32 i = 1; i < solution.solution[solution.shash[(*near).to]].path.size() - 1; i++) {                                                      // 查找所在路径中的位置
+                        if (solution.solution[solution.shash[(*near).to]].path[i]->seq == (*near).to) {                                                            // 找到开始插入
+                            double db = COST::insertb(solution.solution[solution.shash[(*near).to]].path, r.second, i);
+                            double df = COST::insertf(solution.solution[solution.shash[(*near).to]].path, r.second, i);
+                            if (db < df) {
+                                OP::insertb(solution.solution[solution.shash[(*near).to]], r.second, i, 0.0);
+                            } else {
+                                OP::insertf(solution.solution[solution.shash[(*near).to]], r.second, i, 0.0);
+                            }
+                            solution.shash.emplace(std::make_pair(r.second->seq, solution.shash[(*near).to]));  // 更新查找表
+                            break;
+                        }
+                    }
+                    break;  // 跳出二层循环
+                }
+            }
+        }
+    }
+    rest.clear();
 }
 
 void ALNS::destory_wst(Solution& solution, const float p, std::vector<std::pair<u32, Node*>>& rest) {
-	std::vector<std::pair<u32, double>> cost;  // （路线节点，长度差值）
-	for (auto& r : solution.solution) {
-		if (r.path.size() == 2) continue;
-		u32 num = std::ceil((r.path.size() - 2) * p);  // 每条路线删除的个数
-		for (u32 j = 1; j < r.path.size() - 1; j++) {
-			/* 0-a-b-c-d-e-0
-			 * a：0a + ab - 0b
-			 * b: ab + bc - ac
-			 * ...
-			 */
-			double length = r.path[j]->dists[r.path[j + 1]->seq].dist + r.path[j - 1]->dists[r.path[j]->seq].dist - r.path[j - 1]->dists[r.path[j + 1]->seq].dist;
-			cost.emplace_back(std::make_pair(j, length));
-		}
-		if (num > 2) {  // n ? 2
-			// std::sort(cost.begin(), cost.end(), [](const std::pair<u32, double>& a, const std::pair<u32, double>& b) { return a.second < b.second; });
-			ALG::topK(cost, 0, cost.size() - 1, num, [](const std::pair<u32, double>& a, const std::pair<u32, double>& b) { return a.second < b.second; });
-			while (num) {
-				// double dif = COST::erase(r.path, cost.back().first);
-				rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, cost.back().first, 0.0)));
-				solution.shash.erase(rest.back().second->seq);  // 更新查找表
-				cost.pop_back();
-				num--;
-			}
-			OP::erase(r);
-		} else {
-			while (num) {
-				int mx = 0;
-				for (u32 i = 0; i < cost.size(); i++) {
-					mx = cost[mx].second > cost[i].second ? mx : i;
-				}
-				// double dif = COST::erase(r.path, cost[mx].first);
-				rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, cost[mx].first, 0.0)));
-				solution.shash.erase(rest.back().second->seq);  // 更新查找表
-				std::swap(cost[mx], cost.back());
-				cost.pop_back();
-				num--;
-			}
-			OP::erase(r);
-		}
-		cost.clear();
-	}
+    std::vector<std::pair<u32, double>> cost;  // （路线节点，长度差值）
+    for (auto& r : solution.solution) {
+        if (r.path.size() == 2) continue;
+        u32 num = std::ceil((r.path.size() - 2) * p);  // 每条路线删除的个数
+        for (u32 j = 1; j < r.path.size() - 1; j++) {
+            double length = r.path[j]->dists[r.path[j + 1]->seq].dist + r.path[j - 1]->dists[r.path[j]->seq].dist - r.path[j - 1]->dists[r.path[j + 1]->seq].dist;
+            cost.emplace_back(std::make_pair(j, length));
+        }
+        if (num > 2) {  // n ? 2
+            // std::sort(cost.begin(), cost.end(), [](const std::pair<u32, double>& a, const std::pair<u32, double>& b) { return a.second < b.second; });
+            ALG::topK(cost, 0, cost.size() - 1, num, [](const std::pair<u32, double>& a, const std::pair<u32, double>& b) { return a.second < b.second; });
+            while (num) {
+                // double dif = COST::erase(r.path, cost.back().first);
+                rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, cost.back().first, 0.0)));
+                solution.shash.erase(rest.back().second->seq);  // 更新查找表
+                cost.pop_back();
+                num--;
+            }
+            OP::erase(r);
+        } else {
+            while (num) {
+                int mx = 0;
+                for (u32 i = 0; i < cost.size(); i++) {
+                    mx = cost[mx].second > cost[i].second ? mx : i;
+                }
+                // double dif = COST::erase(r.path, cost[mx].first);
+                rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, cost[mx].first, 0.0)));
+                solution.shash.erase(rest.back().second->seq);  // 更新查找表
+                std::swap(cost[mx], cost.back());
+                cost.pop_back();
+                num--;
+            }
+            OP::erase(r);
+        }
+        cost.clear();
+    }
 }
 
 void ALNS::destory_rnd(Solution& solution, const float p, std::vector<std::pair<u32, Node*>>& rest) {
-	std::random_device device_seed;
-	std::mt19937 gen(device_seed());
-	for (auto& r : solution.solution) {
-		if (r.path.size() == 2) continue;
-		u32 num = std::ceil((r.path.size() - 2) * p);  // 每条路线删除的个数
-		std::uniform_int_distribution<> dis(1, r.path.size() - 2);
-		for (u32 i = 0; i < num; i++) {
-			u32 rd = dis(gen) - i;  // 随机选取
-			double dif = COST::erase(r.path, rd);
-			rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, rd, dif)));
-			solution.shash.erase(rest.back().second->seq);  // 更新查找表
-		}
-	}
+    std::random_device device_seed;
+    std::mt19937 gen(device_seed());
+    for (auto& r : solution.solution) {
+        if (r.path.size() == 2) continue;
+        u32 num = std::ceil((r.path.size() - 2) * p);  // 每条路线删除的个数
+        std::uniform_int_distribution<> dis(1, r.path.size() - 2);
+        for (u32 i = 0; i < num; i++) {
+            u32 rd = dis(gen) - i;  // 随机选取
+            double dif = COST::erase(r.path, rd);
+            rest.emplace_back(std::make_pair(r.path.back()->seq, OP::remove(r, rd, dif)));
+            solution.shash.erase(rest.back().second->seq);  // 更新查找表
+        }
+    }
 }
-
+*/
 void LNS::run(Solution& solution, const std::vector<Node*>& nodes, u32 epoch) {
 }
 
@@ -157,8 +152,11 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 	std::unordered_set<u32> tabu;
 	flag = 0;
 	tabu.reserve(32);
-	double saving{};                                        // 移动操作的节约值
-	bool location{};                                        // 一个布尔标志，用于指示是否进行了任何移动
+// double saving{};                                        // 移动操作的节约值
+// bool location{};                                        // 一个布尔标志，用于指示是否进行了任何移动
+#ifdef DEBUG
+	s.debug_hash(1);
+#endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {  // 遍历所有路径
 		if (s.solution[fr].path.size() <= 2) continue;      // 如果路径长度小于等于2，则跳过
 		u32 fp{1};
@@ -167,23 +165,29 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 				fp++;
 				continue;
 			}
+			seq = s.solution[fr].path[fp]->seq;
 			for (u32 i{0}, m = s.solution[fr].path[fp]->distsort.size() * size; i < m; i++) {  // 遍历节点的邻居节点
 				near = s.solution[fr].path[fp]->distsort[i].toNode;                           // 获取邻居节点
 				tr = s.shash[near->seq];                                                      // 获取邻居节点所在的路径
-				tp = CHK::find(s.solution[tr].path, near);                                    // 获取邻居节点在其路径中的位置
-				seq = s.solution[fr].path[fp]->seq;
+				tp = CHK::find(s.solution[tr].path, near, 1);                                 // 获取邻居节点在其路径中的位置
 				if (tr == fr) {
 					tabu.emplace(seq);
-					if (OPS::onepointmove(s.solution[fr], s.solution[tr], fp, tp, saving, location)) {  // 如果移动成功
+					if (OPS::onepointmove(s.solution[fr], fp, tp, 0)) {  // 如果移动成功
+#ifdef DEBUG
+						s.debug_hash(11);
+#endif
 						flag = 1;                                                                       // 设置标志为true
 						num++;
 						break;  // 跳出循环
 					}
 				} else {
-					if (OPS::onepointmove(s.solution[fr], s.solution[tr], fp, tp, saving, location)) {  // 如果移动成功
+					if (OPS::onepointmove(s.solution[fr], s.solution[tr], fp, tp, 0)) {                 // 如果移动成功
 						s.shash[seq] = tr;                                                              // 更新节点所在的路径
 						flag = 1;                                                                       // 设置标志为true
 						num++;
+#ifdef DEBUG
+						s.debug_hash(12);
+#endif
 						break;  // 跳出循环
 					}
 				}
@@ -204,13 +208,16 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
  * @param flag 如果找到更好的解决方案，则设置为true的布尔标志。
  */
 void VNS::twoopt(Solution& s, u32& num, bool& flag) {
-	double saving{};
+	// double saving{};
 	flag = 0;
 	for (auto& r : s.solution) {
 		if (r.path.size() < 5) continue;
 		for (u32 i{1}, n = r.path.size() - 1; i + 3 < n; i++) {
 			for (u32 j{i + 3}; j <= n; j++) {
-				if (OPS::reverse(r, i, j, saving)) flag = 1, num++;
+				if (OPS::reverse(r, i, j, 0)) {
+					flag = 1;
+					num++;
+				}
 			}
 		}
 	}
@@ -224,9 +231,13 @@ void VNS::twoopt(Solution& s, u32& num, bool& flag) {
  */
 void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 	Node* near{};                                           // 指向最近节点的指针
-	u32 tr{}, tp{}, fp_seq{};                               // to_route;to_path;from_route;from_path
-	double saving{};                                        // 交换操作的节约值
+	u32 tr{}, tp{}, fp_seq{}, ctrl{};                       // to_route;to_path;from_route;from_path
+	// double saving{};                                        // 交换操作的节约值
+	// if (!s.valid) ctrl = 1;
 	flag = 0;
+#ifdef DEBUG
+	s.debug_hash(7);
+#endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {  // 遍历所有路径
 		if (s.solution[fr].path.size() <= 2) continue;      // 如果路径长度小于等于2，则跳过
 		u32 fp{1};
@@ -235,12 +246,15 @@ void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 			for (u32 i{0}, m = s.solution[fr].path[fp]->distsort.size() * size; i < m; i++) {  // 遍历节点的邻居节点
 				near = s.solution[fr].path[fp]->distsort[i].toNode;                           // 获取邻居节点
 				tr = s.shash[near->seq];                                                      // 获取邻居节点所在路径的编号
-				tp = CHK::find(s.solution[tr].path, near);                                    // 获取邻居节点在其所在路径中的位置
-				if (OPS::swapmove(s.solution[fr], s.solution[tr], fp, tp, saving)) {          // 执行交换操作
+				tp = CHK::find(s.solution[tr].path, near, 2);                                 // 获取邻居节点在其所在路径中的位置
+				if (OPS::swapmove(s.solution[fr], s.solution[tr], fp, tp, ctrl)) {            // 执行交换操作
 					s.shash[fp_seq] = tr;                                                     // 更新路径哈希表
 					s.shash[near->seq] = fr;                                                  // 更新路径哈希表
 					flag = 1;                                                                 // 标记已进行交换操作
 					num++;
+#ifdef DEBUG
+					s.debug_hash(70);
+#endif
 					break;  // 跳出循环
 				}
 			}
@@ -266,9 +280,12 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 	// 定义向量 p 和 neighbors，以及变量 tr、tp、size、fp 和 saving。
 	std::vector<Node*> p, neighbors;
 	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
-	double saving{};
-	bool location{};
-	// 遍历解中的所有路径。
+// double saving{};
+// bool location{};
+//  遍历解中的所有路径。
+#ifdef DEBUG
+	s.debug_hash(2);
+#endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
 		// 如果路径长度小于等于 4，则跳过该路径。
 		if (s.solution[fr].path.size() <= 4) continue;
@@ -294,26 +311,32 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
 				// 获取邻居节点的路径和位置。
 				tr = s.shash[neighbors[i]->seq];
-				tp = CHK::find(s.solution[tr].path, neighbors[i]->seq);
+				tp = CHK::find(s.solution[tr].path, neighbors[i], 3);
 				// 如果邻居节点在同一路径上，则执行 Or-opt 2 操作。
 				if (tr == fr) {
-					if (OPS::oropt(s.solution[fr], fp, tp, 2, saving, location)) {
+					if (OPS::oropt(s.solution[fr], fp, tp, 2, 0)) {
 						flag = 1;
 						num++;
 						// 如果 fp 小于 tp，则将 (p1->seq << 10) + p2->seq 加入禁忌表。
 						if (fp < tp) {
 							tabu.emplace((p1->seq << 10) + p2->seq);
 						}
+#ifdef DEBUG
+						s.debug_hash(21);
+#endif
 						break;
 					}
 				} else {
 					// 如果邻居节点在不同路径上，则执行  Or-opt 2 操作。
-					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 2, saving, location)) {
+					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 2, 0)) {
 						flag = 1;
 						num++;
 						// 更新 s.shash。
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
+#ifdef DEBUG
+						s.debug_hash(22);
+#endif
 						break;
 					}
 				}
@@ -349,10 +372,13 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 	// 定义两个节点的向量
 	std::vector<Node*> p, neighbors;
 	// 定义一些整数变量
-	u32 tr{}, tp{}, size{}, fp{}, tp_seq{};  // to_route;to_path;from_route;from_path
+	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
 	// 定义一个双精度浮点数变量
 	double saving{};
 	// 遍历解决方案中的每个路径
+#ifdef DEBUG
+	s.debug_hash(3);
+#endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
 		// 如果路径中的节点数小于等于4，则跳过该路径
 		if (s.solution[fr].path.size() <= 4) continue;
@@ -378,9 +404,9 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
 				// 获取邻域中节点所在的路径和位置
 				tr = s.shash[neighbors[i]->seq];
-				tp = CHK::find(s.solution[tr].path, neighbors[i]->seq);
-				tp_seq = s.solution[tr].path[tp]->seq;
-				// 如果邻域中的节点与当前节点对在同一路径上
+				tp = CHK::find(s.solution[tr].path, neighbors[i], 4);
+				// tp_seq = s.solution[tr].path[tp]->seq;
+				//  如果邻域中的节点与当前节点对在同一路径上
 				if (tr == fr) {
 					// 尝试在当前路径上执行 Arc Node 邻域操作
 					if (OPS::arcnode(s.solution[fr], s.solution[fr], fp, tp, saving)) {
@@ -389,6 +415,9 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 						// 如果操作成功，则将当前节点对添加到禁忌表中
 						if (fp < tp)
 							tabu.emplace((p1->seq << 10) + p2->seq);
+#ifdef DEBUG
+						s.debug_hash(31);
+#endif
 						break;
 					}
 				} else {
@@ -399,7 +428,10 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 						// 如果操作成功，则更新节点所在的路径
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
-						s.shash[tp_seq] = fr;
+						s.shash[neighbors[i]->seq] = fr;
+#ifdef DEBUG
+						s.debug_hash(32);
+#endif
 						break;
 					}
 				}
@@ -430,9 +462,12 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 	// 定义两个节点向量和一些整数变量
 	std::vector<Node*> p, neighbors;
 	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
-	double saving{};
-	bool location{};
-	// 遍历解中的所有路径
+	                               // double saving{};
+	                               // bool location{};
+	                               //  遍历解中的所有路径
+#ifdef DEBUG
+	s.debug_hash(4);
+#endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
 		// 如果路径长度小于等于5，则跳过
 		if (s.solution[fr].path.size() <= 5) continue;
@@ -461,27 +496,33 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 				// 获取邻域中节点所在的路径
 				tr = s.shash[neighbors[i]->seq];
 				// 获取邻域中节点在路径中的位置
-				tp = CHK::find(s.solution[tr].path, neighbors[i]->seq);
+				tp = CHK::find(s.solution[tr].path, neighbors[i], 5);
 				// 如果邻域中的节点在同一路径中
 				if (tr == fr) {
 					// 执行 Or-opt 3 操作
-					if (OPS::oropt(s.solution[fr], fp, tp, 3, saving, location)) {
+					if (OPS::oropt(s.solution[fr], fp, tp, 3, 0)) {
 						flag = 1;
 						num++;
 						// 将这个节点组合加入禁忌表
 						if (fp < tp)
 							tabu.emplace((p1->seq << 20) + (p2->seq << 10) + p3->seq);
+#ifdef DEBUG
+						s.debug_hash(41);
+#endif
 						break;
 					}
 				} else {
 					// 如果邻域中的节点在不同路径中
-					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 3, saving, location)) {
+					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 3, 0)) {
 						flag = 1;
 						num++;
 						// 更新节点所在路径的哈希表
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
 						s.shash[p3->seq] = tr;
+#ifdef DEBUG
+						s.debug_hash(42);
+#endif
 						break;
 					}
 				}
@@ -510,8 +551,11 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 	tabu.reserve(32);                 // 预留32个空间
 	std::vector<Node*> p, neighbors;  // 定义两个节点指针的向量
 	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
-	double saving{};               // 定义一个double类型的变量，用于存储节省的距离
-	bool location{};               // 定义一个bool类型的变量，用于存储位置信息
+// double saving{};               // 定义一个double类型的变量，用于存储节省的距离
+// bool location{};               // 定义一个bool类型的变量，用于存储位置信息
+#ifdef DEBUG
+	s.debug_hash(5);
+#endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {          // 遍历解中的所有路径
 		if (s.solution[fr].path.size() <= 6) continue;              // 如果路径长度小于等于6，则跳过
 		u32 index{1};                                               // 定义一个索引变量
@@ -534,24 +578,30 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 			fp = index;
 			for (u32 i{0}, m = neighbors.size(); i < m; i++) {                      // 遍历邻域中的节点
 				tr = s.shash[neighbors[i]->seq];                                    // 获取邻域中节点所在的路径
-				tp = CHK::find(s.solution[tr].path, neighbors[i]->seq);             // 获取邻域中节点在路径中的位置
+				tp = CHK::find(s.solution[tr].path, neighbors[i], 6);               // 获取邻域中节点在路径中的位置
 				if (tr == fr) {                                                     // 如果邻域中的节点和当前路径中的节点在同一路径上
-					if (OPS::oropt(s.solution[fr], fp, tp, 4, saving, location)) {  // 执行or-opt操作
+					if (OPS::oropt(s.solution[fr], fp, tp, 4, 0)) {                 // 执行or-opt操作
 						flag = 1;                                                   // 标记找到更好的解
 						num++;
 						if (fp < tp)
 							tabu.emplace((p1->seq << 20) + (p2->seq << 10)), tabu.emplace((p3->seq << 10) + p4->seq);  // 将节点加入禁忌表
+#ifdef DEBUG
+						s.debug_hash(51);
+#endif
 						break;
 					}
 
 				} else {                                                                            // 如果邻域中的节点和当前路径中的节点不在同一路径上
-					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 4, saving, location)) {  // 执行or-opt操作
+					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 4, 0)) {                 // 执行or-opt操作
 						flag = 1;                                                                   // 标记找到更好的解
 						num++;
 						s.shash[p1->seq] = tr;  // 更新节点所在路径的哈希表
 						s.shash[p2->seq] = tr;
 						s.shash[p3->seq] = tr;
 						s.shash[p4->seq] = tr;
+#ifdef DEBUG
+						s.debug_hash(52);
+#endif
 						break;
 					}
 				}

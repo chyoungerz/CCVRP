@@ -150,33 +150,38 @@ inline void init_distance(std::vector<Node*>& nodes, const u32 depot_num, std::v
 	customers.assign(nodes.begin() + depot_num, nodes.end());
 	u32 size = customers.size();
 	std::for_each(depots.begin(), depots.end(), [](Node* node) { node->isdepot = true; });
+	Edge edge{};
 	// Eigen::MatrixXf dists(size, size);
 	std::vector<Edge> temp_edges(size + depot_num);
 	// 总距离矩阵
 	for (u32 i = 0, n{size + depot_num}; i < n; i++) {
 		for (u32 j = 0; j < n; j++) {
-			temp_edges[j] = {dist(nodes[i], nodes[j]), j, nodes[j]};  // i行-j列（row, col)
+			temp_edges[j] = {disti(nodes[i], nodes[j]), nodes[j], j};  // i行-j列（row, col)
 		}
 		nodes[i]->dists.assign(temp_edges.begin(), temp_edges.end());
 	}
-	temp_edges.resize(size);
+	temp_edges.clear();
 	// 客户->客户
 	for (u32 i = 0; i < size; i++) {
 		for (u32 j = 0; j < size; j++) {
 			if (i == j) continue;
-			temp_edges[j] = {dist(customers[i], customers[j]), j, customers[j]};  // i行-j列（row, col)
+			edge = {dist(customers[i], customers[j]), customers[j], j};
+			temp_edges.emplace_back(edge);  // i行-j列（row, col)
 		}
-		std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist <= b.dist; });
+		std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist < b.dist; });
 		customers[i]->distsort.assign(temp_edges.begin(), temp_edges.end());
+		temp_edges.clear();
 	}
+	temp_edges.clear();
 	// 客户->场站
-	temp_edges.resize(depot_num);
 	for (u32 i = 0; i < size; i++) {
 		for (u32 j = 0; j < depot_num; j++) {
-			temp_edges[j] = {dist(customers[i], depots[j]), j, depots[j]};  // i行-j列（row, col)
+			edge = {dist(customers[i], depots[j]), depots[j], j};
+			temp_edges.emplace_back(edge);  // i行-j列（row, col)
 		}
 		if (depot_num > 1) std::sort(temp_edges.begin(), temp_edges.end(), [](Edge& a, Edge& b) { return a.dist < b.dist; });
 		customers[i]->depotsort.assign(temp_edges.begin(), temp_edges.end());
+		temp_edges.clear();
 	}
 	// return dists;
 }

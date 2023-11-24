@@ -7,19 +7,25 @@
 // #include <eigen3/Eigen/Core>
 #include <cmath>
 #include <iostream>
-// #include <memory>
 #include <unordered_map>
 #include <vector>
 
+#define FORCE 1
+#define ROUTES 2
+#define LOADS 4
+#define LENGTH 8
+#define PRIORITY 16
+
 typedef unsigned int u32;
 typedef unsigned long long int u64;
+typedef long long int i64;
 
 class Node;
 // 边长度，Node的一部分
 struct Edge {
-	double dist;      // 长度
-	u32 to;           // 指向
+	double dist;            // 长度
 	Node* toNode{nullptr};  // 指向的节点
+	u32 to;                 // 指向
 };
 
 struct Info {
@@ -31,6 +37,11 @@ struct Info {
 	u32 or4{};
 	u32 opt2{};
 };
+
+// 目标
+inline double v_aim(double cumlength_) {
+	return cumlength_;
+}
 
 /// @brief 节点
 class Node {
@@ -45,12 +56,12 @@ class Node {
 	u32 duration;                // 服务时间
 	u32 demand;                  // 需求
 	u32 start;                   // 开始时间窗
-	u32 end;                     // 结束时间窗
+	u32 end;                     // 结束时间窗(优先级，场站为最高)
 	bool isdepot;                // 是否为厂站
 
 	/**********构造函数************/
 	//_seq序号， （x.axis, y.axis), start开始时间窗， end结束时间窗, duration 服务时间，demand需求
-	Node() : x(0), y(0), seq(0), duration(0), demand(0), start(0), end(0) {}
+	Node() : x(0), y(0), seq(0), duration(0), demand(0), start(0), end(0), isdepot(0) {}
 	Node(const u32 _seq, const int x_axis, const int y_axis, const u32 _duration, const u32 _demand, const u32 _start, const u32 _end) {
 		x = x_axis;
 		y = y_axis;
@@ -108,6 +119,10 @@ class Node {
 	friend const double dist(const Node* node_x, const Node* node_y) {
 		return sqrt((node_x->x - node_y->x) * (node_x->x - node_y->x) + (node_x->y - node_y->y) * (node_x->y - node_y->y));
 	}
+	// 计算距离（友元）指针
+	friend const double disti(const Node* node_x, const Node* node_y) {
+		return std::round(sqrt((node_x->x - node_y->x) * (node_x->x - node_y->x) + (node_x->y - node_y->y) * (node_x->y - node_y->y)));
+	}
 };
 
 // 车辆或路线
@@ -115,8 +130,9 @@ class Vehicle {
   public:
 	std::vector<Node*> path;  // 走过的路
 	// double diflength;                  // 走过的路(时间）差分数组
-	double cumlength;                  // 所有节点的长度（时间）之和
-	double length;                     // 路径长度（时间）
+	double cumlength;                  // 所有节点的长度（时间）累计和
+	double length{};                   // 路径长度（时间）
+	double Limit{100000.0};            // 最大路径长度（时间）
 	Node* depot{nullptr};              // 场站
 	u32 capacity;                      // 最大容量
 	u32 load;                          // 载重量
@@ -180,17 +196,67 @@ class Vehicle {
 		return _length;
 	}
 
-	bool evaluate(double& length_) {
-		// u32 loads{0};
+	bool evaluate(double& cumlength_, double& length_, u32 num_, const u32 ctrl) {
+		// double length_{};
+		u32 load_{};
 		for (u32 i{1}, n = path.size() - 1; i < n; i++) {  // 优先级
-			// loads += path[i]->demand;
-			length_ += path[i]->dists[path[i - 1]->seq].dist * (n - i);
-			if (path[i]->end > path[i + 1]->end) {
-				return false;
+#ifdef DEBUG
+			if (path[i]->isdepot) throw "路径含有场站";
+#endif
+			length_ += path[i]->dists[path[i - 1]->seq].dist;
+			cumlength_ += length_;
+			load_ += path[i]->demand;
+			// cumlength_ += path[i]->dists[path[i - 1]->seq].dist * (n - i);
+			if (path[i - 1]->end > path[i]->end && !path[i - 1]->isdepot) {
+				num_++;
 			}
 		}
-		// if (loads > capacity) return false;
+		if (!ctrl) {
+			if (num_ || length_ > Limit || load_ > capacity) return false;
+		}
 		return true;
+	}
+
+	bool evaluate(double& cumlength_, const u32 ctrl) {
+		double length_{};
+		u32 load_{};
+		u32 num_{};
+		for (u32 i{1}, n = path.size() - 1; i < n; i++) {  // 优先级
+#ifdef DEBUG
+			if (path[i]->isdepot) throw "路径含有场站";
+#endif
+			length_ += path[i]->dists[path[i - 1]->seq].dist;
+			cumlength_ += length_;
+			load_ += path[i]->demand;
+			// cumlength_ += path[i]->dists[path[i - 1]->seq].dist * (n - i);
+			if (path[i - 1]->end > path[i]->end && !path[i - 1]->isdepot) {
+				num_++;
+			}
+		}
+		if (!ctrl) {
+			if (num_ || length_ > Limit || load_ > capacity) return false;
+		}
+		return true;
+	}
+
+	void precheck(u32& ctrl, u32& num_) {
+		double length_{};
+		u32 load_{};
+		for (u32 i{1}, n = path.size() - 1; i < n; i++) {  // 优先级
+#ifdef DEBUG
+			if (path[i]->isdepot) throw "路径含有场站";
+#endif
+			length_ += path[i]->dists[path[i - 1]->seq].dist;
+			// cumlength_ += length_;
+			load_ += path[i]->demand;
+			// cumlength_ += path[i]->dists[path[i - 1]->seq].dist * (n - i);
+			if (path[i - 1]->end > path[i]->end && !path[i - 1]->isdepot) {
+				num_++;
+			}
+		}
+		if (num_) ctrl += PRIORITY;
+		if (length_ > Limit) ctrl += LENGTH;
+		if (load_ > capacity) ctrl += LOADS;
 	}
 
 	/// @brief 清空
@@ -224,7 +290,7 @@ class Solution {
 	std::vector<Vehicle> solution;                 // 解决方案
 	std::unordered_map<u32, u32> shash;            // hash查找表，key为节点序号，value为所在路线
 	double allength{0.0};                          // 总路径长度
-	double limit{10000000.0};                      // 最大路径长度
+	double Limit{10000000.0};                      // 最大路径长度
 	u32 maxvehicle{};                              // 最大车辆
 	bool multi{false};                             // 是否多场站
 	bool valid{false};                             // 是否可行
@@ -330,23 +396,41 @@ class Solution {
 	}
 
 	///@brief 约束目标
-	bool evaluate() {
+	bool evaluate(u32& ctrl) {
 		valid = true;
 		if (solution.size() > maxvehicle) {
 			valid = false;
+			ctrl += ROUTES;
 		}
+		bool bpriority{0}, bloads{0}, blength{0};
 		for (auto& s : solution) {
 			s.load = 0;
+			s.cumlength = 0.0;
+			s.length = 0.0;
 			for (u32 i{1}, n = s.path.size() - 1; i < n; i++) {  // 优先级
 				s.load += s.path[i]->demand;
-				if (s.path[i]->end > s.path[i + 1]->end) {
+				s.length += s.path[i - 1]->dists[s.path[i]->seq].dist;
+				s.cumlength += s.length;
+				if (s.path[i - 1]->end > s.path[i]->end) {
+					bpriority = true;
 					valid = false;
 				}
-			}
-			if (s.load > s.capacity) {  // 容量
-				valid = false;
+				if (s.length > Limit) {  // 路径长度
+					valid = false;
+					blength = true;
+				}
+				if (s.load > s.capacity) {  // 容量
+					valid = false;
+					bloads = true;
+				}
 			}
 		}
+		if (blength)  // 路径长度
+			ctrl += LENGTH;
+		if (bloads)  // 容量
+			ctrl += LOADS;
+		if (bpriority)  // 优先级
+			ctrl += PRIORITY;
 		return valid;
 	}
 
@@ -356,6 +440,39 @@ class Solution {
 			num += solution[i].path.size() - 2;
 		}
 		std::cout << "total customers: " << num << std::endl;
+	}
+
+	void debug(bool verb = false) {
+		u32 num{};
+		for (auto& s : solution) {
+			u32 load_{};
+			double length_{}, cumlength_{};
+			for (u32 i{1}, n = s.path.size() - 1; i < n; i++) {  // 优先级
+				load_ += s.path[i]->demand;
+				length_ += s.path[i - 1]->dists[s.path[i]->seq].dist;
+				cumlength_ += length_;
+				num++;
+			}
+			if (load_ != s.load || (cumlength_ - s.cumlength) > 0.01) {
+				std::cout << s.seq << " load: " << load_ << " " << s.load << "\n";
+				std::cout << s.seq << " cumlength: " << cumlength_ << " " << s.cumlength << "\n";
+			}
+		}
+		if (verb)
+			std::cout << num << "\n";
+	}
+	void debug_hash(u32 where) {
+		for (auto& s : solution) {
+			for (u32 i{1}, n = s.path.size() - 1; i < n; i++) {  // 优先级
+				if (shash.contains(s.path[i]->seq)) {
+					if (shash[s.path[i]->seq] != s.seq) {
+						std::cout << where << " hash error: " << s.path[i]->seq << " in " << s.seq << "\n";
+					}
+				} else {
+					std::cout << where << " hash lost: " << s.path[i]->seq << " in " << s.seq << "\n";
+				}
+			}
+		}
 	}
 };
 

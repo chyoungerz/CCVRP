@@ -17,6 +17,7 @@ class SA {
 	std::vector<Info> infos;
 	u32 depotnum;  // 厂站数
 	u32 vehicles;  // 最大车辆数
+	u32 ctrl{0};   // 控制变量
 
 	/// @brief
 	void init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<Node*>& customer, const u32 depot_num, u32 maxload, u32 routes);

@@ -127,13 +127,13 @@ Solution greedynear(std::vector<Node*>& nodes, const u32 depot_num, const u32 ma
 	}
 	for (u32 i = 0; i < solution.solution.size(); i++) {
 		for (u32 j = 1; j < solution.solution[i].path.size() - 1; j++) {                   // 排除厂站
-			solution.shash.emplace(std::make_pair(solution.solution[i].path[j]->seq, i));  // 建立hash 查找表
+			solution.shash.emplace(solution.solution[i].path[j]->seq, i);                  // 建立hash 查找表
 		}
 	}
 	return solution;
 }
 
-Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const u32 maxload, const u32 routes) {
+Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const u32 maxload, const u32 routes, u32& ctrl) {
 	Solution solution;
 	if (depots.size() == 1) {  // 单厂站
 		solution.multi = false;
@@ -254,11 +254,11 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 	// 重建序号
 	solution.update_seq();
 	solution.update();
-	solution.evaluate();
+	solution.evaluate(ctrl);
 	// hash
 	for (u32 i = 0; i < solution.solution.size(); i++) {
 		for (u32 j = 1; j < solution.solution[i].path.size() - 1; j++) {                                          // 排除厂站
-			solution.shash.emplace(std::make_pair(solution.solution[i].path[j]->seq, solution.solution[i].seq));  // 建立hash 查找表
+			solution.shash.emplace(solution.solution[i].path[j]->seq, solution.solution[i].seq);                  // 建立hash 查找表
 		}
 	}
 	return solution;

@@ -23,7 +23,7 @@ void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<N
 	customers = std::move(customer);
 	depots = std::move(depot);
 	nodes = node;
-	sol = nassign(customers, depots, maxload, routes);
+	sol = nassign(customers, depots, maxload, routes, ctrl);
 	infos.reserve(50);
 	sol.show();
 }
@@ -32,13 +32,17 @@ void SA::run() {
 	// u32 customer = nodes.size() - depotnum;
 	//  sol.show();
 	bool improved{0}, flag{0};
-	int epoch = 1;
-	float size_near{0.1};
+	int epoch = 30;
+	float size_near{0.4};
 	Info info;
+	int vns[7] = {1, 2, 3, 4, 5, 6, 7};
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::shuffle(vns, vns + 7, gen);
 	while (epoch) {
-		for (u32 n{1}; n <= 7;) {
+		for (u32 n{0}; n < 7;) {
 			flag = 0;
-			switch (n) {
+			switch (vns[n]) {
 			case 1:
 				while (1) {
 					VNS::twoopt(sol, info.opt2, improved);
@@ -47,6 +51,9 @@ void SA::run() {
 					}
 					break;
 				}
+#ifdef DEBUG
+				sol.debug();
+#endif
 				break;
 			case 2:
 				while (1) {
@@ -55,6 +62,9 @@ void SA::run() {
 						flag = 1;
 						continue;
 					}
+#ifdef DEBUG
+					sol.debug();
+#endif
 					break;
 				}
 				break;
@@ -67,6 +77,9 @@ void SA::run() {
 					}
 					break;
 				}
+#ifdef DEBUG
+				sol.debug();
+#endif
 				break;
 			case 4:
 				while (1) {
@@ -77,6 +90,9 @@ void SA::run() {
 					}
 					break;
 				}
+#ifdef DEBUG
+				sol.debug();
+#endif
 				break;
 			case 5:
 				while (1) {
@@ -87,6 +103,9 @@ void SA::run() {
 					}
 					break;
 				}
+#ifdef DEBUG
+				sol.debug();
+#endif
 				break;
 			case 6:
 				while (1) {
@@ -97,6 +116,9 @@ void SA::run() {
 					}
 					break;
 				}
+#ifdef DEBUG
+				sol.debug();
+#endif
 				break;
 			case 7:
 				while (1) {
@@ -107,19 +129,29 @@ void SA::run() {
 					}
 					break;
 				}
+#ifdef DEBUG
+				sol.debug();
+#endif
 				break;
 			}
 			if (flag)
-				n = 1;
+				n = 0;
 			else
 				n++;
 		}
+		sol.update();
+		sol.show();
+		PER::RuinCreate(sol, 0.4, customers, 20, 2);
+		// sol.show();
+#ifdef DEBUG
+		sol.debug();
+#endif
 		epoch--;
 	}
 
 	// infos.emplace_back(info);
-	sol.update();
-	sol.show();
+	// sol.update();
+	// sol.show();
 	// for (u32 i{0}, n = infos.size(); i < n; i++) {
 	std::cout << "one: " << info.one
 	          << " two: " << info.two
@@ -232,7 +264,7 @@ Solution SWO::cross(Solution& sol1, Solution& sol2, float cr) {
 	decode(child_code, child_sol);
 	std::for_each(solutions.begin(), solutions.end(), [](Solution& sol) {
 		sol.remove_void();  // 去除空路线
-		sol.evaluate();     // 约束条件
+		// sol.evaluate();     // 约束条件
 		sol.update(1);      // 计算目标函数
 	});
 	return child_sol;

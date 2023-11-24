@@ -33,9 +33,9 @@ int main(int argc, char const *argv[]) {
 	SA vrp;
 	vrp.init(nodes, depots, customers, depot_num, maxload, routes);
 	vrp.run();
-	//  depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
-	// create(result, now);
-	// write(result, vrp.bestSol);
+	//   depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
+	//  create(result, now);
+	//  write(result, vrp.bestSol);
 	release(nodes);
 	return 0;
 }
