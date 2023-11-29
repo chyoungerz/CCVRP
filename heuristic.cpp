@@ -23,7 +23,7 @@ void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<N
 	customers = std::move(customer);
 	depots = std::move(depot);
 	nodes = node;
-	sol = nassign(customers, depots, maxload, routes, ctrl);
+	bestSol = sol = nassign(customers, depots, maxload, routes, ctrl);
 	infos.reserve(50);
 	sol.show();
 }
@@ -33,12 +33,12 @@ void SA::run() {
 	//  sol.show();
 	bool improved{0}, flag{0};
 	int epoch = 30;
-	float size_near{0.4};
+	float size_near{0.6};
 	Info info;
 	int vns[7] = {1, 2, 3, 4, 5, 6, 7};
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::shuffle(vns, vns + 7, gen);
+	// std::random_device rd;
+	// std::mt19937 gen(rd());
+	// std::shuffle(vns, vns + 7, gen);
 	while (epoch) {
 		for (u32 n{0}; n < 7;) {
 			flag = 0;
@@ -140,7 +140,10 @@ void SA::run() {
 				n++;
 		}
 		sol.update();
-		sol.show();
+		if (sol.allength < bestSol.allength) {
+			bestSol = sol;
+		}
+		// sol.show();
 		PER::RuinCreate(sol, 0.4, customers, 20, 2);
 		// sol.show();
 #ifdef DEBUG
@@ -148,7 +151,7 @@ void SA::run() {
 #endif
 		epoch--;
 	}
-
+	bestSol.show();
 	// infos.emplace_back(info);
 	// sol.update();
 	// sol.show();

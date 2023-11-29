@@ -147,21 +147,35 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 			else
 				return false;
 		});
+		solution.add(vehicle, routes);
+		u32 maxcust = customers.size();
+		for (u32 i{0};; i++) {
+			if (i < maxcust)
+				solution.solution[i % routes].path.emplace_back(customers[i]);
+			else
+				break;
+		}
+		for (auto& v : solution.solution) {
+			v.path.emplace_back(depot);
+			v.path_cumlength(true);
+		}
+		/*
 		for (auto& node : customers) {
-			if (!vehicle.move(node)) {             // 达到最大
-				vehicle.path.emplace_back(depot);  // 返回厂站
-				vehicle.path_cumlength(true);      // 计算路径长度。
-				solution.add(vehicle);             // 加入到答案。
-				vehicle.clear(depot, 0);           // 清空
-				vehicle.move(node);                // 补上
-			}
+		    if (!vehicle.move(node)) {             // 达到最大
+		        vehicle.path.emplace_back(depot);  // 返回厂站
+		        vehicle.path_cumlength(true);      // 计算路径长度。
+		        solution.add(vehicle);             // 加入到答案。
+		        vehicle.clear(depot, 0);           // 清空
+		        vehicle.move(node);                // 补上
+		    }
 		}
 		if (!vehicle.path.empty()) {           // 最后的客户
-			vehicle.path.emplace_back(depot);  // 返回厂站
-			vehicle.path_cumlength(true);      // 计算路径长度。
-			solution.add(vehicle);             // 加入到答案。
-			vehicle.clear(depot, 0);           // 清空
+		    vehicle.path.emplace_back(depot);  // 返回厂站
+		    vehicle.path_cumlength(true);      // 计算路径长度。
+		    solution.add(vehicle);             // 加入到答案。
+		    vehicle.clear(depot, 0);           // 清空
 		}
+		*/
 	} else {  // 多厂站(未测试)
 		solution.multi = true;
 		solution.maxvehicle = routes;

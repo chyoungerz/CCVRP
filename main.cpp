@@ -14,7 +14,7 @@ int main(int argc, char const *argv[]) {
 	string file, result;
 	vector<Node *> nodes, depots, customers;
 	if (argc != 3) {
-		file = "A-n32-k5.vrp";
+		file = "B-n66-k9.vrp";
 		result = "data.txt";
 		cerr << "no enought args" << endl;
 		cerr << "use default: " << file << " " << result << endl;
@@ -22,7 +22,7 @@ int main(int argc, char const *argv[]) {
 		file = argv[1];
 		result = argv[2];
 	}
-	u32 maxload{}, depot_num{}, routes{5};
+	u32 maxload{}, depot_num{}, routes{9};
 	// nodes = read(file, maxload, depot_num, routes);
 	read_vrp(file, maxload, depot_num, routes, nodes);
 	if (nodes.empty()) {

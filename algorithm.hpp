@@ -173,6 +173,39 @@ namespace ALG {
 		}
 	}
 
+	/**
+	 * @brief 计算DTW距离
+	 * @tparam T
+	 * @tparam _Dn
+	 * @param _r1 路径r1
+	 * @param _r2 路径r2
+	 * @param _dist 距离函数
+	 * @return 距离
+	 */
+	template <class T, class _Dn>
+	inline auto dtw(const std::vector<T>& _r1, const std::vector<T>& _r2, _Dn _dist) -> decltype(_dist) {
+		// std::vector<std::vector<double>> _dtw(_r1.size()-1, std::vector<double>(_r2.size()-1, 0.0));
+		const unsigned int _r1_size = _r1.size() - 2, _r2_size = _r2.size() - 2;
+		if (_r1_size <= 0 || _r2_size <= 0) return;
+		auto _dtw = new decltype(_dist)[_r1_size][_r2_size];
+		decltype(_dist) _dist_min{};
+		_dtw[0][0] = _dist(_r1[1], _r2[1]);
+		for (unsigned int i{1}; i < _r1_size; ++i) {
+			_dtw[i][0] = _dtw[i - 1][0] + _dist(_r1[i + 1], _r2[1]);
+		}
+		for (unsigned int i{1}; i < _r2_size; ++i) {
+			_dtw[0][i] = _dtw[0][i - 1] + _dist(_r1[1], _r2[i + 1]);
+		}
+		for (unsigned int i{1}; i < _r1_size; ++i) {
+			for (unsigned int j{1}; j < _r2_size; ++j) {
+				_dtw[i][j] = std::min({_dtw[i - 1][j], _dtw[i][j - 1], _dtw[i - 1][j - 1]}) + _dist(_r1[i + 1], _r2[j + 1]);
+			}
+		}
+		_dist_min = _dtw[_r1_size - 1][_r2_size - 1];
+		delete[] _dtw;
+		return _dist_min;
+	}
+
 }  // namespace ALG
 
 #endif
