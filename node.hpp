@@ -332,10 +332,12 @@ class Solution {
 		if (update == 0) {
 			for (auto& i : solution) {
 				allength += i.cumlength;
+				if (i.load > i.capacity || i.length > i.Limit) valid = false;
 			}
 		} else {
 			for (auto& i : solution) {
 				allength += i.path_cumlength(true);
+				if (i.load > i.capacity || i.length > i.Limit) valid = false;
 			}
 		}
 	}

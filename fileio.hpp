@@ -117,13 +117,13 @@ inline void create(const std::string& filename) {
 		std::cerr << "Error! cannot write to file: " << filename << std::endl;
 		return;
 	}
-	out << "日期：" << str << "\n";
+	out << "date：" << str << "\n";
 	// out << "随机数种子：" << 0 << "\n";
 	out.close();
 }
 
 // 将结果写入到文件中
-inline void write(const std::string& filename, const Solution& sol) {
+inline void write(const std::string& filename, const Solution& sol, const Info& info) {
 	std::fstream out(filename, std::ios::out | std::ios::app);  // 输出, 追加末尾
 	if (out.fail()) {
 		std::cerr << "Error! cannot write to file: " << filename << std::endl;
@@ -132,7 +132,7 @@ inline void write(const std::string& filename, const Solution& sol) {
 	char chs[12];
 	const time_t now = std::time(nullptr);
 	strftime(chs, 96, "%Y%m%d%H%M", localtime(&now));
-	out << "日期：" << chs << std::endl;
+	out << "data: " << chs << std::endl;
 	u32 num{}, routes{};
 	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
 		if (sol.solution[i].path.size() - 2 == 0) continue;
@@ -140,7 +140,36 @@ inline void write(const std::string& filename, const Solution& sol) {
 		num += sol.solution[i].path.size() - 2;
 		routes++;
 	}
-	out << "总路线长度: " << sol.allength << "\t 总客户数: " << num << "\t 总路线: " << routes << std::endl;
+	out << "one: " << info.one << " two: " << info.two << " three: " << info.three << " or2: " << info.or2 << " or3: " << info.or3 << " or4: " << info.or4 << " 2-opt: " << info.opt2 << "\n";
+	out << "total length: " << sol.allength << "\t total nodes: " << num << "\t total routes: " << routes << std::endl;
+	out.close();
+}
+
+// 将结果写入到文件中
+inline void write(const std::string& filename, const Solution& sol, const Info& info, const std::vector<double> lengths, const u64 duration) {
+	std::fstream out(filename, std::ios::out | std::ios::app);  // 输出, 追加末尾
+	if (out.fail()) {
+		std::cerr << "Error! cannot write to file: " << filename << std::endl;
+		return;
+	}
+	char chs[12];
+	const time_t now = std::time(nullptr);
+	strftime(chs, 96, "%Y%m%d%H%M", localtime(&now));
+	u32 num{}, routes{}, times = lengths.size();
+	double length{};
+	out << "data: " << chs << "\t run epoch: " << times << "\t total time: " << duration << "ms\n";
+	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
+		if (sol.solution[i].path.size() - 2 == 0) continue;
+		out << sol.solution[i] << " : " << sol.solution[i].path.size() - 2 << "\n";
+		num += sol.solution[i].path.size() - 2;
+		routes++;
+	}
+	for (auto i : lengths) {
+		length += i / times;
+	}
+	out << "one: " << info.one << " two: " << info.two << " three: " << info.three << " or2: " << info.or2 << " or3: " << info.or3 << " or4: " << info.or4 << " 2-opt: " << info.opt2 << "\n";
+	out << "total length: " << sol.allength << "\t avg length: " << length << "\t total nodes: " << num << "\t total routes: " << routes << "\n"
+	    << std::endl;
 	out.close();
 }
 

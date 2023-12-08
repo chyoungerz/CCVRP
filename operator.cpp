@@ -1087,7 +1087,7 @@ bool PER::insert(Vehicle& vehicle, Node* node, u32 ctrl) {
 	vehicle.load += node->demand;
 	vehicle.path.emplace(vehicle.path.end() - 1, node);
 	std::vector<Node*> path{vehicle.path};
-	double minlength{100000.0};
+	double minlength{1000000000.0};
 	u32 size = path.size();
 	if (path[size - 3]->end <= path[size - 2]->end)
 		minlength = PER::cumlength(path);
@@ -1107,7 +1107,7 @@ bool PER::insert(Vehicle& vehicle, Node* node, u32 ctrl) {
 bool PER::insert(Solution& sol, Node* node, u32 ctrl) {
 	u32 best_seq{}, seq{0};
 	std::vector<Node*> best_path{};
-	double minlength{100000.0};
+	double minlength{1000000000.0};
 	for (auto& ve : sol.solution) {
 		seq++;
 		if (ve.load + node->demand > ve.capacity && !(ctrl & FORCE)) continue;
@@ -1358,6 +1358,8 @@ void PER::EjecChain(Solution& sol, u32 k, std::vector<Node*>& maxnode, u32 epoch
 				std::swap(sol.solution[select_s[i + 1]].path[index_b], sol.solution[select_s[i]].path[index_a]);
 				sol.solution[select_s[i + 1]].path_cumlength(1);
 				sol.solution[select_s[i]].path_cumlength(1);
+				sol.shash[sol.solution[select_s[i]].path[index_a]->seq] = sol.solution[select_s[i + 1]].seq;
+				sol.shash[sol.solution[select_s[i + 1]].path[index_b]->seq] = sol.solution[select_s[i]].seq;
 				break;
 			}
 		}
@@ -1365,7 +1367,7 @@ void PER::EjecChain(Solution& sol, u32 k, std::vector<Node*>& maxnode, u32 epoch
 }
 
 bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
-	double saving0{100000.0}, saving1{100000.0};
+	double saving0{1000000.0}, saving1{1000000.0};
 	u32 cmd0{0}, pnum{0}, numf{0}, numb{0}, flag{0};
 	if (ctrl) cmd0 += FORCE;
 	bool improved{false};
@@ -1508,7 +1510,7 @@ bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
 
 bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) {
 	Node* temp{r1.path[a]};  // 保存要插入的节点
-	double saving0{100000.0}, saving1{100000.0};
+	double saving0{1000000.0}, saving1{1000000.0};
 	u32 cmd1{0}, cmd2{0}, r1pnum{}, r2pnum{}, flag{0}, r1num{}, r2fnum{}, r2bnum{};
 	if (ctrl) cmd1 = cmd2 += FORCE;  // 是否强制
 	bool improved{false};
@@ -1729,7 +1731,7 @@ bool OPS::swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl)
 	}
 }
 bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
-	double saving0{100000.0}, saving1{100000.0};
+	double saving0{1000000.0}, saving1{1000000.0};
 	u32 cmd0{0}, pnum{0}, numf{0}, numb{0}, flag{0};
 	if (ctrl) cmd0 += FORCE;
 	bool improved{false};
@@ -1927,7 +1929,7 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 
 bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 	const u32 f1{f + len}, t1{t + len};
-	double saving0{100000.0}, saving1{100000.0};
+	double saving0{1000000.0}, saving1{1000000.0};
 	u32 cmd1{0}, cmd2{0}, r1pnum{}, r2pnum{}, flag{0}, r1num{}, r2fnum{}, r2bnum{}, difload{};
 	if (ctrl) cmd1 = cmd2 += FORCE;  // 是否强制
 	bool improved{false};

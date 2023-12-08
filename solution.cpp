@@ -141,9 +141,9 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 		Node* depot{depots.front()};
 		Vehicle vehicle(depot, maxload, 0);  // 初始路线
 		// 按离厂站距离排序
-		std::sort(customers.begin(), customers.end(), [&depot](const Node* a, const Node* b) {
+		std::sort(customers.begin(), customers.end(), [](const Node* a, const Node* b) {
 			if (a->end <= b->end)
-				return a->dists[depot->seq].dist < b->dists[depot->seq].dist;
+				return a->demand > b->demand;
 			else
 				return false;
 		});
@@ -200,7 +200,12 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 			}
 			Vehicle vehicle(depots[min_index], maxload, 0);  // 初始路线
 			// 按离厂站距离排序
-			std::sort(classfy[i].begin(), classfy[i].end(), [&depots, min_index](const Node* a, const Node* b) { return a->dists[depots[min_index]->seq].dist < b->dists[depots[min_index]->seq].dist; });
+			std::sort(classfy[i].begin(), classfy[i].end(), [](const Node* a, const Node* b) {
+				if (a->end <= b->end)
+					return a->demand < b->demand;
+				else
+					return false;
+			});
 			for (auto& node : classfy[i]) {
 				if (!vehicle.move(node)) {                         // 达到最大
 					vehicle.path.emplace_back(depots[min_index]);  // 返回厂站
@@ -270,11 +275,11 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 	solution.update();
 	solution.evaluate(ctrl);
 	// hash
-	for (u32 i = 0; i < solution.solution.size(); i++) {
-		for (u32 j = 1; j < solution.solution[i].path.size() - 1; j++) {                                          // 排除厂站
-			solution.shash.emplace(solution.solution[i].path[j]->seq, solution.solution[i].seq);                  // 建立hash 查找表
-		}
-	}
+	// for (u32 i = 0; i < solution.solution.size(); i++) {
+	//	for (u32 j = 1; j < solution.solution[i].path.size() - 1; j++) {                                          // 排除厂站
+	//		solution.shash.emplace(solution.solution[i].path[j]->seq, solution.solution[i].seq);                  // 建立hash 查找表
+	//	}
+	//}
 	return solution;
 }
 

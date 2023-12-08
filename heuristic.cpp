@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "NSearch.hpp"
-// #include "algorithm.hpp"
+#include "algorithm.hpp"
 #include "node.hpp"
 #include "operator.hpp"
 #include "solution.hpp"
@@ -23,115 +23,106 @@ void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<N
 	customers = std::move(customer);
 	depots = std::move(depot);
 	nodes = node;
-	bestSol = sol = nassign(customers, depots, maxload, routes, ctrl);
-	infos.reserve(50);
-	sol.show();
+	initSol = nassign(customers, depots, maxload, routes, ctrl);
+	initSol.update_hash(1);
+	sol = initSol;
+}
+
+void SA::reset() {
+	sol = initSol;
+	bestSol.allength = 0.0;
+	bestSol.shash.clear();
+	bestSol.solution.clear();
+	info.one = 0;
+	info.opt2 = 0;
+	info.or2 = 0;
+	info.or3 = 0;
+	info.three = 0;
+	info.or4 = 0;
+	info.two = 0;
 }
 
 void SA::run() {
 	// u32 customer = nodes.size() - depotnum;
 	//  sol.show();
-	bool improved{0}, flag{0};
-	int epoch = 30;
-	float size_near{0.6};
-	Info info;
-	int vns[7] = {1, 2, 3, 4, 5, 6, 7};
-	// std::random_device rd;
-	// std::mt19937 gen(rd());
-	// std::shuffle(vns, vns + 7, gen);
+	bool improved{1}, flag{0};
+	int max_epoch{20};
+	int epoch{max_epoch};
+	float size_near{0.5}, T{1.0}, cold_rate{0.95};
+	int vns[7] = {1, 2, 3, 4, 5, 6};
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<> dis(0, 1);
+	ALG::SM dists;
+	while (improved) {
+		improved = false;
+		VNS::relocate(sol, info.one, size_near, improved);
+		VNS::oropt2(sol, info.or2, size_near, improved);
+		VNS::arcnode(sol, info.three, size_near, improved);
+		VNS::oropt3(sol, info.or3, size_near, improved);
+		VNS::oropt4(sol, info.or4, size_near, improved);
+	}
+	sol.update();
+	// sol.show();
+	if (sol.valid)
+		bestSol = sol;
 	while (epoch) {
+		PER::RuinCreate(sol, 0.2, customers, 10, 2);
 		for (u32 n{0}; n < 7;) {
 			flag = 0;
 			switch (vns[n]) {
 			case 1:
 				while (1) {
-					VNS::twoopt(sol, info.opt2, improved);
+					VNS::exchange(sol, info.two, size_near, improved);
 					if (improved) {
+						VNS::twoopt(sol, info.opt2, improved);
+						improved = 1;
 						continue;
 					}
 					break;
 				}
-#ifdef DEBUG
-				sol.debug();
-#endif
 				break;
 			case 2:
-				while (1) {
-					VNS::exchange(sol, info.two, size_near, improved);
-					if (improved) {
-						flag = 1;
-						continue;
-					}
-#ifdef DEBUG
-					sol.debug();
-#endif
-					break;
+				VNS::relocate(sol, info.one, size_near, improved);
+				if (improved) {
+					VNS::twoopt(sol, info.opt2, improved);
+					improved = 1;
+					flag = 1;
 				}
 				break;
 			case 3:
-				while (1) {
-					VNS::relocate(sol, info.one, size_near, improved);
-					if (improved) {
-						flag = 1;
-						continue;
-					}
-					break;
+				VNS::oropt2(sol, info.or2, size_near, improved);
+				if (improved) {
+					VNS::twoopt(sol, info.opt2, improved);
+					improved = 1;
+					flag = 1;
 				}
-#ifdef DEBUG
-				sol.debug();
-#endif
 				break;
 			case 4:
-				while (1) {
-					VNS::oropt2(sol, info.or2, size_near, improved);
-					if (improved) {
-						flag = 1;
-						continue;
-					}
-					break;
+
+				VNS::arcnode(sol, info.three, size_near, improved);
+				if (improved) {
+					VNS::twoopt(sol, info.opt2, improved);
+					improved = 1;
+					flag = 1;
 				}
-#ifdef DEBUG
-				sol.debug();
-#endif
 				break;
 			case 5:
-				while (1) {
-					VNS::oropt2(sol, info.three, size_near, improved);
-					if (improved) {
-						flag = 1;
-						continue;
-					}
-					break;
+
+				VNS::oropt3(sol, info.three, size_near, improved);
+				if (improved) {
+					VNS::twoopt(sol, info.opt2, improved);
+					improved = 1;
+					flag = 1;
 				}
-#ifdef DEBUG
-				sol.debug();
-#endif
 				break;
 			case 6:
-				while (1) {
-					VNS::oropt3(sol, info.three, size_near, improved);
-					if (improved) {
-						flag = 1;
-						continue;
-					}
-					break;
+				VNS::oropt4(sol, info.three, size_near, improved);
+				if (improved) {
+					VNS::twoopt(sol, info.opt2, improved);
+					improved = 1;
+					flag = 1;
 				}
-#ifdef DEBUG
-				sol.debug();
-#endif
-				break;
-			case 7:
-				while (1) {
-					VNS::oropt4(sol, info.three, size_near, improved);
-					if (improved) {
-						flag = 1;
-						continue;
-					}
-					break;
-				}
-#ifdef DEBUG
-				sol.debug();
-#endif
 				break;
 			}
 			if (flag)
@@ -140,30 +131,35 @@ void SA::run() {
 				n++;
 		}
 		sol.update();
-		if (sol.allength < bestSol.allength) {
-			bestSol = sol;
+		if (sol.valid) {
+			if (sol.allength < bestSol.allength) {
+				bestSol = sol;
+				epoch = max_epoch;
+			} else if (dis(gen) < T) {
+				bestSol = sol;
+				epoch = max_epoch;
+			} else {
+				sol = bestSol;
+				epoch--;
+			}
+		} else {
+			epoch--;
 		}
-		// sol.show();
-		PER::RuinCreate(sol, 0.4, customers, 20, 2);
-		// sol.show();
-#ifdef DEBUG
-		sol.debug();
-#endif
-		epoch--;
+		T *= cold_rate;
 	}
-	bestSol.show();
-	// infos.emplace_back(info);
-	// sol.update();
-	// sol.show();
-	// for (u32 i{0}, n = infos.size(); i < n; i++) {
-	std::cout << "one: " << info.one
-	          << " two: " << info.two
-	          << " three: " << info.three
-	          << " or2: " << info.or2
-	          << " or3: " << info.or3
-	          << " or4: " << info.or4
-	          << " 2-opt: " << info.opt2 << "\n";
-	//}
+	// bestSol.show();
+	//  infos.emplace_back(info);
+	//  sol.update();
+	//  sol.show();
+	//  for (u32 i{0}, n = infos.size(); i < n; i++) {
+	// std::cout << "one: " << info.one
+	//           << " two: " << info.two
+	//           << " three: " << info.three
+	//           << " or2: " << info.or2
+	//           << " or3: " << info.or3
+	//           << " or4: " << info.or4
+	//           << " 2-opt: " << info.opt2 << "\n";
+	// }
 }
 
 /*

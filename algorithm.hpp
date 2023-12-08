@@ -80,7 +80,7 @@ namespace ALG {
 	 * @param _cmp 用于比较元素的函数对象。
 	 * @return void
 	 */
-	template <class _RanIt, class _Fn>
+	template <class _RanIt, typename _Fn>
 	inline void topk(_RanIt _first, _RanIt _last, unsigned int _k, _Fn _cmp) {
 		if (_last <= _first || _k == 0) return;
 		if (_k >= _last - _first) return;
@@ -174,7 +174,7 @@ namespace ALG {
 	}
 
 	/**
-	 * @brief 计算DTW距离
+	 * @brief 计算SM距离
 	 * @tparam T
 	 * @tparam _Dn
 	 * @param _r1 路径r1
@@ -182,7 +182,7 @@ namespace ALG {
 	 * @param _dist 距离函数
 	 * @return 距离
 	 */
-	template <class T, class _Dn>
+	template <typename T, typename _Dn>
 	inline auto dtw(const std::vector<T>& _r1, const std::vector<T>& _r2, _Dn _dist) -> decltype(_dist) {
 		// std::vector<std::vector<double>> _dtw(_r1.size()-1, std::vector<double>(_r2.size()-1, 0.0));
 		const unsigned int _r1_size = _r1.size() - 2, _r2_size = _r2.size() - 2;
@@ -206,6 +206,113 @@ namespace ALG {
 		return _dist_min;
 	}
 
+	/**
+	 * @brief 计算SM距离
+	 * @tparam T
+	 * @tparam _Dn
+	 * @param _r1 路径r1
+	 * @param _r2 路径r2
+	 * @param _dist 距离函数
+	 * @return 距离
+	 */
+	template <typename T, typename _Dn>
+	inline double dtw(const std::vector<T>& _r1, const std::vector<T>& _r2, double** mem_dtw, _Dn _dist) {
+		// std::vector<std::vector<double>> _dtw(_r1.size()-1, std::vector<double>(_r2.size()-1, 0.0));
+		const unsigned int _r1_size = _r1.size() - 2, _r2_size = _r2.size() - 2;
+		if (_r1_size <= 0 || _r2_size <= 0) return 0.0;
+		auto _dtw = new decltype(_dist)[_r1_size][_r2_size];
+		double _dist_min{};
+		if (mem_dtw == nullptr) throw "mem_dtw is nullptr";
+		mem_dtw[0][0] = _dist(_r1[1], _r2[1]);
+		for (unsigned int i{1}; i < _r1_size; ++i) {
+			mem_dtw[i][0] = mem_dtw[i - 1][0] + _dist(_r1[i + 1], _r2[1]);
+		}
+		for (unsigned int i{1}; i < _r2_size; ++i) {
+			mem_dtw[0][i] = mem_dtw[0][i - 1] + _dist(_r1[1], _r2[i + 1]);
+		}
+		for (unsigned int i{1}; i < _r1_size; ++i) {
+			for (unsigned int j{1}; j < _r2_size; ++j) {
+				mem_dtw[i][j] = std::min({mem_dtw[i - 1][j], mem_dtw[i][j - 1], mem_dtw[i - 1][j - 1]}) + _dist(_r1[i + 1], _r2[j + 1]);
+			}
+		}
+		_dist_min = mem_dtw[_r1_size - 1][_r2_size - 1];
+		return _dist_min;
+	}
+
+	// Similarity Measurement
+	class SM {
+		double* mem_mat{nullptr};
+		u32 mem_dtw_r1{};
+		u32 mem_dtw_r2{};
+
+	  protected:
+		double _dtw_r_(const std::vector<Node*>& _r1, const std::vector<Node*>& _r2) {
+			// std::vector<std::vector<double>> _dtw(_r1.size()-1, std::vector<double>(_r2.size()-1, 0.0));
+			const u32 _r1_size = _r1.size() - 2, _r2_size = _r2.size() - 2;
+			if (_r1_size <= 0 || _r2_size <= 0) throw "path is empty";
+			if (mem_mat == nullptr) throw "mem_dtw is nullptr";
+			mem_mat[0] = dist(_r1[1], _r2[1]);
+			for (unsigned int i{1}; i < _r1_size; ++i) {
+				mem_mat[i * _r1_size] = mem_mat[(i - 1) * _r1_size] + dist(_r1[i + 1], _r2[1]);
+			}
+			for (unsigned int i{1}; i < _r2_size; ++i) {
+				mem_mat[i] = mem_mat[i - 1] + dist(_r1[1], _r2[i + 1]);
+			}
+			for (unsigned int i{1}; i < _r1_size; ++i) {
+				for (unsigned int j{1}; j < _r2_size; ++j) {
+					mem_mat[i * _r1_size + j] = std::min({mem_mat[(i - 1) * _r1_size + j], mem_mat[i * _r1_size + j - 1], mem_mat[(i - 1) * _r1_size + j - 1]}) + dist(_r1[i + 1], _r2[j + 1]);
+				}
+			}
+			return mem_mat[(_r1_size - 1) * _r1_size + _r2_size - 1];
+		}
+
+	  public:
+		SM() = default;
+		~SM() { delete[] mem_mat; }
+		SM(const SM&) = delete;             // 复制构造
+		SM(SM&&) = delete;                  // 移动构造
+		SM& operator=(const SM&) = delete;  // 复制赋值
+		SM& operator=(SM&&) = delete;       // 移动赋值
+
+		double dtw(std::vector<Vehicle>& s1, std::vector<Vehicle>& s2) {
+			u32 size = s1.size();
+			if (size != s2.size()) throw "r1_size != r2_size";
+			u32 index[size];
+			double dist_min{};
+			bool need_expand{0};
+			for (u32 i{0}; i < size; ++i) {
+				if (mem_dtw_r1 + 2 < s1[i].path.size()) {
+					mem_dtw_r1 = s1[i].path.size();
+					need_expand = 1;
+				}
+				if (mem_dtw_r2 + 2 < s2[i].path.size()) {
+					mem_dtw_r2 = s2[i].path.size();
+					need_expand = 1;
+				}
+				index[i] = i;
+			}
+			if (need_expand) {
+				delete[] mem_mat;
+				mem_mat = new double[mem_dtw_r1 * mem_dtw_r2];
+			}
+
+			for (auto& i : s1) {
+				double _dist_min{1000000.0}, temp{};
+				u32 index_seq{};
+				for (u32 j{0}; j < size; ++j) {
+					temp = _dtw_r_(i.path, s2[index[j]].path);
+					if (temp < _dist_min) {
+						_dist_min = temp;
+						index_seq = j;
+					}
+				}
+				dist_min += _dist_min;
+				size--;
+				index[index_seq] = index[size];
+			}
+			return dist_min;
+		}
+	};
 }  // namespace ALG
 
 #endif
