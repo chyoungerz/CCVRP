@@ -329,6 +329,7 @@ class Solution {
 	/// @param update 是否重新计算，1:全部重新计算，0：不重新计算（默认）
 	void update(u32 update = 0) {
 		allength = 0.0;
+		valid = true;
 		if (update == 0) {
 			for (auto& i : solution) {
 				allength += i.cumlength;

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <random>
 #include <set>
+#include <utility>
 #include <vector>
 
 #include "NSearch.hpp"
@@ -26,11 +27,12 @@ void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<N
 	initSol = nassign(customers, depots, maxload, routes, ctrl);
 	initSol.update_hash(1);
 	sol = initSol;
+	bestSol.allength = 100000000.0;
 }
 
 void SA::reset() {
 	sol = initSol;
-	bestSol.allength = 0.0;
+	bestSol.allength = 100000000.0;
 	bestSol.shash.clear();
 	bestSol.solution.clear();
 	info.one = 0;
@@ -50,6 +52,8 @@ void SA::run() {
 	int epoch{max_epoch};
 	float size_near{0.5}, T{1.0}, cold_rate{0.95};
 	int vns[7] = {1, 2, 3, 4, 5, 6};
+	u32 maxcustomers = customers.size(), stop{0};
+	Solution lsbest = bestSol;
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_real_distribution<> dis(0, 1);
@@ -65,11 +69,17 @@ void SA::run() {
 	sol.update();
 	// sol.show();
 	if (sol.valid)
-		bestSol = sol;
+		bestSol = lsbest = sol;
 	while (epoch) {
-		PER::RuinCreate(sol, 0.2, customers, 10, 2);
+		if (dis(gen) < 0.5) {
+			PER::RuinCreate(sol, 0.2, customers, 10, 2);
+		} else {
+			PER::EjecChain(sol, 4, 1, 0);
+		}
 		for (u32 n{0}; n < 7;) {
 			flag = 0;
+			stop++;
+			if (stop > maxcustomers * 20) break;
 			switch (vns[n]) {
 			case 1:
 				while (1) {
@@ -130,22 +140,27 @@ void SA::run() {
 			else
 				n++;
 		}
+		stop = 0;
 		sol.update();
 		if (sol.valid) {
-			if (sol.allength < bestSol.allength) {
-				bestSol = sol;
+			if (sol.allength < bestSol.allength) bestSol = sol;
+			if (sol.allength < lsbest.allength) {
+				lsbest = sol;
 				epoch = max_epoch;
 			} else if (dis(gen) < T) {
-				bestSol = sol;
+				lsbest = sol;
 				epoch = max_epoch;
 			} else {
-				sol = bestSol;
+				sol = lsbest;
 				epoch--;
 			}
 		} else {
 			epoch--;
 		}
 		T *= cold_rate;
+	}
+	if (bestSol.allength > lsbest.allength) {
+		bestSol = std::move(lsbest);
 	}
 	// bestSol.show();
 	//  infos.emplace_back(info);

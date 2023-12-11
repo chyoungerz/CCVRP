@@ -349,7 +349,7 @@ namespace PER {
 	/// @param sol 解
 	/// @param k k条路径
 	/// @param epoch 扰动最大失败次数
-	void EjecChain(Solution& sol, u32 k, std::vector<Node*>& maxnode, u32 epoch, u32 rule);
+	void EjecChain(Solution& sol, u32 k, u32 epoch, u32 rule);
 }  // namespace PER
 
 namespace OPS {

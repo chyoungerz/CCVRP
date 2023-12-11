@@ -1326,7 +1326,7 @@ void PER::RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 ep
 	sol.update_hash(1);
 }
 
-void PER::EjecChain(Solution& sol, u32 k, std::vector<Node*>& maxnode, u32 epoch, u32 rule) {
+void PER::EjecChain(Solution& sol, u32 k, u32 epoch, u32 rule) {
 	u32 size_s = sol.solution.size();
 	if (k >= size_s) k = size_s;
 	std::vector<u32> select_s(size_s, 0);
@@ -1344,7 +1344,7 @@ void PER::EjecChain(Solution& sol, u32 k, std::vector<Node*>& maxnode, u32 epoch
 			u32 index_a{gen() % range_a + 1};
 			u32 index_b{gen() % range_b + 1};
 			int difload = sol.solution[select_s[i]].path[index_a]->demand - sol.solution[select_s[i + 1]].path[index_b]->demand;
-			if (sol.solution[select_s[i]].load - difload <= sol.solution[select_s[i]].capacity && sol.solution[select_s[i + 1]].load + difload <= sol.solution[select_s[i + 1]].capacity) {
+			if ((sol.solution[select_s[i]].load - difload <= sol.solution[select_s[i]].capacity && sol.solution[select_s[i + 1]].load + difload <= sol.solution[select_s[i + 1]].capacity) || n == 0) {
 				if (!sol.solution[select_s[i]].path[index_a - 1]->isdepot && sol.solution[select_s[i]].path[index_a - 1]->end > sol.solution[select_s[i + 1]].path[index_b]->end)
 					continue;
 				if (!sol.solution[select_s[i]].path[index_a + 1]->isdepot && sol.solution[select_s[i + 1]].path[index_b]->end > sol.solution[select_s[i]].path[index_a + 1]->end)
@@ -1355,15 +1355,16 @@ void PER::EjecChain(Solution& sol, u32 k, std::vector<Node*>& maxnode, u32 epoch
 					continue;
 				sol.solution[select_s[i]].load -= difload;
 				sol.solution[select_s[i + 1]].load += difload;
+				sol.shash[sol.solution[select_s[i]].path[index_a]->seq] = sol.solution[select_s[i + 1]].seq;
+				sol.shash[sol.solution[select_s[i + 1]].path[index_b]->seq] = sol.solution[select_s[i]].seq;
 				std::swap(sol.solution[select_s[i + 1]].path[index_b], sol.solution[select_s[i]].path[index_a]);
 				sol.solution[select_s[i + 1]].path_cumlength(1);
 				sol.solution[select_s[i]].path_cumlength(1);
-				sol.shash[sol.solution[select_s[i]].path[index_a]->seq] = sol.solution[select_s[i + 1]].seq;
-				sol.shash[sol.solution[select_s[i + 1]].path[index_b]->seq] = sol.solution[select_s[i]].seq;
 				break;
 			}
 		}
 	}
+	sol.update();
 }
 
 bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {

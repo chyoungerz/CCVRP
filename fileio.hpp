@@ -136,7 +136,7 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 	u32 num{}, routes{};
 	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
 		if (sol.solution[i].path.size() - 2 == 0) continue;
-		out << sol.solution[i] << " : " << sol.solution[i].path.size() - 2 << "\n";
+		out << sol.solution[i] << " : " << sol.solution[i].load << "\n";
 		num += sol.solution[i].path.size() - 2;
 		routes++;
 	}
@@ -159,8 +159,8 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 	double length{};
 	out << "data: " << chs << "\t run epoch: " << times << "\t total time: " << duration << "ms\n";
 	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
-		if (sol.solution[i].path.size() - 2 == 0) continue;
-		out << sol.solution[i] << " : " << sol.solution[i].path.size() - 2 << "\n";
+		if (sol.solution[i].path.size() - 2 <= 0) continue;
+		out << sol.solution[i] << " : " << sol.solution[i].load << "\n";
 		num += sol.solution[i].path.size() - 2;
 		routes++;
 	}
