@@ -364,6 +364,6 @@ namespace OPS {
 	bool oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 len, u32 ctrl);
 	bool oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl);
 	bool arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl);
-	bool arcswap(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl);
+	bool arcswap(Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u32 ctrl);
 };  // namespace OPS
 #endif

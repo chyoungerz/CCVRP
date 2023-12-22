@@ -35,6 +35,7 @@ struct Info {
 	u32 or2{};
 	u32 or3{};
 	u32 or4{};
+	u32 arc{};
 	u32 opt2{};
 };
 
@@ -187,7 +188,6 @@ class Vehicle {
 	/// @param update 是否更新，默认否
 	/// @return 累计路径长度
 	double path_cumlength(bool update = false) {
-		if (path.size() <= 2) return 0.0;
 		double _length{0.0};
 		for (u64 j{0}, n{path.size() - 2}; j < n; j++) {
 			_length += (n - j) * path[j]->dists[path[j + 1]->seq].dist;
@@ -196,7 +196,16 @@ class Vehicle {
 		return _length;
 	}
 
-	bool evaluate(double& cumlength_, double& length_, u32 num_, const u32 ctrl) {
+	/// @brief 更新所有路径长度
+	void update_allength() {
+		length = cumlength = 0.0;
+		for (u64 j{0}, n{path.size() - 2}; j < n; j++) {
+			length += path[j]->dists[path[j + 1]->seq].dist;
+			cumlength += length;
+		}
+	}
+
+	bool evaluate(double& cumlength_, double& length_, const u32 ctrl) {
 		// double length_{};
 		u32 load_{};
 		for (u32 i{1}, n = path.size() - 1; i < n; i++) {  // 优先级
@@ -207,56 +216,23 @@ class Vehicle {
 			cumlength_ += length_;
 			load_ += path[i]->demand;
 			// cumlength_ += path[i]->dists[path[i - 1]->seq].dist * (n - i);
-			if (path[i - 1]->end > path[i]->end && !path[i - 1]->isdepot) {
-				num_++;
-			}
 		}
 		if (!ctrl) {
-			if (num_ || length_ > Limit || load_ > capacity) return false;
+			if (length_ > Limit || load_ > capacity) return false;
 		}
 		return true;
 	}
 
-	bool evaluate(double& cumlength_, const u32 ctrl) {
-		double length_{};
-		u32 load_{};
-		u32 num_{};
-		for (u32 i{1}, n = path.size() - 1; i < n; i++) {  // 优先级
-#ifdef DEBUG
-			if (path[i]->isdepot) throw "路径含有场站";
-#endif
-			length_ += path[i]->dists[path[i - 1]->seq].dist;
-			cumlength_ += length_;
-			load_ += path[i]->demand;
-			// cumlength_ += path[i]->dists[path[i - 1]->seq].dist * (n - i);
-			if (path[i - 1]->end > path[i]->end && !path[i - 1]->isdepot) {
-				num_++;
-			}
-		}
-		if (!ctrl) {
-			if (num_ || length_ > Limit || load_ > capacity) return false;
+	bool valid() {
+		if (length > Limit || load > capacity) {
+			return false;
 		}
 		return true;
 	}
 
-	void precheck(u32& ctrl, u32& num_) {
-		double length_{};
-		u32 load_{};
-		for (u32 i{1}, n = path.size() - 1; i < n; i++) {  // 优先级
-#ifdef DEBUG
-			if (path[i]->isdepot) throw "路径含有场站";
-#endif
-			length_ += path[i]->dists[path[i - 1]->seq].dist;
-			// cumlength_ += length_;
-			load_ += path[i]->demand;
-			// cumlength_ += path[i]->dists[path[i - 1]->seq].dist * (n - i);
-			if (path[i - 1]->end > path[i]->end && !path[i - 1]->isdepot) {
-				num_++;
-			}
-		}
-		if (num_) ctrl += PRIORITY;
-		if (length_ > Limit) ctrl += LENGTH;
-		if (load_ > capacity) ctrl += LOADS;
+	void precheck(u32& ctrl) {
+		if (length > Limit) ctrl += LENGTH;
+		if (load > capacity) ctrl += LOADS;
 	}
 
 	/// @brief 清空
@@ -418,14 +394,14 @@ class Solution {
 					bpriority = true;
 					valid = false;
 				}
-				if (s.length > Limit) {  // 路径长度
-					valid = false;
-					blength = true;
-				}
-				if (s.load > s.capacity) {  // 容量
-					valid = false;
-					bloads = true;
-				}
+			}
+			if (s.length > Limit) {  // 路径长度
+				valid = false;
+				blength = true;
+			}
+			if (s.load > s.capacity) {  // 容量
+				valid = false;
+				bloads = true;
 			}
 		}
 		if (blength)  // 路径长度
@@ -435,6 +411,18 @@ class Solution {
 		if (bpriority)  // 优先级
 			ctrl += PRIORITY;
 		return valid;
+	}
+	void evaluate() {
+		valid = true;
+		if (solution.size() > maxvehicle) {
+			valid = false;
+		}
+		for (auto& s : solution) {
+			if (!s.valid()) {  // 路径长度
+				valid = false;
+				return;
+			}
+		}
 	}
 
 	void customer() {

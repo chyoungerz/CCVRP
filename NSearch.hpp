@@ -55,6 +55,9 @@ namespace VNS {
 	/// @brief 点边交换操作
 	void arcnode(Solution& solution, u32& num, float size_near, bool& flag);
 
+	/// @brief 边交换操作
+	void arcswap(Solution& solution, u32& num, bool& flag);
+
 	/// @brief oropt 2 操作
 	void oropt2(Solution& solution, u32& num, float size_near, bool& flag);
 
@@ -65,6 +68,6 @@ namespace VNS {
 	void oropt4(Solution& solution, u32& num, float size_near, bool& flag);
 
 	/// @brief 交叉扰动优化操作
-	void cross(Solution& solution, u32& num, float size_near, bool& flag);
+	void cross(Solution& solution, u32& num, bool& flag);
 };  // namespace VNS
 #endif

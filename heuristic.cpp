@@ -35,6 +35,7 @@ void SA::reset() {
 	bestSol.allength = 100000000.0;
 	bestSol.shash.clear();
 	bestSol.solution.clear();
+	bestSol.valid = 0;
 	info.one = 0;
 	info.opt2 = 0;
 	info.or2 = 0;
@@ -42,108 +43,168 @@ void SA::reset() {
 	info.three = 0;
 	info.or4 = 0;
 	info.two = 0;
+	info.arc = 0;
 }
 
 void SA::run() {
 	// u32 customer = nodes.size() - depotnum;
 	//  sol.show();
-	bool improved{1}, flag{0};
+	bool improved{1}, flag{0}, change{1};
 	int max_epoch{20};
 	int epoch{max_epoch};
-	float size_near{0.5}, T{1.0}, cold_rate{0.95};
-	int vns[7] = {1, 2, 3, 4, 5, 6};
-	u32 maxcustomers = customers.size(), stop{0};
+	float size_near{0.5}, T{1.0}, cold_rate{0.93};
+	int vns[7] = {1, 2, 3, 4, 5, 6, 7};
+	u32 maxcustomers = customers.size();
+	u32 stop{maxcustomers}, timelimit{0};
 	Solution lsbest = bestSol;
 	std::random_device rd;
-	std::mt19937 gen(rd());
+	Xoshiro::Xoshiro128ss gen(rd());
 	std::uniform_real_distribution<> dis(0, 1);
-	ALG::SM dists;
-	while (improved) {
+	// sol.evaluate();
+	while (stop-- && improved) {
 		improved = false;
 		VNS::relocate(sol, info.one, size_near, improved);
 		VNS::oropt2(sol, info.or2, size_near, improved);
 		VNS::arcnode(sol, info.three, size_near, improved);
 		VNS::oropt3(sol, info.or3, size_near, improved);
 		VNS::oropt4(sol, info.or4, size_near, improved);
+		VNS::arcswap(sol, info.arc, improved);
 	}
+	stop = maxcustomers;
 	sol.update();
 	// sol.show();
 	if (sol.valid)
 		bestSol = lsbest = sol;
 	while (epoch) {
+		std::shuffle(vns, vns + 7, gen);
+		// if (T > 0.2) {
+		//	float r = dis(gen);
+		//	if (dis(gen) < 0.5) {
+		//		// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
+		//		PER::EjecChain(sol, vehicles * r > 2 ? vehicles * r : 2, 10 * r > 1 ? 10 * r : 1, 0);
+		//	} else {
+		//		// PER::RuinCreate(sol, T > 0.2 ? T / 2 : 0.1, customers, 10, 2);
+		//		PER::RuinCreate(sol, r > 0.2 ? r / 2 : 0.1, customers, 10, 2);
+		//	}
+		//} else {
 		if (dis(gen) < 0.5) {
-			PER::RuinCreate(sol, 0.2, customers, 10, 2);
+			PER::EjecChain(sol, vehicles * (1 - T) > 2 ? vehicles * (1 - T) : 2, 10 * (1 - T) > 1 ? 10 * (1 - T) : 1, 0);
+			// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
+			// PER::EjecChain(sol, vehicles * r > 2 ? vehicles * r : 2, 10 * r > 1 ? 10 * r : 1, 0);
 		} else {
-			PER::EjecChain(sol, 4, 1, 0);
+			PER::RuinCreate(sol, (1 - T) / 2 > 0.1 ? (1 - T) / 2 : 0.1, customers, 10, 2);
+			// PER::RuinCreate(sol, T > 0.2 ? T / 2 : 0.1, customers, 10, 2);
+			// PER::RuinCreate(sol, r > 0.2 ? r / 2 : 0.1, customers, 10, 2);
 		}
+		//}
 		for (u32 n{0}; n < 7;) {
 			flag = 0;
-			stop++;
-			if (stop > maxcustomers * 20) break;
+			if (timelimit > maxcustomers) break;
 			switch (vns[n]) {
 			case 1:
-				while (1) {
+				while (stop--) {
 					VNS::exchange(sol, info.two, size_near, improved);
 					if (improved) {
 						VNS::twoopt(sol, info.opt2, improved);
 						improved = 1;
-						continue;
+						flag = 1;
+					} else {
+						break;
 					}
-					break;
 				}
 				break;
 			case 2:
-				VNS::relocate(sol, info.one, size_near, improved);
-				if (improved) {
-					VNS::twoopt(sol, info.opt2, improved);
-					improved = 1;
-					flag = 1;
+				while (stop--) {
+					VNS::relocate(sol, info.one, size_near, improved);
+					if (improved) {
+						VNS::twoopt(sol, info.opt2, improved);
+						improved = 1;
+						flag = 1;
+					} else {
+						break;
+					}
 				}
 				break;
 			case 3:
-				VNS::oropt2(sol, info.or2, size_near, improved);
-				if (improved) {
-					VNS::twoopt(sol, info.opt2, improved);
-					improved = 1;
-					flag = 1;
+				while (stop--) {
+					VNS::arcnode(sol, info.three, size_near, improved);
+					if (improved) {
+						VNS::twoopt(sol, info.opt2, improved);
+						improved = 1;
+						flag = 1;
+					} else {
+						break;
+					}
 				}
 				break;
 			case 4:
-
-				VNS::arcnode(sol, info.three, size_near, improved);
-				if (improved) {
-					VNS::twoopt(sol, info.opt2, improved);
-					improved = 1;
-					flag = 1;
+				while (stop--) {
+					VNS::arcswap(sol, info.arc, improved);
+					if (improved) {
+						VNS::twoopt(sol, info.opt2, improved);
+						improved = 1;
+						flag = 1;
+					} else {
+						break;
+					}
 				}
 				break;
 			case 5:
-
-				VNS::oropt3(sol, info.three, size_near, improved);
-				if (improved) {
-					VNS::twoopt(sol, info.opt2, improved);
-					improved = 1;
-					flag = 1;
+				while (stop--) {
+					VNS::oropt2(sol, info.or2, size_near, improved);
+					if (improved) {
+						VNS::twoopt(sol, info.opt2, improved);
+						improved = 1;
+						flag = 1;
+					} else {
+						break;
+					}
 				}
 				break;
 			case 6:
-				VNS::oropt4(sol, info.three, size_near, improved);
-				if (improved) {
-					VNS::twoopt(sol, info.opt2, improved);
-					improved = 1;
-					flag = 1;
+				while (stop--) {
+					VNS::oropt3(sol, info.or3, size_near, improved);
+					if (improved) {
+						VNS::twoopt(sol, info.opt2, improved);
+						improved = 1;
+						flag = 1;
+					} else {
+						break;
+					}
+				}
+				break;
+			case 7:
+				while (stop--) {
+					VNS::oropt4(sol, info.or4, size_near, improved);
+					if (improved) {
+						VNS::twoopt(sol, info.opt2, improved);
+						improved = 1;
+						flag = 1;
+					} else {
+						break;
+					}
 				}
 				break;
 			}
+			timelimit++;
+			if (stop == 0) flag = 0;
+			stop = maxcustomers;
 			if (flag)
 				n = 0;
 			else
 				n++;
 		}
-		stop = 0;
+		timelimit = 0;
+		stop = maxcustomers;
 		sol.update();
 		if (sol.valid) {
-			if (sol.allength < bestSol.allength) bestSol = sol;
+			if (sol.allength < bestSol.allength) {
+				bestSol = sol;
+			}
+			if (T < 0.2 && change) {
+				lsbest = bestSol;
+				change = 0;
+			}
 			if (sol.allength < lsbest.allength) {
 				lsbest = sol;
 				epoch = max_epoch;

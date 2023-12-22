@@ -150,8 +150,9 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 	Node* near{};    // 指向最近节点的指针,存储路径中的节点
 	u32 tr{}, tp{}, seq{};  // to_route;to_path;from_route;from_path
 	std::unordered_set<u32> tabu;
-	flag = 0;
 	tabu.reserve(32);
+	flag = 0;
+	bool skip{1};
 // double saving{};                                        // 移动操作的节约值
 // bool location{};                                        // 一个布尔标志，用于指示是否进行了任何移动
 #ifdef DEBUG
@@ -159,8 +160,9 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 #endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {  // 遍历所有路径
 		if (s.solution[fr].path.size() <= 2) continue;      // 如果路径长度小于等于2，则跳过
+		if (!s.valid && s.solution[fr].valid()) continue;
 		u32 fp{1};
-		while (fp < s.solution[fr].path.size() - 1) {  // 遍历路径中的节点
+		while (fp + 1 < s.solution[fr].path.size()) {  // 遍历路径中的节点
 			if (tabu.find(s.solution[fr].path[fp]->seq) != tabu.end()) {
 				fp++;
 				continue;
@@ -169,6 +171,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 			for (u32 i{0}, m = s.solution[fr].path[fp]->distsort.size() * size; i < m; i++) {  // 遍历节点的邻居节点
 				near = s.solution[fr].path[fp]->distsort[i].toNode;                           // 获取邻居节点
 				tr = s.shash[near->seq];                                                      // 获取邻居节点所在的路径
+				if (!s.valid && !s.solution[tr].valid()) continue;
 				tp = CHK::find(s.solution[tr].path, near, 1);                                 // 获取邻居节点在其路径中的位置
 				if (tr == fr) {
 					tabu.emplace(seq);
@@ -178,6 +181,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 #endif
 						flag = 1;                                                                       // 设置标志为true
 						num++;
+						skip = 0;
 						break;  // 跳出循环
 					}
 				} else {
@@ -185,6 +189,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 						s.shash[seq] = tr;                                                              // 更新节点所在的路径
 						flag = 1;                                                                       // 设置标志为true
 						num++;
+						skip = 0;
 #ifdef DEBUG
 						s.debug_hash(12);
 #endif
@@ -192,11 +197,12 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 					}
 				}
 			}
-			fp++;
+			if (!s.valid || skip) fp++;
+			skip = 1;
 		}
 		tabu.clear();
 	}
-	s.remove_void();  // 移除空路径
+	s.evaluate();  // 移除空路径
 }
 
 /**
@@ -210,10 +216,12 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 void VNS::twoopt(Solution& s, u32& num, bool& flag) {
 	// double saving{};
 	flag = 0;
+	if (!s.valid) return;
 	for (auto& r : s.solution) {
-		if (r.path.size() < 5) continue;
-		for (u32 i{1}, n = r.path.size() - 1; i + 3 < n; i++) {
-			for (u32 j{i + 3}; j <= n; j++) {
+		if (r.path.size() < 4) continue;
+		if (r.length > r.Limit) continue;
+		for (u32 i{1}, n = r.path.size() - 1; i + 1 < n; i++) {
+			for (u32 j{i + 1}; j < n; j++) {
 				if (OPS::reverse(r, i, j, 0)) {
 					flag = 1;
 					num++;
@@ -221,6 +229,7 @@ void VNS::twoopt(Solution& s, u32& num, bool& flag) {
 			}
 		}
 	}
+	s.evaluate();
 }
 
 /**
@@ -246,6 +255,7 @@ void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 			for (u32 i{0}, m = s.solution[fr].path[fp]->distsort.size() * size; i < m; i++) {  // 遍历节点的邻居节点
 				near = s.solution[fr].path[fp]->distsort[i].toNode;                           // 获取邻居节点
 				tr = s.shash[near->seq];                                                      // 获取邻居节点所在路径的编号
+				if (!s.solution[tr].valid() && !s.solution[fr].valid()) continue;
 				tp = CHK::find(s.solution[tr].path, near, 2);                                 // 获取邻居节点在其所在路径中的位置
 				if (OPS::swapmove(s.solution[fr], s.solution[tr], fp, tp, ctrl)) {            // 执行交换操作
 					s.shash[fp_seq] = tr;                                                     // 更新路径哈希表
@@ -261,6 +271,7 @@ void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 			fp++;
 		}
 	}
+	s.evaluate();
 }
 
 /**
@@ -275,9 +286,10 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 	// 定义指向节点的指针 p1 和 p2，以及一个无序集合 tabu，用于存储禁忌表。
 	Node *p1{}, *p2{};
 	flag = 0;
+	bool skip{1};
 	std::unordered_set<u32> tabu;
 	tabu.reserve(32);
-	// 定义向量 p 和 neighbors，以及变量 tr、tp、size、fp 和 saving。
+	//  定义向量 p 和 neighbors，以及变量 tr、tp、size、fp 和 saving。
 	std::vector<Node*> p, neighbors;
 	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
 // double saving{};
@@ -289,6 +301,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
 		// 如果路径长度小于等于 4，则跳过该路径。
 		if (s.solution[fr].path.size() <= 4) continue;
+		if (!s.valid && s.solution[fr].valid()) continue;
 		// 初始化 index 为 1，size 为 p1 的仓库排序列表的 20%。
 		u32 index{1};
 		size = s.solution[fr].path[index]->distsort.size() * size_near;
@@ -311,12 +324,14 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
 				// 获取邻居节点的路径和位置。
 				tr = s.shash[neighbors[i]->seq];
+				if (!s.valid && !s.solution[tr].valid()) continue;
 				tp = CHK::find(s.solution[tr].path, neighbors[i], 3);
 				// 如果邻居节点在同一路径上，则执行 Or-opt 2 操作。
 				if (tr == fr) {
 					if (OPS::oropt(s.solution[fr], fp, tp, 2, 0)) {
 						flag = 1;
 						num++;
+						skip = 0;
 						// 如果 fp 小于 tp，则将 (p1->seq << 10) + p2->seq 加入禁忌表。
 						if (fp < tp) {
 							tabu.emplace((p1->seq << 10) + p2->seq);
@@ -331,6 +346,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 2, 0)) {
 						flag = 1;
 						num++;
+						skip = 0;
 						// 更新 s.shash。
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
@@ -342,12 +358,13 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 				}
 			}
 			neighbors.clear();
-			index++;
+			if (!s.valid || skip) index++;
+			skip = 1;
 		}
 		// 清空禁忌表。
 		tabu.clear();
 	}
-	s.remove_void();  // 移除空路径
+	s.evaluate();  // 移除空路径
 }
 
 /**
@@ -366,6 +383,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 	// 定义指向节点的指针
 	Node *p1{}, *p2{};
 	flag = 0;
+	bool skip{1};
 	// 定义一个哈希表，用于存储禁忌表
 	std::unordered_set<u32> tabu;
 	tabu.reserve(32);
@@ -382,6 +400,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
 		// 如果路径中的节点数小于等于4，则跳过该路径
 		if (s.solution[fr].path.size() <= 4) continue;
+		if (!s.valid && s.solution[fr].valid()) continue;
 		// 初始化索引和邻域大小
 		u32 index{1};
 		size = s.solution[fr].path[index]->distsort.size() * size_near;
@@ -404,6 +423,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
 				// 获取邻域中节点所在的路径和位置
 				tr = s.shash[neighbors[i]->seq];
+				if (!s.valid && !s.solution[tr].valid()) continue;
 				tp = CHK::find(s.solution[tr].path, neighbors[i], 4);
 				// tp_seq = s.solution[tr].path[tp]->seq;
 				//  如果邻域中的节点与当前节点对在同一路径上
@@ -412,6 +432,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 					if (OPS::arcnode(s.solution[fr], s.solution[fr], fp, tp, saving)) {
 						flag = 1;
 						num++;
+						skip = 0;
 						// 如果操作成功，则将当前节点对添加到禁忌表中
 						if (fp < tp)
 							tabu.emplace((p1->seq << 10) + p2->seq);
@@ -425,6 +446,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 					if (OPS::arcnode(s.solution[fr], s.solution[tr], fp, tp, saving)) {
 						flag = 1;
 						num++;
+						skip = 0;
 						// 如果操作成功，则更新节点所在的路径
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
@@ -436,13 +458,14 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 					}
 				}
 			}
-			index++;
+			if (!s.valid || skip) index++;
+			skip = 1;
 			neighbors.clear();
 		}
 		// 清空禁忌表
 		tabu.clear();
 	}
-	s.remove_void();  // 移除空路径
+	s.evaluate();  // 移除空路径
 }
 
 /**
@@ -457,9 +480,10 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 	// 定义三个节点指针和一个无序集合
 	Node *p1{}, *p2{}, *p3;
 	flag = 0;
+	bool skip{1};
 	std::unordered_set<u32> tabu;
 	tabu.reserve(32);
-	// 定义两个节点向量和一些整数变量
+	//  定义两个节点向量和一些整数变量
 	std::vector<Node*> p, neighbors;
 	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
 	                               // double saving{};
@@ -471,6 +495,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
 		// 如果路径长度小于等于5，则跳过
 		if (s.solution[fr].path.size() <= 5) continue;
+		if (!s.valid && s.solution[fr].valid()) continue;
 		// 初始化索引和邻域大小
 		u32 index{1};
 		size = s.solution[fr].path[index]->distsort.size() * size_near;
@@ -495,6 +520,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 			for (u32 i{0}, m = neighbors.size(); i < m; i++) {
 				// 获取邻域中节点所在的路径
 				tr = s.shash[neighbors[i]->seq];
+				if (!s.valid && !s.solution[tr].valid()) continue;
 				// 获取邻域中节点在路径中的位置
 				tp = CHK::find(s.solution[tr].path, neighbors[i], 5);
 				// 如果邻域中的节点在同一路径中
@@ -503,6 +529,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 					if (OPS::oropt(s.solution[fr], fp, tp, 3, 0)) {
 						flag = 1;
 						num++;
+						skip = 0;
 						// 将这个节点组合加入禁忌表
 						if (fp < tp)
 							tabu.emplace((p1->seq << 20) + (p2->seq << 10) + p3->seq);
@@ -516,6 +543,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 3, 0)) {
 						flag = 1;
 						num++;
+						skip = 0;
 						// 更新节点所在路径的哈希表
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
@@ -527,13 +555,14 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 					}
 				}
 			}
-			index++;
+			if (!s.valid || skip) index++;
+			skip = 1;
 			neighbors.clear();
 		}
 		// 清空禁忌表
 		tabu.clear();
 	}
-	s.remove_void();  // 移除空路径
+	s.evaluate();  // 移除空路径
 }
 
 /**
@@ -547,6 +576,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 	Node *p1{}, *p2{}, *p3{}, *p4{};  // 定义四个节点指针
 	flag = 0;
+	bool skip{1};
 	std::unordered_set<u32> tabu;     // 定义一个无序集合，用于存储禁忌表
 	tabu.reserve(32);                 // 预留32个空间
 	std::vector<Node*> p, neighbors;  // 定义两个节点指针的向量
@@ -558,6 +588,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 #endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {          // 遍历解中的所有路径
 		if (s.solution[fr].path.size() <= 6) continue;              // 如果路径长度小于等于6，则跳过
+		if (!s.valid && s.solution[fr].valid()) continue;
 		u32 index{1};                                               // 定义一个索引变量
 		size = s.solution[fr].path[index]->distsort.size() * size_near;  // 计算邻域大小
 		while (index + 4 < s.solution[fr].path.size()) {                 // 遍历路径中的节点
@@ -578,11 +609,13 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 			fp = index;
 			for (u32 i{0}, m = neighbors.size(); i < m; i++) {                      // 遍历邻域中的节点
 				tr = s.shash[neighbors[i]->seq];                                    // 获取邻域中节点所在的路径
+				if (!s.valid && !s.solution[tr].valid()) continue;
 				tp = CHK::find(s.solution[tr].path, neighbors[i], 6);               // 获取邻域中节点在路径中的位置
 				if (tr == fr) {                                                     // 如果邻域中的节点和当前路径中的节点在同一路径上
 					if (OPS::oropt(s.solution[fr], fp, tp, 4, 0)) {                 // 执行or-opt操作
 						flag = 1;                                                   // 标记找到更好的解
 						num++;
+						skip = 0;
 						if (fp < tp)
 							tabu.emplace((p1->seq << 20) + (p2->seq << 10)), tabu.emplace((p3->seq << 10) + p4->seq);  // 将节点加入禁忌表
 #ifdef DEBUG
@@ -595,6 +628,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 4, 0)) {                 // 执行or-opt操作
 						flag = 1;                                                                   // 标记找到更好的解
 						num++;
+						skip = 0;
 						s.shash[p1->seq] = tr;  // 更新节点所在路径的哈希表
 						s.shash[p2->seq] = tr;
 						s.shash[p3->seq] = tr;
@@ -606,12 +640,56 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 					}
 				}
 			}
-			index++;  // 更新索引
+			if (!s.valid || skip) index++;  // 更新索引
+			skip = 1;
 			neighbors.clear();
 		}
 		tabu.clear();  // 清空禁忌表
 	}
-	s.remove_void();  // 移除空路径
+	s.evaluate();  // 移除空路径
+}
+
+void VNS::arcswap(Solution& s, u32& num, bool& flag) {
+	flag = 0;
+	float c = 1.0;  // 温度
+	for (auto r1{s.solution.begin()}; r1 != s.solution.end(); ++r1) {
+		if ((*r1).path.size() < 4) continue;
+		for (auto r2 = r1; r2 != s.solution.end(); ++r2) {
+			if (!s.valid && ((*r1).valid() && (*r2).valid())) continue;
+			if ((*r1).seq != (*r2).seq) {  // 不同路径
+				if ((*r2).path.size() < 4) continue;
+				for (u32 i{1}, n = (*r1).path.size() - 2; i < n; i++) {
+					for (u32 j{1}, m = (*r2).path.size() - 2; j < m; j++) {
+						if (OPS::arcswap(*r1, *r2, c, i, j, 0)) {
+							s.shash[(*r1).path[i]->seq] = (*r1).seq;
+							s.shash[(*r1).path[i + 1]->seq] = (*r1).seq;
+							s.shash[(*r2).path[j]->seq] = (*r2).seq;
+							s.shash[(*r2).path[j + 1]->seq] = (*r2).seq;
+							flag = 1;
+							num++;
+#ifdef DEBUG
+							s.debug_hash(53);
+#endif
+						}
+					}
+				}
+			} else {
+				if ((*r2).path.size() < 6) continue;
+				for (u32 i{1}, n = (*r1).path.size() - 4; i < n; i++) {
+					for (u32 j{2 + i}, m = (*r2).path.size() - 2; j < m; j++) {
+						if (OPS::arcswap(*r1, *r2, c, i, j, 0)) {
+							flag = 1;
+							num++;
+#ifdef DEBUG
+							s.debug_hash(54);
+#endif
+						}
+					}
+				}
+			}
+		}
+	}
+	s.evaluate();
 }
 
 /// @brief 计算节点的邻域

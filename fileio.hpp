@@ -1,12 +1,12 @@
 #pragma once
 
-#include <vector>
 #ifndef _FILEIO_HPP_
 #define _FILEIO_HPP_
-
 #include <algorithm>
 #include <ctime>
 #include <fstream>
+#include <vector>
+
 // #include <ostream>
 #include <string>
 
@@ -140,7 +140,7 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 		num += sol.solution[i].path.size() - 2;
 		routes++;
 	}
-	out << "one: " << info.one << " two: " << info.two << " three: " << info.three << " or2: " << info.or2 << " or3: " << info.or3 << " or4: " << info.or4 << " 2-opt: " << info.opt2 << "\n";
+	out << "one: " << info.one << " two: " << info.two << " three: " << info.three << " arc: " << info.arc << " or2: " << info.or2 << " or3: " << info.or3 << " or4: " << info.or4 << " 2-opt: " << info.opt2 << "\n";
 	out << "total length: " << sol.allength << "\t total nodes: " << num << "\t total routes: " << routes << std::endl;
 	out.close();
 }
@@ -156,8 +156,8 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 	const time_t now = std::time(nullptr);
 	strftime(chs, 96, "%Y%m%d%H%M", localtime(&now));
 	u32 num{}, routes{}, times = lengths.size();
-	double length{};
-	out << "data: " << chs << "\t run epoch: " << times << "\t total time: " << duration << "ms\n";
+	float length{};
+	out << "data: " << chs << "  run epoch: " << times << "  total time: " << duration << "ms\n";
 	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
 		if (sol.solution[i].path.size() - 2 <= 0) continue;
 		out << sol.solution[i] << " : " << sol.solution[i].load << "\n";
@@ -167,8 +167,9 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 	for (auto i : lengths) {
 		length += i / times;
 	}
-	out << "one: " << info.one << " two: " << info.two << " three: " << info.three << " or2: " << info.or2 << " or3: " << info.or3 << " or4: " << info.or4 << " 2-opt: " << info.opt2 << "\n";
-	out << "total length: " << sol.allength << "\t avg length: " << length << "\t total nodes: " << num << "\t total routes: " << routes << "\n"
+	out << "one: " << info.one << " two: " << info.two << " three: " << info.three << " arc: " << info.arc << " or2: " << info.or2 << " or3: " << info.or3 << " or4: " << info.or4 << " 2-opt: " << info.opt2 << "\n";
+	out << "total length: " << sol.allength << "  avg length: " << std::fixed << length << std::defaultfloat
+	    << "  total nodes: " << num << "  total routes: " << routes << "\n"
 	    << std::endl;
 	out.close();
 }

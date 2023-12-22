@@ -22,9 +22,9 @@ int main(int argc, char const *argv[]) {
 	vector<double> lengths;
 	lengths.reserve(10);
 	if (argc != 3) {
-		file = "P-n23-k8.vrp";
+		file = "A-n61-k9.vrp";
 		result = "data.txt";
-		routes = 8;
+		routes = 9;
 		cerr << "no enought args" << endl;
 		cerr << "use default: " << file << endl;
 	} else {
@@ -38,7 +38,7 @@ int main(int argc, char const *argv[]) {
 		} else {
 			routes = atoi(file.substr(file.size() - 6, 2).c_str());
 		}
-		result = file.substr(0, file.size() - 4) + ".txt";
+		result = "results/" + file.substr(2, file.size() - 6) + ".txt";
 		epoch = atoi(argv[2]);
 	}
 	// nodes = read(file, maxload, depot_num, routes);
@@ -66,10 +66,8 @@ int main(int argc, char const *argv[]) {
 	write(result, bestsol, infos, lengths, duration);
 #else
 	vrp.run();
-	write(result, vrp.bestSol, vrp.info);
+	vrp.bestSol.show();
 #endif
-
-	//   depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
 
 	release(nodes);
 	return 0;
