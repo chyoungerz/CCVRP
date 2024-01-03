@@ -142,7 +142,7 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 		Vehicle vehicle(depot, maxload, 0);  // 初始路线
 		// 按离厂站距离排序
 		std::sort(customers.begin(), customers.end(), [](const Node* a, const Node* b) {
-			if (a->end <= b->end)
+			if (a->end < b->end)
 				return a->demand > b->demand;
 			else
 				return false;
