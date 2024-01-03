@@ -28,6 +28,16 @@ set(CMAKE_CXX_FLAGS_Release "${CMAKE_CXX_FLAGS} -O3")
 #源文件目录
 #aux_source_directory(. DIR_SRCS)
 
+#plot绘图库
+find_library(PLOTLIB plotLib PATHS ${CMAKE_BINARY_DIR}/plotlib NO_DEFAULT_PATH)
+if(PLOTLIB)
+	ADD_DEFINITIONS(-DPLOT)
+	set(PLOTLIB ${CMAKE_BINARY_DIR}/plotlib)
+	add_library(plotlib SHARED IMPORTED)
+	set_target_properties(plotlib PROPERTIES IMPORTED_LOCATION PLOTLIB/plotlib)
+endif()
+
+
 # 分别设置Debug和Release输出目录
 set(CMAKE_LIBRATY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)
 set(CMAKE_LIBRATY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/lib)
@@ -37,6 +47,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
 # 指定生成目标 
 #add_executable(vrp ${DIR_SRCS})
 add_executable(vrp main.cpp operator.cpp solution.cpp NSearch.cpp heuristic.cpp)
+
+if(PLOTLIB)
+	target_include_directories(vrp PUBLIC PLOTLIB)
+	target_link_libraries(vrp PUBLIC plotlib)
+endif()
 
 # 测试
 enable_testing()
