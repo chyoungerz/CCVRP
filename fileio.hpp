@@ -99,6 +99,14 @@ inline bool read_vrp(const std::string& file, u32& maxload, u32& despot, u32& ro
 			std::getline(config, line);
 			continue;
 		}
+		if (line.find("NODE_PRIORITY_SECTION") != std::string::npos) {
+			for (u32 i{0}; i < max_node; i++) {
+				config >> seq >> demand;
+				nodes[i]->end = demand;
+			}
+			std::getline(config, line);
+			continue;
+		}
 		// 结束
 		if (line.find("EOF") != std::string::npos) {
 			break;
