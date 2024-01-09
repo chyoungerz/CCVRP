@@ -1751,6 +1751,9 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 					saving1 = r_back_limit - r.length;
 				}
 			}
+		} else {
+			saving1 = r_back_path - r.cumlength;
+			saving1 = v_aim(saving1);
 		}
 		if (saving0 < saving1) {
 			saving = static_cast<int>(saving0 * 1000);
@@ -1819,6 +1822,9 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 					saving1 = r_back_limit - r.length;
 				}
 			}
+		} else {
+			saving1 = r_back_path - r.cumlength;
+			saving1 = v_aim(saving1);
 		}
 		if (saving0 < saving1) {
 			saving = static_cast<int>(saving0 * 1000);
