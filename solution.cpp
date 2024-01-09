@@ -272,8 +272,10 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 	*/
 	// 重建序号
 	solution.update_seq();
+	solution.alltardiness = 0.0;
 	solution.update();
 	solution.evaluate(ctrl);
+	solution.alltardiness = 0.0;
 	// hash
 	// for (u32 i = 0; i < solution.solution.size(); i++) {
 	//	for (u32 j = 1; j < solution.solution[i].path.size() - 1; j++) {                                          // 排除厂站

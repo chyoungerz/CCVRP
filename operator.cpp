@@ -1089,11 +1089,11 @@ bool PER::insert(Vehicle& vehicle, Node* node, u32 ctrl) {
 	std::vector<Node*> path{vehicle.path};
 	double minlength{1000000000.0};
 	u32 size = path.size();
-	if (path[size - 3]->end <= path[size - 2]->end)
+	if (path[size - 3]->end >= path[size - 2]->end)
 		minlength = PER::cumlength(path);
 	for (u32 i = path.size() - 3; i > 0; i--) {
 		std::swap(path[i], path[i + 1]);
-		if (path[i]->end <= path[i + 1]->end) {
+		if (path[i]->end >= path[i + 1]->end) {
 			double tmp = PER::cumlength(path);
 			if (tmp < minlength) {
 				vehicle.path = path;
@@ -1122,7 +1122,7 @@ bool PER::insert(Solution& sol, Node* node, u32 ctrl) {
 				minlength = tmp;
 			}
 		} else {  // 非空
-			if (ve.path[1]->end <= ve.path[2]->end) {
+			if (ve.path[1]->end >= ve.path[2]->end) {
 				tmp = PER::cumlength(ve.path) - ve.cumlength;
 				if (tmp < minlength) {
 					best_path = ve.path;
@@ -1132,7 +1132,7 @@ bool PER::insert(Solution& sol, Node* node, u32 ctrl) {
 			}
 			for (u32 i{2}; i < size; i++) {
 				std::swap(ve.path[i], ve.path[i - 1]);
-				if (ve.path[i - 1]->end <= ve.path[i]->end && ve.path[i]->end <= ve.path[i + 1]->end) {
+				if (ve.path[i - 1]->end >= ve.path[i]->end && ve.path[i]->end >= ve.path[i + 1]->end) {
 					tmp = PER::cumlength(ve.path) - ve.cumlength;
 					if (tmp < minlength) {
 						best_path = ve.path;
@@ -1295,10 +1295,11 @@ void PER::RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 ep
 		}
 		epoch--;
 		if (error) {  // 失败
+			s.alltardiness = priority(s);
 			s.update();
 			s.valid = false;
-			if (best_sol.valid == 0 && s.allength < ilength) {
-				ilength = s.allength;
+			if (best_sol.valid == 0 && s.allobj < ilength) {
+				ilength = s.allobj;
 				flag = 1;
 				best_sol = s;
 				best_sol.valid = 0;
@@ -1307,9 +1308,10 @@ void PER::RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 ep
 			error = 0;
 			continue;
 		}
+		s.alltardiness = priority(s);
 		s.update();
-		if (s.allength < flength) {
-			flength = s.allength;
+		if (s.allobj < flength) {
+			flength = s.allobj;
 			flag = 1;
 			best_sol = s;
 			best_sol.valid = 1;
@@ -1353,6 +1355,7 @@ void PER::EjecChain(Solution& sol, u32 k, u32 epoch, u32 rule) {
 				std::swap(sol.solution[select_s[i + 1]].path[index_b], sol.solution[select_s[i]].path[index_a]);
 				sol.solution[select_s[i + 1]].path_cumlength(1);
 				sol.solution[select_s[i]].path_cumlength(1);
+				sol.alltardiness = priority(sol);
 				// break;
 			}
 			//} else if (sol.solution[select_s[i]].load - difload <= sol.solution[select_s[i]].capacity && sol.solution[select_s[i + 1]].load + difload <= sol.solution[select_s[i + 1]].capacity) {
@@ -1372,6 +1375,7 @@ void PER::EjecChain(Solution& sol, u32 k, u32 epoch, u32 rule) {
 				std::swap(sol.solution[select_s[i + 1]].path[index_b], sol.solution[select_s[i]].path[index_a]);
 				sol.solution[select_s[i + 1]].path_cumlength(1);
 				sol.solution[select_s[i]].path_cumlength(1);
+				sol.alltardiness = priority(sol);
 				// break;
 			}
 		}
@@ -1379,12 +1383,12 @@ void PER::EjecChain(Solution& sol, u32 k, u32 epoch, u32 rule) {
 	sol.update();
 }
 
-bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
+bool OPS::onepointmove(Solution& s, Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
 	double saving0{100000000.0}, saving1{100000000.0};
 	u32 cmd0{0}, flag{0};
 	if (ctrl) cmd0 += FORCE;
 	i64 saving{};  // 初始化保存插入前面和后面的节省距离
-	double r_front_path{}, r_back_path{}, r_front_limit{}, r_back_limit{};
+	double r_front_path{}, r_back_path{}, r_front_limit{}, r_back_limit{}, s_front_tardiness{}, s_back_tardiness{};
 	r.precheck(cmd0);
 	if (cmd0 & LOADS) return false;
 	if (cmd0 & LENGTH)
@@ -1403,13 +1407,15 @@ bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
 				}
 			}
 		} else {  // 可行
+			s_front_tardiness = priority(s);
 			saving0 = r_front_path - r.cumlength;
-			saving0 = v_aim(saving0);
+			saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 		}
 		std::swap(r.path[b], r.path[b - 1]);
 		if (r.evaluate(r_back_path, r_back_limit, cmd0)) {  // 评估插入r2的后面
+			s_back_tardiness = priority(s);
 			saving1 = r_back_path - r.cumlength;
-			saving1 = v_aim(saving1);
+			saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 		}
 		if (saving0 < saving1) {
 			// 插入前面更优
@@ -1423,6 +1429,7 @@ bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
 			std::swap(r.path[b], r.path[b - 1]);
 			r.cumlength = r_front_path;
 			r.length = r_front_limit;
+			s.alltardiness = s_front_tardiness;
 			return true;
 		} else {
 			// 插入后面更优
@@ -1435,6 +1442,7 @@ bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
 			// 可行
 			r.cumlength = r_back_path;
 			r.length = r_back_limit;
+			s.alltardiness = s_back_tardiness;
 			return true;
 		}
 	} else {  // a在b后面
@@ -1451,13 +1459,15 @@ bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
 				}
 			}
 		} else {  // 可行
+			s_front_tardiness = priority(s);
 			saving0 = r_front_path - r.cumlength;
-			saving0 = v_aim(saving0);
+			saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 		}
 		std::swap(r.path[b], r.path[b + 1]);
 		if (r.evaluate(r_back_path, r_back_limit, cmd0)) {  // 评估插入r2的后面
+			s_back_tardiness = priority(s);
 			saving1 = r_back_path - r.cumlength;
-			saving1 = v_aim(saving1);
+			saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 		}
 		if (saving0 < saving1) {
 			// 插入前面更优
@@ -1471,6 +1481,7 @@ bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
 			std::swap(r.path[b], r.path[b + 1]);
 			r.cumlength = r_front_path;
 			r.length = r_front_limit;
+			s.alltardiness = s_front_tardiness;
 			return true;
 		} else {
 			// 插入后面更优
@@ -1483,18 +1494,19 @@ bool OPS::onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl) {
 			// 可行
 			r.cumlength = r_back_path;
 			r.length = r_back_limit;
+			s.alltardiness = s_back_tardiness;
 			return true;
 		}
 	}
 }
 
-bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) {
+bool OPS::onepointmove(Solution& s, Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) {
 	Node* temp{r1.path[a]};  // 保存要插入的节点
 	double saving0{100000000.0}, saving1{100000000.0};
 	u32 cmd1{0}, cmd2{0}, flag{0};
 	if (ctrl) cmd1 = cmd2 += FORCE;  // 是否强制
 	i64 saving{};  // 初始化保存插入前面和后面的节省距离
-	double r1_newpath{}, r1_newlimit{}, r2_front_path{}, r2_back_path{}, r2_front_limit{}, r2_back_limit{};
+	double r1_newpath{}, r1_newlimit{}, r2_front_path{}, r2_back_path{}, r2_front_limit{}, r2_back_limit{}, s_front_tardiness{-1.0}, s_back_tardiness{-1.0};
 	// bool location{};         // 保存插入的位置
 	// 不在同路径
 	r1.precheck(cmd1), r2.precheck(cmd2);
@@ -1513,6 +1525,7 @@ bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 c
 				r1.length = r1_newlimit;
 				r1.load -= temp->demand;
 				r2.load += temp->demand;
+				s.alltardiness = priority(s);
 				return true;
 			} else {
 				r1.path.emplace(r1.path.begin() + a, temp);  // 还原r1路径
@@ -1525,8 +1538,9 @@ bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 c
 			}
 		}
 	} else {  // 可行
+		s_front_tardiness = priority(s);
 		saving0 = r1_newpath + r2_front_path - r1.cumlength - r2.cumlength;
-		saving0 = v_aim(saving0);
+		saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 	}
 	std::swap(r2.path[b], r2.path[b + 1]);  // 交换r2中插入的节点和后面的节点
 	if (!r2.evaluate(r2_back_path, r2_back_limit, cmd2)) {
@@ -1536,8 +1550,9 @@ bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 c
 			}
 		}
 	} else {
+		s_back_tardiness = priority(s);
 		saving1 = r1_newpath + r2_back_path - r1.cumlength - r2.cumlength;
-		saving1 = v_aim(saving1);
+		saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 	}
 	if (saving0 < saving1) {
 		// 插入前面更优
@@ -1556,6 +1571,10 @@ bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 c
 		r1.length = r1_newlimit;
 		r1.load -= temp->demand;
 		r2.load += temp->demand;
+		if (s_front_tardiness < 0.0)
+			s.alltardiness = priority(s);
+		else
+			s.alltardiness = s_front_tardiness;
 		return true;
 	} else {
 		// 插入后面更优
@@ -1573,13 +1592,17 @@ bool OPS::onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 c
 		r1.length = r1_newlimit;
 		r1.load -= temp->demand;
 		r2.load += temp->demand;
+		if (s_back_tardiness < 0.0)
+			s.alltardiness = priority(s);
+		else
+			s.alltardiness = s_back_tardiness;
 		return true;
 	}
 }
 
-bool OPS::reverse(Vehicle& r, const u32 f, const u32 t, u32 ctrl) {
+bool OPS::reverse(Solution& s, Vehicle& r, const u32 f, const u32 t, u32 ctrl) {
 	i64 saving{};
-	double r_path{}, r_path_limit{};
+	double r_path{}, r_path_limit{}, s_tardiness{-1.0};
 	// bool improved{false};
 	u32 cmd0{}, flag{};
 	if (ctrl) cmd0 += FORCE;
@@ -1599,23 +1622,28 @@ bool OPS::reverse(Vehicle& r, const u32 f, const u32 t, u32 ctrl) {
 			//}
 		}
 	} else {  // 可行
-		saving = static_cast<i64>(v_aim(r_path - r.cumlength) * 1000);
+		s_tardiness = priority(s);
+		saving = static_cast<i64>(v_aim(r_path - r.cumlength, s_tardiness - s.alltardiness) * 1000);
 		// improved = true;
 	}
 	if (cmd0 & FORCE || saving < 0) {
 		r.cumlength = r_path;
 		r.length = r_path_limit;
+		if (s_tardiness < 0.0)
+			s.alltardiness = priority(s);
+		else
+			s.alltardiness = s_tardiness;
 		return true;
 	}
 	std::reverse(r.path.begin() + f, r.path.begin() + t);
 	return false;
 }
 
-bool OPS::swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) {
+bool OPS::swapmove(Solution& s, Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) {
 	u32 cmd1{0}, cmd2{0}, flag{0};
 	if (ctrl) cmd1 = cmd2 += FORCE;  // 是否强制
 	i64 saving{};                    // 初始化保存插入前面和后面的节省距离
-	double r1_newpath{}, r1_newlimit{}, r2_new_path{}, r2_limit{};
+	double r1_newpath{}, r1_newlimit{}, r2_new_path{}, r2_limit{}, s_tardiness{-1.0};
 	int difload = r1.path[a]->demand - r2.path[b]->demand;
 	if (r1.seq == r2.seq) {  // 同车
 		r1.precheck(cmd1);
@@ -1632,12 +1660,17 @@ bool OPS::swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl)
 				//}
 			}
 		} else {  // 可行
-			saving = static_cast<i64>(v_aim(r1_newpath - r1.cumlength) * 1000);
+			s_tardiness = priority(s);
+			saving = static_cast<i64>(v_aim(r1_newpath - r1.cumlength, s_tardiness - s.alltardiness) * 1000);
 			// improved = true;
 		}
 		if (cmd1 & FORCE || saving < 0) {
 			r1.cumlength = r1_newpath;
 			r1.length = r1_newlimit;
+			if (s_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_tardiness;
 			return true;
 		}
 		std::swap(r1.path[a], r1.path[b]);     // 恢复原始路径
@@ -1665,6 +1698,7 @@ bool OPS::swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl)
 			std::swap(r1.path[a], r2.path[b]);
 			r1.update_allength();
 			r2.update_allength();
+			s.alltardiness = priority(s);
 			return true;
 		}
 		std::swap(r1.path[a], r2.path[b]);     // 交换路径中的两个位置
@@ -1673,7 +1707,8 @@ bool OPS::swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl)
 				saving = static_cast<i64>((r2_limit + r1_newlimit - r2.length - r1.length) * 1000);
 			}
 		} else {  // 可行
-			saving = static_cast<i64>(v_aim(r1_newpath + r2_new_path - r1.cumlength - r2.cumlength) * 1000);
+			s_tardiness = priority(s);
+			saving = static_cast<i64>(v_aim(r1_newpath + r2_new_path - r1.cumlength - r2.cumlength, s_tardiness - s.alltardiness) * 1000);
 		}
 		if (cmd1 & FORCE || saving < 0) {
 			r1.cumlength = r1_newpath;
@@ -1682,18 +1717,22 @@ bool OPS::swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl)
 			r2.cumlength = r2_new_path;
 			r1.load -= difload;
 			r2.load += difload;
+			if (s_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_tardiness;
 			return true;  // 返回交换成功
 		}
 		std::swap(r1.path[a], r2.path[b]);  // 恢复原始路径
 		return false;                       // 返回交换失败
 	}
 }
-bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
+bool OPS::oropt(Solution& s, Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 	double saving0{100000000.0}, saving1{100000000.0};
 	u32 cmd0{0}, flag{0};
 	if (ctrl) cmd0 += FORCE;
 	i64 saving{};  // 初始化保存插入前面和后面的节省距离
-	double r_front_path{}, r_back_path{}, r_front_limit{}, r_back_limit{};
+	double r_front_path{}, r_back_path{}, r_front_limit{}, r_back_limit{}, s_front_tardiness{-1.0}, s_back_tardiness{-1.0};
 	r.precheck(cmd0);
 	if (cmd0 & LOADS)
 		return false;
@@ -1712,8 +1751,9 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 					}
 				}
 			} else {  // 可行
+				s_back_tardiness = priority(s);
 				saving1 = r_back_path - r.cumlength;
-				saving1 = v_aim(saving1);
+				saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 			}
 			// 如果节约值大于0，则表示路径优化失败
 			saving = static_cast<i64>(saving1 * 1000);
@@ -1726,6 +1766,10 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 			// saving = saving1;
 			r.cumlength = r_back_path;
 			r.length = r_back_limit;
+			if (s_back_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_back_tardiness;
 			return true;
 		}
 		// 向左旋转r的路径
@@ -1739,8 +1783,9 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 				}
 			}
 		} else {  // 可行
+			s_front_tardiness = priority(s);
 			saving0 = r_front_path - r.cumlength;
-			saving0 = v_aim(saving0);
+			saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 		}
 		ALG::rotate(r.path.begin() + t - len, r.path.begin() + t + 1, 1);
 		// r_back = r.path_cumlength();
@@ -1751,6 +1796,10 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 					saving1 = r_back_limit - r.length;
 				}
 			}
+		} else {  // 可行
+			s_back_tardiness = priority(s);
+			saving1 = r_back_path - r.cumlength;
+			saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 		}
 		if (saving0 < saving1) {
 			saving = static_cast<int>(saving0 * 1000);
@@ -1761,6 +1810,10 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 			ALG::rotate(r.path.begin() + t - len, r.path.begin() + t + 1, -1);
 			r.cumlength = r_front_path;
 			r.length = r_front_limit;
+			if (s_front_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_front_tardiness;
 			return true;
 		} else {
 			saving = static_cast<i64>(saving1 * 1000);
@@ -1770,6 +1823,10 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 			}
 			r.cumlength = r_back_path;
 			r.length = r_back_limit;
+			if (s_back_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_back_tardiness;
 			return false;
 		}
 	} else {               // f在t后面
@@ -1783,8 +1840,9 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 					}
 				}
 			} else {  // 可行
+				s_front_tardiness = priority(s);
 				saving0 = r_front_path - r.cumlength;
-				saving0 = v_aim(saving0);
+				saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 			}
 			saving = static_cast<i64>(saving0 * 1000);
 			if (saving >= 0 && !cmd0) {
@@ -1796,6 +1854,10 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 			// saving = saving1;
 			r.cumlength = r_front_path;
 			r.length = r_front_limit;
+			if (s_front_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_front_tardiness;
 			return true;
 		}
 		// 向右旋转r的路径
@@ -1808,8 +1870,9 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 				}
 			}
 		} else {  // 可行
+			s_front_tardiness = priority(s);
 			saving0 = r_front_path - r.cumlength;
-			saving0 = v_aim(saving0);
+			saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 		}
 		ALG::rotate(r.path.begin() + t, r.path.begin() + t + len + 1, 1);
 		// r_back = r.path_cumlength();
@@ -1819,6 +1882,10 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 					saving1 = r_back_limit - r.length;
 				}
 			}
+		} else {  // 可行
+			s_back_tardiness = priority(s);
+			saving1 = r_back_path - r.cumlength;
+			saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 		}
 		if (saving0 < saving1) {
 			saving = static_cast<int>(saving0 * 1000);
@@ -1829,6 +1896,10 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 			ALG::rotate(r.path.begin() + t, r.path.begin() + t + len + 1, -1);
 			r.cumlength = r_front_path;
 			r.length = r_front_limit;
+			if (s_front_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_front_tardiness;
 			return true;
 		} else {
 			saving = static_cast<i64>(saving1 * 1000);
@@ -1838,18 +1909,22 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 			}
 			r.cumlength = r_back_path;
 			r.length = r_back_limit;
+			if (s_back_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_back_tardiness;
 			return false;
 		}
 	}
 }
 
-bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 len, u32 ctrl) {
+bool OPS::oropt(Solution& s, Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 	const u32 f1{f + len}, t1{t + len};
 	double saving0{100000000.0}, saving1{100000000.0};
 	u32 cmd1{0}, cmd2{0}, flag{0}, difload{};
 	if (ctrl) cmd1 = cmd2 += FORCE;  // 是否强制
 	i64 saving{};  // 初始化保存插入前面和后面的节省距离
-	double r1_newpath{}, r1_newlimit{}, r2_front_path{}, r2_back_path{}, r2_front_limit{}, r2_back_limit{};
+	double r1_newpath{}, r1_newlimit{}, r2_front_path{}, r2_back_path{}, r2_front_limit{}, r2_back_limit{}, s_front_tardiness{-1.0}, s_back_tardiness{-1.0};
 	// bool location{};
 	//  从r1中提取要移动的节点
 	std::vector<Node*> temp(r1.path.begin() + f, r1.path.begin() + f1);
@@ -1876,6 +1951,7 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 			r2.update_allength();
 			r1.load -= difload;
 			r2.load += difload;
+			s.alltardiness = priority(s);
 			return true;
 		} else {
 			r1.path.insert(r1.path.begin() + f, temp.begin(), temp.end());
@@ -1890,8 +1966,9 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 			}
 		}
 	} else {  // 可行
+		s_front_tardiness = priority(s);
 		saving0 = r1_newpath + r2_front_path - r1.cumlength - r2.cumlength;
-		saving0 = v_aim(saving0);
+		saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 	}
 	// 向右旋转r2的路径
 	ALG::rotate(r2.path.begin() + t, r2.path.begin() + t + len + 1, 1);
@@ -1905,8 +1982,9 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 			}
 		}
 	} else {  // 可行正常
+		s_back_tardiness = priority(s);
 		saving1 = r1_newpath + r2_back_path - r1.cumlength - r2.cumlength;
-		saving1 = v_aim(saving1);
+		saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 	}
 	if (saving0 < saving1) {
 		// 插入前面更优
@@ -1925,6 +2003,10 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 		r1.length = r1_newlimit;
 		r1.load -= difload;
 		r2.load += difload;
+		if (s_front_tardiness < 0.0)
+			s.alltardiness = priority(s);
+		else
+			s.alltardiness = s_front_tardiness;
 		return true;
 	} else {
 		// 插入后面更优
@@ -1942,6 +2024,10 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 		r1.length = r1_newlimit;
 		r1.load -= difload;
 		r2.load += difload;
+		if (s_back_tardiness < 0.0)
+			s.alltardiness = priority(s);
+		else
+			s.alltardiness = s_back_tardiness;
 		return true;
 	}
 }
@@ -1953,13 +2039,13 @@ bool OPS::oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 le
 /// @param b
 /// @param saving
 /// @return
-bool OPS::arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) {
+bool OPS::arcnode(Solution& s, Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) {
 	u32 cmd1{0}, cmd2{0}, flag{0};
 	if (ctrl) cmd1 = cmd2 += FORCE;               // 是否强制
 	i64 saving{};                                 // 保存交换节点后的路径长度
 	Node* node{r1.path[a + 1]};                   // 保存需要交换的节点
 	int difload = r1.path[a + 1]->demand + r1.path[a]->demand - r2.path[b]->demand;  // 保存交换节点后的负载变化
-	double r1_newpath{}, r1_newlimit{}, r2_new_path{}, r2_limit{};
+	double r1_newpath{}, r1_newlimit{}, r2_new_path{}, r2_limit{}, s_tardiness{-1.0};
 	if (r1.seq == r2.seq) {                       // 如果两个车辆的路径相同
 		r1.precheck(cmd1);
 		if (cmd1 & LENGTH)
@@ -1974,11 +2060,16 @@ bool OPS::arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) 
 					saving = static_cast<i64>((r1_newlimit - r1.length) * 1000);
 				}
 			} else {  // 可行
-				saving = static_cast<i64>(v_aim(r1_newpath - r1.cumlength) * 1000);
+				s_tardiness = priority(s);
+				saving = static_cast<i64>(v_aim(r1_newpath - r1.cumlength, s_tardiness - s.alltardiness) * 1000);
 			}
 			if (cmd1 & FORCE || saving < 0) {
 				r1.cumlength = r1_newpath;
 				r1.length = r1_newlimit;
+				if (s_tardiness < 0.0)
+					s.alltardiness = priority(s);
+				else
+					s.alltardiness = s_tardiness;
 				return true;
 			}
 			std::swap(r1.path[a], r1.path[b]);  // 恢复节点交换前的路径
@@ -1996,11 +2087,16 @@ bool OPS::arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) 
 					saving = static_cast<i64>((r1_newlimit - r1.length) * 1000);
 				}
 			} else {  // 可行
-				saving = static_cast<i64>(v_aim(r1_newpath - r1.cumlength) * 1000);
+				s_tardiness = priority(s);
+				saving = static_cast<i64>(v_aim(r1_newpath - r1.cumlength, s_tardiness - s.alltardiness) * 1000);
 			}
 			if (cmd1 & FORCE || saving < 0) {
 				r1.cumlength = r1_newpath;
 				r1.length = r1_newlimit;
+				if (s_tardiness < 0.0)
+					s.alltardiness = priority(s);
+				else
+					s.alltardiness = s_tardiness;
 				return true;
 			}
 			std::swap(r1.path[a + 1], r1.path[b + 1]);  // 恢复节点交换前的路径
@@ -2029,6 +2125,7 @@ bool OPS::arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) 
 			r2.path.emplace(r2.path.begin() + b + 1, node);  // 调整路径
 			r1.update_allength();
 			r2.update_allength();
+			s.alltardiness = priority(s);
 			return true;
 		}
 		std::swap(r1.path[a], r2.path[b]);               // 交换节点
@@ -2039,7 +2136,8 @@ bool OPS::arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) 
 				saving = static_cast<i64>((r2_limit + r1_newlimit - r2.length - r1.length) * 1000);
 			}
 		} else {  // 可行
-			saving = static_cast<i64>(v_aim(r1_newpath + r2_new_path - r1.cumlength - r2.cumlength) * 1000);
+			s_tardiness = priority(s);
+			saving = static_cast<i64>(v_aim(r1_newpath + r2_new_path - r1.cumlength - r2.cumlength, s_tardiness - s.alltardiness) * 1000);
 		}
 		if (cmd1 & FORCE || saving < 0) {
 			r1.cumlength = r1_newpath;
@@ -2048,6 +2146,10 @@ bool OPS::arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) 
 			r2.cumlength = r2_new_path;
 			r1.load -= difload;
 			r2.load += difload;
+			if (s_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_tardiness;
 			return true;  // 返回交换成功
 		}
 		std::swap(r1.path[a], r2.path[b]);  // 恢复节点交换前的路径
@@ -2057,12 +2159,12 @@ bool OPS::arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl) 
 	}
 }
 
-bool OPS::arcswap(Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u32 ctrl) {
+bool OPS::arcswap(Solution& s, Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u32 ctrl) {
 	i64 saving{};
 	int difload = r1.path[a]->demand + r1.path[a + 1]->demand - r2.path[b]->demand - r2.path[b + 1]->demand;
 	u32 cmd1{0}, cmd2{0}, flag{0};
 	if (ctrl) cmd1 = cmd2 += FORCE;  // 是否强制
-	double r1_newpath{}, r1_newlimit{}, r2_new_path{}, r2_limit{};
+	double r1_newpath{}, r1_newlimit{}, r2_new_path{}, r2_limit{}, s_tardiness{-1.0};
 	if (r1.seq == r2.seq) {                         // 同车
 		r1.precheck(cmd1);
 		if (cmd1 & LOADS)
@@ -2076,11 +2178,16 @@ bool OPS::arcswap(Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u
 				saving = static_cast<i64>((r1_newlimit - r1.length) * 1000);
 			}
 		} else {  // 可行
-			saving = static_cast<i64>(v_aim(r1_newpath - r1.cumlength) * 1000);
+			s_tardiness = priority(s);
+			saving = static_cast<i64>(v_aim(r1_newpath - r1.cumlength, s_tardiness - s.alltardiness) * 1000);
 		}
 		if (cmd1 & FORCE || saving < 0) {
 			r1.cumlength = r1_newpath;
 			r1.length = r1_newlimit;
+			if (s_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_tardiness;
 			return true;
 		}
 		std::swap(r1.path[a], r1.path[b]);          // 恢复原始路径
@@ -2105,6 +2212,7 @@ bool OPS::arcswap(Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u
 			std::swap(r1.path[a + 1], r2.path[b + 1]);  // 交换路径中的两个位置
 			r1.update_allength();
 			r2.update_allength();
+			s.alltardiness = priority(s);
 			return true;
 		}
 		std::swap(r1.path[a], r2.path[b]);                             // 交换路径中的两个位置
@@ -2114,7 +2222,8 @@ bool OPS::arcswap(Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u
 				saving = static_cast<i64>((r2_limit + r1_newlimit - r2.length - r1.length) * 1000);
 			}
 		} else {  // 可行
-			saving = static_cast<i64>(v_aim(r1_newpath + r2_new_path - r1.cumlength - r2.cumlength) * 1000);
+			s_tardiness = priority(s);
+			saving = static_cast<i64>(v_aim(r1_newpath + r2_new_path - r1.cumlength - r2.cumlength, s_tardiness - s.alltardiness) * 1000);
 		}
 		if (cmd1 & FORCE || saving < 0) {
 			r1.cumlength = r1_newpath;
@@ -2123,6 +2232,10 @@ bool OPS::arcswap(Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u
 			r2.cumlength = r2_new_path;
 			r1.load -= difload;
 			r2.load += difload;
+			if (s_tardiness < 0.0)
+				s.alltardiness = priority(s);
+			else
+				s.alltardiness = s_tardiness;
 			return true;  // 返回交换成功
 		}
 		std::swap(r1.path[a], r2.path[b]);          // 恢复原始路径

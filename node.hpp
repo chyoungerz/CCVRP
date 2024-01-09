@@ -40,8 +40,8 @@ struct Info {
 };
 
 // 目标
-inline double v_aim(double cumlength_) {
-	return cumlength_;
+inline double v_aim(double cumlength_, double tardiness_ = 0.0) {
+	return cumlength_ * 0.5 + tardiness_ * 0.5;
 }
 
 /// @brief 节点
@@ -132,6 +132,7 @@ class Vehicle {
 	std::vector<Node*> path;  // 走过的路
 	// double diflength;                  // 走过的路(时间）差分数组
 	double cumlength;                  // 所有节点的长度（时间）累计和
+	double tardiness;                  // 所有节点的优先级（时间）和
 	double length{};                   // 路径长度（时间）
 	double Limit{100000.0};            // 最大路径长度（时间）
 	Node* depot{nullptr};              // 场站
@@ -266,8 +267,11 @@ class Solution {
 	std::vector<Vehicle> solution;                 // 解决方案
 	std::unordered_map<u32, u32> shash;            // hash查找表，key为节点序号，value为所在路线
 	double allength{0.0};                          // 总路径长度
+	double alltardiness{0.0};                      // 总优先级
+	double allobj{0.0};                            // 总目标
 	double Limit{10000000.0};                      // 最大路径长度
 	u32 maxvehicle{};                              // 最大车辆
+	u32 maxpriority{};                             // 最大优先级
 	bool multi{false};                             // 是否多场站
 	bool valid{false};                             // 是否可行
 
@@ -317,6 +321,7 @@ class Solution {
 				if (i.load > i.capacity || i.length > i.Limit) valid = false;
 			}
 		}
+		allobj = v_aim(allength, alltardiness);
 	}
 	// 更新序号
 	void update_seq() {
@@ -464,6 +469,48 @@ class Solution {
 				}
 			}
 		}
+	}
+
+	friend double priority(const Solution& s) {
+		double result{};
+		// std::vector<u32> dfpr(s.maxpriority * s.maxnode, 0);
+		// std::vector<double> dftard(s.maxpriority * s.maxnode, 0.0);
+		u32 maxpath{0};
+		for (auto& i : s.solution) {
+			if (i.path.size() > maxpath) maxpath = i.path.size();
+		}
+		maxpath -= 2;
+		/*
+		for (u32 i{1}; i < maxpath; i++) {
+		    for (auto& v : s.solution) {
+		        for (u32 p{1}; p <= s.maxpriority; p++) {
+		            dfpr[p * i + p] = dfpr[p * (i - 1) + p];
+		            dftard[p * i + p] = dftard[p * (i - 1) + p];
+		            if (i + 2 <= v.path.size()) {
+		                if (v.path[i]->end > p) {
+		                    dfpr[p * i + p] += 1;
+		                    dftard[p * i + p] += v.depot->dists[v.path[i]->seq].dist;
+		                }
+		            }
+		        }
+		    }
+		}*/
+		for (u32 i{2}; i < maxpath; i++) {
+			for (auto& v : s.solution) {
+				if (i + 2 <= v.path.size()) {
+					for (u32 j{1}; j < i; j++) {
+						for (auto& vb : s.solution) {
+							if (j + 2 <= vb.path.size()) {
+								if (vb.path[j]->end < v.path[i]->end) {
+									result += v.path[i]->dists[vb.path[j]->seq].dist;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return result;
 	}
 };
 

@@ -353,17 +353,17 @@ namespace PER {
 }  // namespace PER
 
 namespace OPS {
-	bool remove(std::vector<Node*> r, const u32 k, double& saving);
-	bool remove(std::vector<Node*> r, const u32 k, const u32 len, double& saving);
-	bool insert(std::vector<Node*> r1, std::vector<Node*> r2, const u32 k, const u32 len, double& saving, bool& location);
-	bool insert(std::vector<Node*> r, const u32 k, Node* node, double& saving, bool& location);
-	bool reverse(Vehicle& r, const u32 f, const u32 t, u32 ctrl);
-	bool swapmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl);
-	bool onepointmove(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl);
-	bool onepointmove(Vehicle& r, const u32 a, const u32 b, u32 ctrl);
-	bool oropt(Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 len, u32 ctrl);
-	bool oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl);
-	bool arcnode(Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl);
-	bool arcswap(Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u32 ctrl);
+	bool remove(Solution& s, std::vector<Node*> r, const u32 k, double& saving);
+	bool remove(Solution& s, std::vector<Node*> r, const u32 k, const u32 len, double& saving);
+	bool insert(Solution& s, std::vector<Node*> r1, std::vector<Node*> r2, const u32 k, const u32 len, double& saving, bool& location);
+	bool insert(Solution& s, std::vector<Node*> r, const u32 k, Node* node, double& saving, bool& location);
+	bool reverse(Solution& s, Vehicle& r, const u32 f, const u32 t, u32 ctrl);
+	bool swapmove(Solution& s, Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl);
+	bool onepointmove(Solution& s, Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl);
+	bool onepointmove(Solution& s, Vehicle& r, const u32 a, const u32 b, u32 ctrl);
+	bool oropt(Solution& s, Vehicle& r1, Vehicle& r2, const u32 f, const u32 t, const u32 len, u32 ctrl);
+	bool oropt(Solution& s, Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl);
+	bool arcnode(Solution& s, Vehicle& r1, Vehicle& r2, const u32 a, const u32 b, u32 ctrl);
+	bool arcswap(Solution& s, Vehicle& r1, Vehicle& r2, float c, const u32 a, const u32 b, u32 ctrl);
 };  // namespace OPS
 #endif

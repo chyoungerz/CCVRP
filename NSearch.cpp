@@ -175,7 +175,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 				tp = CHK::find(s.solution[tr].path, near, 1);                                 // 获取邻居节点在其路径中的位置
 				if (tr == fr) {
 					tabu.emplace(seq);
-					if (OPS::onepointmove(s.solution[fr], fp, tp, 0)) {  // 如果移动成功
+					if (OPS::onepointmove(s, s.solution[fr], fp, tp, 0)) {  // 如果移动成功
 #ifdef DEBUG
 						s.debug_hash(11);
 #endif
@@ -185,7 +185,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 						break;  // 跳出循环
 					}
 				} else {
-					if (OPS::onepointmove(s.solution[fr], s.solution[tr], fp, tp, 0)) {                 // 如果移动成功
+					if (OPS::onepointmove(s, s.solution[fr], s.solution[tr], fp, tp, 0)) {              // 如果移动成功
 						s.shash[seq] = tr;                                                              // 更新节点所在的路径
 						flag = 1;                                                                       // 设置标志为true
 						num++;
@@ -222,7 +222,7 @@ void VNS::twoopt(Solution& s, u32& num, bool& flag) {
 		if (r.length > r.Limit) continue;
 		for (u32 i{1}, n = r.path.size() - 1; i + 1 < n; i++) {
 			for (u32 j{i + 1}; j < n; j++) {
-				if (OPS::reverse(r, i, j, 0)) {
+				if (OPS::reverse(s, r, i, j, 0)) {
 					flag = 1;
 					num++;
 				}
@@ -257,7 +257,7 @@ void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 				tr = s.shash[near->seq];                                                      // 获取邻居节点所在路径的编号
 				if (!s.solution[tr].valid() && !s.solution[fr].valid()) continue;
 				tp = CHK::find(s.solution[tr].path, near, 2);                                 // 获取邻居节点在其所在路径中的位置
-				if (OPS::swapmove(s.solution[fr], s.solution[tr], fp, tp, ctrl)) {            // 执行交换操作
+				if (OPS::swapmove(s, s.solution[fr], s.solution[tr], fp, tp, ctrl)) {         // 执行交换操作
 					s.shash[fp_seq] = tr;                                                     // 更新路径哈希表
 					s.shash[near->seq] = fr;                                                  // 更新路径哈希表
 					flag = 1;                                                                 // 标记已进行交换操作
@@ -328,7 +328,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 				tp = CHK::find(s.solution[tr].path, neighbors[i], 3);
 				// 如果邻居节点在同一路径上，则执行 Or-opt 2 操作。
 				if (tr == fr) {
-					if (OPS::oropt(s.solution[fr], fp, tp, 2, 0)) {
+					if (OPS::oropt(s, s.solution[fr], fp, tp, 2, 0)) {
 						flag = 1;
 						num++;
 						skip = 0;
@@ -343,7 +343,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 					}
 				} else {
 					// 如果邻居节点在不同路径上，则执行  Or-opt 2 操作。
-					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 2, 0)) {
+					if (OPS::oropt(s, s.solution[fr], s.solution[tr], fp, tp, 2, 0)) {
 						flag = 1;
 						num++;
 						skip = 0;
@@ -429,7 +429,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 				//  如果邻域中的节点与当前节点对在同一路径上
 				if (tr == fr) {
 					// 尝试在当前路径上执行 Arc Node 邻域操作
-					if (OPS::arcnode(s.solution[fr], s.solution[fr], fp, tp, saving)) {
+					if (OPS::arcnode(s, s.solution[fr], s.solution[fr], fp, tp, saving)) {
 						flag = 1;
 						num++;
 						skip = 0;
@@ -443,7 +443,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 					}
 				} else {
 					// 尝试在不同路径上执行 Arc Node 邻域操作
-					if (OPS::arcnode(s.solution[fr], s.solution[tr], fp, tp, saving)) {
+					if (OPS::arcnode(s, s.solution[fr], s.solution[tr], fp, tp, saving)) {
 						flag = 1;
 						num++;
 						skip = 0;
@@ -526,7 +526,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 				// 如果邻域中的节点在同一路径中
 				if (tr == fr) {
 					// 执行 Or-opt 3 操作
-					if (OPS::oropt(s.solution[fr], fp, tp, 3, 0)) {
+					if (OPS::oropt(s, s.solution[fr], fp, tp, 3, 0)) {
 						flag = 1;
 						num++;
 						skip = 0;
@@ -540,7 +540,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 					}
 				} else {
 					// 如果邻域中的节点在不同路径中
-					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 3, 0)) {
+					if (OPS::oropt(s, s.solution[fr], s.solution[tr], fp, tp, 3, 0)) {
 						flag = 1;
 						num++;
 						skip = 0;
@@ -612,7 +612,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 				if (!s.valid && !s.solution[tr].valid()) continue;
 				tp = CHK::find(s.solution[tr].path, neighbors[i], 6);               // 获取邻域中节点在路径中的位置
 				if (tr == fr) {                                                     // 如果邻域中的节点和当前路径中的节点在同一路径上
-					if (OPS::oropt(s.solution[fr], fp, tp, 4, 0)) {                 // 执行or-opt操作
+					if (OPS::oropt(s, s.solution[fr], fp, tp, 4, 0)) {              // 执行or-opt操作
 						flag = 1;                                                   // 标记找到更好的解
 						num++;
 						skip = 0;
@@ -625,7 +625,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 					}
 
 				} else {                                                                            // 如果邻域中的节点和当前路径中的节点不在同一路径上
-					if (OPS::oropt(s.solution[fr], s.solution[tr], fp, tp, 4, 0)) {                 // 执行or-opt操作
+					if (OPS::oropt(s, s.solution[fr], s.solution[tr], fp, tp, 4, 0)) {              // 执行or-opt操作
 						flag = 1;                                                                   // 标记找到更好的解
 						num++;
 						skip = 0;
@@ -660,7 +660,7 @@ void VNS::arcswap(Solution& s, u32& num, bool& flag) {
 				if ((*r2).path.size() < 4) continue;
 				for (u32 i{1}, n = (*r1).path.size() - 2; i < n; i++) {
 					for (u32 j{1}, m = (*r2).path.size() - 2; j < m; j++) {
-						if (OPS::arcswap(*r1, *r2, c, i, j, 0)) {
+						if (OPS::arcswap(s, *r1, *r2, c, i, j, 0)) {
 							s.shash[(*r1).path[i]->seq] = (*r1).seq;
 							s.shash[(*r1).path[i + 1]->seq] = (*r1).seq;
 							s.shash[(*r2).path[j]->seq] = (*r2).seq;
@@ -677,7 +677,7 @@ void VNS::arcswap(Solution& s, u32& num, bool& flag) {
 				if ((*r2).path.size() < 6) continue;
 				for (u32 i{1}, n = (*r1).path.size() - 4; i < n; i++) {
 					for (u32 j{2 + i}, m = (*r2).path.size() - 2; j < m; j++) {
-						if (OPS::arcswap(*r1, *r2, c, i, j, 0)) {
+						if (OPS::arcswap(s, *r1, *r2, c, i, j, 0)) {
 							flag = 1;
 							num++;
 #ifdef DEBUG

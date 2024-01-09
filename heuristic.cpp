@@ -27,11 +27,13 @@ void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<N
 	initSol = nassign(customers, depots, maxload, routes, ctrl);
 	initSol.update_hash(1);
 	sol = initSol;
-	bestSol.allength = 100000000.0;
+	bestSol.allobj = 100000000.0;
 }
 
 void SA::reset() {
 	sol = initSol;
+	bestSol.allobj = 100000000.0;
+	bestSol.alltardiness = 100000000.0;
 	bestSol.allength = 100000000.0;
 	bestSol.shash.clear();
 	bestSol.solution.clear();
@@ -198,14 +200,14 @@ void SA::run() {
 		stop = maxcustomers;
 		sol.update();
 		if (sol.valid) {
-			if (sol.allength < bestSol.allength) {
+			if (sol.allobj < bestSol.allobj) {
 				bestSol = sol;
 			}
 			if (T < 0.2 && change) {
 				lsbest = bestSol;
 				change = 0;
 			}
-			if (sol.allength < lsbest.allength) {
+			if (sol.allobj < lsbest.allobj) {
 				lsbest = sol;
 				epoch = max_epoch;
 			} else if (dis(gen) < T) {
@@ -220,7 +222,7 @@ void SA::run() {
 		}
 		T *= cold_rate;
 	}
-	if (bestSol.allength > lsbest.allength) {
+	if (bestSol.allobj > lsbest.allobj) {
 		bestSol = std::move(lsbest);
 	}
 	// bestSol.show();
