@@ -1827,7 +1827,7 @@ bool OPS::oropt(Solution& s, Vehicle& r, const u32 f, const u32 t, const u32 len
 				s.alltardiness = priority(s);
 			else
 				s.alltardiness = s_back_tardiness;
-			return false;
+			return true;
 		}
 	} else {               // f在t后面
 		if (f - t == 1) {  // 相邻
@@ -1913,7 +1913,7 @@ bool OPS::oropt(Solution& s, Vehicle& r, const u32 f, const u32 t, const u32 len
 				s.alltardiness = priority(s);
 			else
 				s.alltardiness = s_back_tardiness;
-			return false;
+			return true;
 		}
 	}
 }
