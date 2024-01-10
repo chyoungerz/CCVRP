@@ -1773,7 +1773,7 @@ bool OPS::oropt(Vehicle& r, const u32 f, const u32 t, const u32 len, u32 ctrl) {
 			}
 			r.cumlength = r_back_path;
 			r.length = r_back_limit;
-			return false;
+			return true;
 		}
 	} else {               // f在t后面
 		if (f - t == 1) {  // 相邻

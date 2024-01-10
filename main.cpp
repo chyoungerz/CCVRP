@@ -22,9 +22,9 @@ int main(int argc, char const *argv[]) {
 	vector<double> lengths;
 	lengths.reserve(10);
 	if (argc != 3) {
-		file = "A-n61-k9.vrp";
+		file = "A-n80-k10.vrp";
 		result = "data.txt";
-		routes = 9;
+		routes = 10;
 		cerr << "no enought args" << endl;
 		cerr << "use default: " << file << endl;
 	} else {
