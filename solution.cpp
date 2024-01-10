@@ -142,7 +142,7 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 		Vehicle vehicle(depot, maxload, 0);  // 初始路线
 		// 按离厂站距离排序
 		std::sort(customers.begin(), customers.end(), [](const Node* a, const Node* b) {
-			if (a->end < b->end)
+			if (a->end > b->end)
 				return a->demand > b->demand;
 			else
 				return false;
@@ -275,7 +275,6 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 	solution.alltardiness = 0.0;
 	solution.update();
 	solution.evaluate(ctrl);
-	solution.alltardiness = 0.0;
 	// hash
 	// for (u32 i = 0; i < solution.solution.size(); i++) {
 	//	for (u32 j = 1; j < solution.solution[i].path.size() - 1; j++) {                                          // 排除厂站

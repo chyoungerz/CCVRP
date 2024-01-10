@@ -154,7 +154,7 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 }
 
 // 将结果写入到文件中
-inline void write(const std::string& filename, const Solution& sol, const Info& info, const std::vector<double> lengths, const u64 duration) {
+inline void write(const std::string& filename, const Solution& sol, const Info& info, const std::vector<double>& lengths, const std::vector<double>& objs, const std::vector<double>& tardiness, const u64 duration) {
 	std::fstream out(filename, std::ios::out | std::ios::app);  // 输出, 追加末尾
 	if (out.fail()) {
 		std::cerr << "Error! cannot write to file: " << filename << std::endl;
@@ -164,7 +164,7 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 	const time_t now = std::time(nullptr);
 	strftime(chs, 96, "%Y%m%d%H%M", localtime(&now));
 	u32 num{}, routes{}, times = lengths.size();
-	float length{};
+	float length{}, obj{}, tard{};
 	out << "data: " << chs << "  run epoch: " << times << "  total time: " << duration << "ms\n";
 	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
 		if (sol.solution[i].path.size() - 2 <= 0) continue;
@@ -172,10 +172,14 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 		num += sol.solution[i].path.size() - 2;
 		routes++;
 	}
-	for (auto i : lengths) {
-		length += i / times;
+	for (u32 i = 0; i < times; i++) {
+		length += lengths[i] / times;
+		obj += objs[i] / times;
+		tard += tardiness[i] / times;
 	}
 	out << "one: " << info.one << " two: " << info.two << " three: " << info.three << " arc: " << info.arc << " or2: " << info.or2 << " or3: " << info.or3 << " or4: " << info.or4 << " 2-opt: " << info.opt2 << "\n";
+	out << "total obj: " << sol.allobj << "  avg obj: " << std::fixed << obj << std::defaultfloat << "\n";
+	out << "total tardiness: " << sol.alltardiness << "  avg tardiness: " << std::fixed << tard << std::defaultfloat << "\n";
 	out << "total length: " << sol.allength << "  avg length: " << std::fixed << length << std::defaultfloat
 	    << "  total nodes: " << num << "  total routes: " << routes << "\n"
 	    << std::endl;

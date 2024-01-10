@@ -203,6 +203,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 		tabu.clear();
 	}
 	s.evaluate();  // 移除空路径
+	s.update();
 }
 
 /**
@@ -230,6 +231,7 @@ void VNS::twoopt(Solution& s, u32& num, bool& flag) {
 		}
 	}
 	s.evaluate();
+	s.update();
 }
 
 /**
@@ -272,6 +274,7 @@ void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 		}
 	}
 	s.evaluate();
+	s.update();
 }
 
 /**
@@ -365,6 +368,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 		tabu.clear();
 	}
 	s.evaluate();  // 移除空路径
+	s.update();
 }
 
 /**
@@ -466,6 +470,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 		tabu.clear();
 	}
 	s.evaluate();  // 移除空路径
+	s.update();
 }
 
 /**
@@ -563,6 +568,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 		tabu.clear();
 	}
 	s.evaluate();  // 移除空路径
+	s.update();
 }
 
 /**
@@ -647,6 +653,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 		tabu.clear();  // 清空禁忌表
 	}
 	s.evaluate();  // 移除空路径
+	s.update();
 }
 
 void VNS::arcswap(Solution& s, u32& num, bool& flag) {
@@ -690,6 +697,7 @@ void VNS::arcswap(Solution& s, u32& num, bool& flag) {
 		}
 	}
 	s.evaluate();
+	s.update();
 }
 
 /// @brief 计算节点的邻域

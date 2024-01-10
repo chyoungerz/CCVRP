@@ -73,13 +73,14 @@ void SA::run() {
 		VNS::arcswap(sol, info.arc, improved);
 	}
 	stop = maxcustomers;
+	sol.alltardiness = priority(sol);
 	sol.update();
 	// sol.show();
 	if (sol.valid)
 		bestSol = lsbest = sol;
 	while (epoch) {
-		std::shuffle(vns, vns + 7, gen);
-		// if (T > 0.2) {
+		// std::shuffle(vns, vns + 7, gen);
+		//  if (T > 0.2) {
 		//	float r = dis(gen);
 		//	if (dis(gen) < 0.5) {
 		//		// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
@@ -88,7 +89,7 @@ void SA::run() {
 		//		// PER::RuinCreate(sol, T > 0.2 ? T / 2 : 0.1, customers, 10, 2);
 		//		PER::RuinCreate(sol, r > 0.2 ? r / 2 : 0.1, customers, 10, 2);
 		//	}
-		//} else {
+		// } else {
 		if (dis(gen) < 0.5) {
 			PER::EjecChain(sol, vehicles * (1 - T) > 2 ? vehicles * (1 - T) : 2, 10 * (1 - T) > 1 ? 10 * (1 - T) : 1, 0);
 			// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
@@ -198,7 +199,7 @@ void SA::run() {
 		}
 		timelimit = 0;
 		stop = maxcustomers;
-		sol.update();
+		// sol.update();
 		if (sol.valid) {
 			if (sol.allobj < bestSol.allobj) {
 				bestSol = sol;

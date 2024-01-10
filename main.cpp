@@ -17,26 +17,23 @@ int main(int argc, char const *argv[]) {
 	vector<Node *> nodes, depots, customers;
 	u32 maxload{}, depot_num{}, routes{}, epoch{};
 	Solution bestsol;
-	bestsol.allength = 1000000000;
-	Info infos;
-	vector<double> lengths;
-	lengths.reserve(10);
+	bestsol.allobj = 1000000000;
 	if (argc != 3) {
-		file = "A-n61-k9.vrp";
+		file = "A-n32-k5-PrU.vrp";
 		result = "data.txt";
-		routes = 9;
+		routes = 5;
 		cerr << "no enought args" << endl;
 		cerr << "use default: " << file << endl;
 	} else {
 		file = argv[1];
-		if (file.size() < 6) {
+		if (file.size() < 10) {
 			cerr << "file: " << file << " name error" << endl;
 			return 1;
 		}
-		if (file[file.size() - 6] == 'k') {
-			routes = atoi(file.substr(file.size() - 5, 1).c_str());
+		if (file[file.size() - 10] == 'k') {
+			routes = atoi(file.substr(file.size() - 9, 1).c_str());
 		} else {
-			routes = atoi(file.substr(file.size() - 6, 2).c_str());
+			routes = atoi(file.substr(file.size() - 10, 2).c_str());
 		}
 		result = "results/" + file.substr(2, file.size() - 6) + ".txt";
 		epoch = atoi(argv[2]);
@@ -51,11 +48,18 @@ int main(int argc, char const *argv[]) {
 	SA vrp;
 	vrp.init(nodes, depots, customers, depot_num, maxload, routes);
 #ifndef DEBUG
+	Info infos;
+	vector<double> lengths, objs, tardiness;
+	lengths.reserve(10);
+	objs.reserve(10);
+	tardiness.reserve(10);
 	auto t1{chrono::high_resolution_clock::now()};
 	for (u32 i{0}; i < epoch; i++) {
 		vrp.run();
 		lengths.emplace_back(vrp.bestSol.allength);
-		if (bestsol.allength > vrp.bestSol.allength) {
+		objs.emplace_back(vrp.bestSol.allobj);
+		tardiness.emplace_back(vrp.bestSol.alltardiness);
+		if (bestsol.allobj > vrp.bestSol.allobj) {
 			bestsol = vrp.bestSol;
 			infos = vrp.info;
 		}
@@ -63,7 +67,7 @@ int main(int argc, char const *argv[]) {
 	}
 	auto t2{chrono::high_resolution_clock::now()};
 	u64 duration = (chrono::duration_cast<chrono::milliseconds>(t2 - t1)).count();
-	write(result, bestsol, infos, lengths, duration);
+	write(result, bestsol, infos, lengths, objs, tardiness, duration);
 #else
 	vrp.run();
 	vrp.bestSol.show();

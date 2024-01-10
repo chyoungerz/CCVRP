@@ -132,7 +132,7 @@ class Vehicle {
 	std::vector<Node*> path;  // 走过的路
 	// double diflength;                  // 走过的路(时间）差分数组
 	double cumlength;                  // 所有节点的长度（时间）累计和
-	double tardiness;                  // 所有节点的优先级（时间）和
+	// double tardiness;                  // 所有节点的优先级（时间）和
 	double length{};                   // 路径长度（时间）
 	double Limit{100000.0};            // 最大路径长度（时间）
 	Node* depot{nullptr};              // 场站
@@ -302,7 +302,7 @@ class Solution {
 			std::cout << solution[i] << " : " << solution[i].load << std::endl;
 			routes++;
 		}
-		std::cout << "total length: " << allength << "\ttotal customers: " << num << "\ttotal routes: " << routes << std::endl;
+		std::cout << "total length: " << allength << " total tardiness: " << alltardiness << " total obj: " << allobj << " total customers: " << num << " total routes: " << routes << std::endl;
 	}
 
 	/// @brief 更新累计路径长度
