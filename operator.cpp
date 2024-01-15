@@ -285,7 +285,7 @@ u32 CHK::find(std::vector<Node*>& route, const u32 seq, u32 where) {
 	for (u32 i = route.size() - 1; i > 0; i--) {
 		if (route[i]->seq == seq) return i;
 	}
-#ifdef DEBUG
+#ifndef NDEBUG
 	std::cerr << "没有找到节点:" << seq << "\n";
 	throw "没有找到节点";
 #endif
@@ -296,7 +296,7 @@ u32 CHK::find(std::vector<Node*>& route, Node* seq, u32 where) {
 	for (u32 i = route.size() - 1; i > 0; i--) {
 		if (route[i] == seq) return i;
 	}
-#ifdef DEBUG
+#ifndef NDEBUG
 	std::cerr << "没有找到节点:" << seq->seq << " " << where << "\n";
 	throw "没有找到节点";
 #endif

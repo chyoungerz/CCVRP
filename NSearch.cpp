@@ -155,7 +155,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 	bool skip{1};
 // double saving{};                                        // 移动操作的节约值
 // bool location{};                                        // 一个布尔标志，用于指示是否进行了任何移动
-#ifdef DEBUG
+#ifndef NDEBUG
 	s.debug_hash(1);
 #endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {  // 遍历所有路径
@@ -176,7 +176,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 				if (tr == fr) {
 					tabu.emplace(seq);
 					if (OPS::onepointmove(s, s.solution[fr], fp, tp, 0)) {  // 如果移动成功
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(11);
 #endif
 						flag = 1;                                                                       // 设置标志为true
@@ -190,7 +190,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 						flag = 1;                                                                       // 设置标志为true
 						num++;
 						skip = 0;
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(12);
 #endif
 						break;  // 跳出循环
@@ -246,7 +246,7 @@ void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 	// double saving{};                                        // 交换操作的节约值
 	// if (!s.valid) ctrl = 1;
 	flag = 0;
-#ifdef DEBUG
+#ifndef NDEBUG
 	s.debug_hash(7);
 #endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {  // 遍历所有路径
@@ -264,7 +264,7 @@ void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 					s.shash[near->seq] = fr;                                                  // 更新路径哈希表
 					flag = 1;                                                                 // 标记已进行交换操作
 					num++;
-#ifdef DEBUG
+#ifndef NDEBUG
 					s.debug_hash(70);
 #endif
 					break;  // 跳出循环
@@ -298,7 +298,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 // double saving{};
 // bool location{};
 //  遍历解中的所有路径。
-#ifdef DEBUG
+#ifndef NDEBUG
 	s.debug_hash(2);
 #endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
@@ -339,7 +339,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 						if (fp < tp) {
 							tabu.emplace((p1->seq << 10) + p2->seq);
 						}
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(21);
 #endif
 						break;
@@ -353,7 +353,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 						// 更新 s.shash。
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(22);
 #endif
 						break;
@@ -398,7 +398,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 	// 定义一个双精度浮点数变量
 	double saving{};
 	// 遍历解决方案中的每个路径
-#ifdef DEBUG
+#ifndef NDEBUG
 	s.debug_hash(3);
 #endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
@@ -440,7 +440,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 						// 如果操作成功，则将当前节点对添加到禁忌表中
 						if (fp < tp)
 							tabu.emplace((p1->seq << 10) + p2->seq);
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(31);
 #endif
 						break;
@@ -455,7 +455,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
 						s.shash[neighbors[i]->seq] = fr;
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(32);
 #endif
 						break;
@@ -494,7 +494,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 	                               // double saving{};
 	                               // bool location{};
 	                               //  遍历解中的所有路径
-#ifdef DEBUG
+#ifndef NDEBUG
 	s.debug_hash(4);
 #endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {
@@ -538,7 +538,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 						// 将这个节点组合加入禁忌表
 						if (fp < tp)
 							tabu.emplace((p1->seq << 20) + (p2->seq << 10) + p3->seq);
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(41);
 #endif
 						break;
@@ -553,7 +553,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 						s.shash[p1->seq] = tr;
 						s.shash[p2->seq] = tr;
 						s.shash[p3->seq] = tr;
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(42);
 #endif
 						break;
@@ -589,7 +589,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 	u32 tr{}, tp{}, size{}, fp{};  // to_route;to_path;from_route;from_path
 // double saving{};               // 定义一个double类型的变量，用于存储节省的距离
 // bool location{};               // 定义一个bool类型的变量，用于存储位置信息
-#ifdef DEBUG
+#ifndef NDEBUG
 	s.debug_hash(5);
 #endif
 	for (u32 fr{0}, t = s.solution.size(); fr < t; fr++) {          // 遍历解中的所有路径
@@ -624,7 +624,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 						skip = 0;
 						if (fp < tp)
 							tabu.emplace((p1->seq << 20) + (p2->seq << 10)), tabu.emplace((p3->seq << 10) + p4->seq);  // 将节点加入禁忌表
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(51);
 #endif
 						break;
@@ -639,7 +639,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 						s.shash[p2->seq] = tr;
 						s.shash[p3->seq] = tr;
 						s.shash[p4->seq] = tr;
-#ifdef DEBUG
+#ifndef NDEBUG
 						s.debug_hash(52);
 #endif
 						break;
@@ -674,7 +674,7 @@ void VNS::arcswap(Solution& s, u32& num, bool& flag) {
 							s.shash[(*r2).path[j + 1]->seq] = (*r2).seq;
 							flag = 1;
 							num++;
-#ifdef DEBUG
+#ifndef NDEBUG
 							s.debug_hash(53);
 #endif
 						}
@@ -687,7 +687,7 @@ void VNS::arcswap(Solution& s, u32& num, bool& flag) {
 						if (OPS::arcswap(s, *r1, *r2, c, i, j, 0)) {
 							flag = 1;
 							num++;
-#ifdef DEBUG
+#ifndef NDEBUG
 							s.debug_hash(54);
 #endif
 						}

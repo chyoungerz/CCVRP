@@ -47,7 +47,7 @@ int main(int argc, char const *argv[]) {
 	init_distance(nodes, depot_num, depots, customers);  // 计算客户距离
 	SA vrp;
 	vrp.init(nodes, depots, customers, depot_num, maxload, routes);
-#ifndef DEBUG
+#ifdef NDEBUG
 	Info infos;
 	vector<double> lengths, objs, tardiness;
 	lengths.reserve(10);

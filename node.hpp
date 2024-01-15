@@ -41,7 +41,7 @@ struct Info {
 
 // 目标
 inline double v_aim(double cumlength_, double tardiness_ = 0.0) {
-	return cumlength_ * 0.5 + tardiness_ * 0.5;
+	return cumlength_ + tardiness_;
 }
 
 /// @brief 节点
@@ -210,7 +210,7 @@ class Vehicle {
 		// double length_{};
 		u32 load_{};
 		for (u32 i{1}, n = path.size() - 1; i < n; i++) {  // 优先级
-#ifdef DEBUG
+#ifndef NDEBUG
 			if (path[i]->isdepot) throw "路径含有场站";
 #endif
 			length_ += path[i]->dists[path[i - 1]->seq].dist;
@@ -475,11 +475,20 @@ class Solution {
 		double result{};
 		// std::vector<u32> dfpr(s.maxpriority * s.maxnode, 0);
 		// std::vector<double> dftard(s.maxpriority * s.maxnode, 0.0);
-		u32 maxpath{0};
+		u32 maxpath{}, m{};
+		u32 size = s.solution.size();
+
 		for (auto& i : s.solution) {
 			if (i.path.size() > maxpath) maxpath = i.path.size();
 		}
+		m = maxpath - 1;
 		maxpath -= 2;
+		double* dif = new double[s.solution.size() * m]{};
+		for (u32 i{0}; i < size; i++) {
+			for (u32 j{1}, psize = s.solution[i].path.size() - 1; j < psize; j++) {
+				dif[i * m + j] += dif[i * m + j - 1] + s.solution[i].path[j - 1]->dists[s.solution[i].path[j]->seq].dist;
+			}
+		}
 		/*
 		for (u32 i{1}; i < maxpath; i++) {
 		    for (auto& v : s.solution) {
@@ -496,13 +505,13 @@ class Solution {
 		    }
 		}*/
 		for (u32 i{2}; i < maxpath; i++) {
-			for (auto& v : s.solution) {
-				if (i + 2 <= v.path.size()) {
+			for (u32 a{0}; a < size; a++) {
+				if (i + 2 <= s.solution[a].path.size()) {
 					for (u32 j{1}; j < i; j++) {
-						for (auto& vb : s.solution) {
-							if (j + 2 <= vb.path.size()) {
-								if (vb.path[j]->end < v.path[i]->end) {
-									result += v.path[i]->dists[vb.path[j]->seq].dist;
+						for (u32 b{0}; b < size; b++) {
+							if (j + 2 <= s.solution[b].path.size()) {
+								if (s.solution[b].path[j]->end < s.solution[a].path[i]->end) {
+									result += std::abs(dif[a * m + i] - dif[b * m + j]);
 								}
 							}
 						}
@@ -510,6 +519,7 @@ class Solution {
 				}
 			}
 		}
+		delete[] dif;
 		return result;
 	}
 };
