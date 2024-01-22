@@ -154,7 +154,7 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 }
 
 // 将结果写入到文件中
-inline void write(const std::string& filename, const Solution& sol, const Info& info, const std::vector<double>& lengths, const std::vector<double>& objs, const std::vector<double>& tardiness, const u64 duration) {
+inline void write(const std::string& filename, const Solution& sol, const Info& info, const std::vector<double>& lengths, const std::vector<double>& objs, const std::vector<double>& tardiness, const u64 duration, const u32 maxload) {
 	std::fstream out(filename, std::ios::out | std::ios::app);  // 输出, 追加末尾
 	if (out.fail()) {
 		std::cerr << "Error! cannot write to file: " << filename << std::endl;
@@ -165,7 +165,7 @@ inline void write(const std::string& filename, const Solution& sol, const Info& 
 	strftime(chs, 96, "%Y%m%d%H%M", localtime(&now));
 	u32 num{}, routes{}, times = lengths.size();
 	float length{}, obj{}, tard{};
-	out << "data: " << chs << "  run epoch: " << times << "  total time: " << duration << "ms\n";
+	out << "data: " << chs << "  run epoch: " << times << "  maxload: " << maxload << "  total time: " << duration << "ms\n";
 	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
 		if (sol.solution[i].path.size() - 2 <= 0) continue;
 		out << sol.solution[i] << " : " << sol.solution[i].load << "\n";

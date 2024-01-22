@@ -1,11 +1,12 @@
 #include "NSearch.hpp"
 
 #include <algorithm>
-// #include <random>
+#include <random>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-// #include "algorithm.hpp"
+#include "algorithm.hpp"
 #include "operator.hpp"
 /*
 void ALNS::repair(Solution& solution, std::vector<std::pair<u32, Node*>>& rest) {
@@ -202,7 +203,7 @@ void VNS::relocate(Solution& s, u32& num, float size, bool& flag) {
 		}
 		tabu.clear();
 	}
-	s.evaluate();  // 移除空路径
+	// s.evaluate();  // 移除空路径
 	s.update();
 }
 
@@ -230,7 +231,7 @@ void VNS::twoopt(Solution& s, u32& num, bool& flag) {
 			}
 		}
 	}
-	s.evaluate();
+	// s.evaluate();
 	s.update();
 }
 
@@ -273,7 +274,7 @@ void VNS::exchange(Solution& s, u32& num, float size, bool& flag) {
 			fp++;
 		}
 	}
-	s.evaluate();
+	// s.evaluate();
 	s.update();
 }
 
@@ -367,7 +368,7 @@ void VNS::oropt2(Solution& s, u32& num, float size_near, bool& flag) {
 		// 清空禁忌表。
 		tabu.clear();
 	}
-	s.evaluate();  // 移除空路径
+	// s.evaluate();  // 移除空路径
 	s.update();
 }
 
@@ -469,7 +470,7 @@ void VNS::arcnode(Solution& s, u32& num, float size_near, bool& flag) {
 		// 清空禁忌表
 		tabu.clear();
 	}
-	s.evaluate();  // 移除空路径
+	// s.evaluate();  // 移除空路径
 	s.update();
 }
 
@@ -567,7 +568,7 @@ void VNS::oropt3(Solution& s, u32& num, float size_near, bool& flag) {
 		// 清空禁忌表
 		tabu.clear();
 	}
-	s.evaluate();  // 移除空路径
+	// s.evaluate();  // 移除空路径
 	s.update();
 }
 
@@ -652,7 +653,7 @@ void VNS::oropt4(Solution& s, u32& num, float size_near, bool& flag) {
 		}
 		tabu.clear();  // 清空禁忌表
 	}
-	s.evaluate();  // 移除空路径
+	// s.evaluate();  // 移除空路径
 	s.update();
 }
 
@@ -696,7 +697,7 @@ void VNS::arcswap(Solution& s, u32& num, bool& flag) {
 			}
 		}
 	}
-	s.evaluate();
+	// s.evaluate();
 	s.update();
 }
 
@@ -770,5 +771,193 @@ void VNS::neighbor(std::vector<Node*>& node, u32 size) {
 			node.resize(size);
 		}
 		return;
+	}
+}
+
+void SHACK::arcnode(Solution& s, float threshold, u32 max_iter) {
+	u32 size_s = s.solution.size();
+	std::random_device rd;
+	Xoshiro::Xoshiro128ss gen(rd());
+	std::uniform_int_distribution<> dis_s(0, size_s - 1);
+	u32 p1{}, p2{}, r1{}, r2{};
+	Node *n1{}, *n2{}, *n3{};
+	double dif_obj{}, new_tardiness{}, new_length_1{}, new_length_2{};
+	int m = 100;
+	while (m--) {
+		r1 = dis_s(gen), r2 = dis_s(gen);
+		if (m-- < 0) return;
+		if (r1 == r2) continue;
+		if (s.solution[r1].path.size() < 4 || s.solution[r2].path.size() < 3) continue;
+		break;
+	}
+	m = 100;
+	u32 iter{};
+	while (iter++ < max_iter) {
+		p1 = gen() % (s.solution[r1].path.size() - 3) + 1;
+		p2 = gen() % (s.solution[r2].path.size() - 2) + 1;
+		int dif_load = s.solution[r1].path[p1]->demand + s.solution[r1].path[p1 + 1]->demand - s.solution[r2].path[p2]->demand;
+		if (dif_load + s.solution[r2].load > s.solution[r2].capacity || s.solution[r1].load - dif_load > s.solution[r1].capacity) continue;
+		n1 = s.solution[r1].path[p1], n2 = s.solution[r1].path[p1 + 1], n3 = s.solution[r2].path[p2];
+		s.solution[r1].path[p1] = n3, s.solution[r2].path[p2] = n1;
+		s.solution[r1].path.erase(s.solution[r1].path.begin() + p1 + 1);
+		s.solution[r2].path.emplace(s.solution[r2].path.begin() + p2 + 1, n2);
+		new_tardiness = priority(s);
+		new_length_1 = s.solution[r1].path_cumlength();
+		new_length_2 = s.solution[r2].path_cumlength();
+		dif_obj = v_aim(new_length_1 + new_length_2 - s.solution[r1].cumlength - s.solution[r2].cumlength, new_tardiness - s.alltardiness);
+		if (dif_obj / s.allobj <= threshold) {
+			s.alltardiness = new_tardiness;
+			s.solution[r1].cumlength = new_length_1;
+			s.solution[r2].cumlength = new_length_2;
+			s.solution[r1].load -= dif_load;
+			s.solution[r2].load += dif_load;
+			s.shash[n1->seq] = r2;
+			s.shash[n2->seq] = r2;
+			s.shash[n3->seq] = r1;
+			s.update();
+			return;
+		} else {
+			s.solution[r1].path[p1] = n1, s.solution[r2].path[p2] = n3;
+			s.solution[r2].path.erase(s.solution[r2].path.begin() + p2 + 1);
+			s.solution[r1].path.emplace(s.solution[r1].path.begin() + p1 + 1, n2);
+		}
+	}
+}
+
+void SHACK::arcswap(Solution& s, float threshold, u32 max_iter) {
+	u32 size_s = s.solution.size();
+	std::random_device rd;
+	Xoshiro::Xoshiro128ss gen(rd());
+	std::uniform_int_distribution<> dis_s(0, size_s - 1);
+	u32 p1{}, p2{}, r1{}, r2{};
+	double dif_obj{}, new_tardiness{}, new_length_1{}, new_length_2{};
+	int m = 100;
+	while (m--) {
+		r1 = dis_s(gen), r2 = dis_s(gen);
+		if (m-- < 0) return;
+		if (r1 == r2) continue;
+		if (s.solution[r1].path.size() < 4 || s.solution[r2].path.size() < 4) continue;
+		break;
+	}
+	m = 100;
+	u32 iter{};
+	while (iter++ < max_iter) {
+		p1 = gen() % (s.solution[r1].path.size() - 3) + 1;
+		p2 = gen() % (s.solution[r2].path.size() - 3) + 1;
+		int dif_load = s.solution[r1].path[p1]->demand + s.solution[r1].path[p1 + 1]->demand - s.solution[r2].path[p2]->demand - s.solution[r2].path[p2 + 1]->demand;
+		if (dif_load + s.solution[r2].load > s.solution[r2].capacity || s.solution[r1].load - dif_load > s.solution[r1].capacity) continue;
+		std::swap(s.solution[r1].path[p1], s.solution[r2].path[p2]);
+		std::swap(s.solution[r1].path[p1 + 1], s.solution[r2].path[p2 + 1]);
+		new_tardiness = priority(s);
+		new_length_1 = s.solution[r1].path_cumlength();
+		new_length_2 = s.solution[r2].path_cumlength();
+		dif_obj = v_aim(new_length_1 + new_length_2 - s.solution[r1].cumlength - s.solution[r2].cumlength, new_tardiness - s.alltardiness);
+		if (dif_obj / s.allobj <= threshold) {
+			s.alltardiness = new_tardiness;
+			s.solution[r1].cumlength = new_length_1;
+			s.solution[r2].cumlength = new_length_2;
+			s.solution[r1].load -= dif_load;
+			s.solution[r2].load += dif_load;
+			s.shash[s.solution[r1].path[p1]->seq] = r1;
+			s.shash[s.solution[r1].path[p1 + 1]->seq] = r1;
+			s.shash[s.solution[r2].path[p2]->seq] = r2;
+			s.shash[s.solution[r2].path[p2 + 1]->seq] = r2;
+			s.update();
+			return;
+		} else {
+			std::swap(s.solution[r1].path[p1], s.solution[r2].path[p2]);
+			std::swap(s.solution[r1].path[p1 + 1], s.solution[r2].path[p2 + 1]);
+		}
+	}
+}
+
+void SHACK::oropt(Solution& s, float threshold, u32 max_iter) {
+	u32 size_s = s.solution.size();
+	std::random_device rd;
+	Xoshiro::Xoshiro128ss gen(rd());
+	std::uniform_int_distribution<> dis_s(0, size_s - 1);
+	u32 p1{}, p2{}, r1{}, r2{};
+	Node *n1{}, *n2{};
+	double dif_obj{}, new_tardiness{}, new_length_1{}, new_length_2{};
+	int m = 100;
+	while (m--) {
+		r1 = dis_s(gen), r2 = dis_s(gen);
+		if (m-- < 0) return;
+		if (r1 == r2) continue;
+		if (s.solution[r1].path.size() < 4) continue;
+		break;
+	}
+	m = 100;
+	u32 iter{};
+	while (iter++ < max_iter) {
+		p1 = gen() % (s.solution[r1].path.size() - 3) + 1;
+		p2 = gen() % (s.solution[r2].path.size() - 2) + 1;
+		int dif_load = s.solution[r1].path[p1]->demand + s.solution[r1].path[p1 + 1]->demand;
+		if (dif_load + s.solution[r2].load > s.solution[r2].capacity) continue;
+		n1 = s.solution[r1].path[p1], n2 = s.solution[r1].path[p1 + 1];
+		s.solution[r2].path.insert(s.solution[r2].path.begin() + p2, {n1, n2});
+		s.solution[r1].path.erase(s.solution[r1].path.begin() + p1, s.solution[r1].path.begin() + p1 + 2);
+		new_tardiness = priority(s);
+		new_length_1 = s.solution[r1].path_cumlength();
+		new_length_2 = s.solution[r2].path_cumlength();
+		dif_obj = v_aim(new_length_1 + new_length_2 - s.solution[r1].cumlength - s.solution[r2].cumlength, new_tardiness - s.alltardiness);
+		if (dif_obj / s.allobj <= threshold) {
+			s.alltardiness = new_tardiness;
+			s.solution[r1].cumlength = new_length_1;
+			s.solution[r2].cumlength = new_length_2;
+			s.solution[r1].load -= dif_load;
+			s.solution[r2].load += dif_load;
+			s.shash[n1->seq] = r2;
+			s.shash[n2->seq] = r2;
+			s.update();
+			return;
+		} else {
+			s.solution[r1].path.insert(s.solution[r1].path.begin() + p1, {n1, n2});
+			s.solution[r2].path.erase(s.solution[r2].path.begin() + p2, s.solution[r2].path.begin() + p2 + 2);
+		}
+	}
+}
+
+void SHACK::twoopt(Solution& s, float threshold, u32 max_iter) {
+	u32 size_s = s.solution.size();
+	u32 max_path{};
+	int m{};
+	for (auto& r : s.solution) {
+		if (r.path.size() > max_path) max_path = r.path.size();
+	}
+	if (max_path < 5) return;
+	std::random_device rd;
+	Xoshiro::Xoshiro128ss gen(rd());
+	std::uniform_int_distribution<> dis_s(0, size_s - 1);
+	int p1{}, p2{};
+	u32 r{};
+	double dif_obj{}, new_tardiness{}, new_length{};
+	while (1) {
+		r = dis_s(gen);
+		if (s.solution[r].path.size() >= 5) break;
+	}
+	u32 iter{};
+	while (iter++ < max_iter) {
+		m = 100;
+		while (1) {
+			p1 = gen() % (s.solution[r].path.size() - 2) + 1;
+			p2 = gen() % (s.solution[r].path.size() - 2) + 1;
+			if (std::abs(p1 - p2) > 1) break;
+			if (m-- < 0) return;
+		}
+		if (p1 > p2)
+			std::swap(p1, p2);
+		std::reverse(s.solution[r].path.begin() + p1, s.solution[r].path.begin() + p2 + 1);
+		new_tardiness = priority(s);
+		new_length = s.solution[r].path_cumlength();
+		dif_obj = v_aim(new_length - s.solution[r].cumlength, new_tardiness - s.alltardiness);
+		if (dif_obj / s.allobj <= threshold) {
+			s.alltardiness = new_tardiness;
+			s.solution[r].cumlength = new_length;
+			s.update();
+			return;
+		} else {
+			std::reverse(s.solution[r].path.begin() + p1, s.solution[r].path.begin() + p2 + 1);
+		}
 	}
 }

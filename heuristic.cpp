@@ -14,7 +14,7 @@
 #include "solution.hpp"
 
 // SA算法
-void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<Node*>& customer, const u32 depot_num, u32 maxload, u32 routes) {
+void VN::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<Node*>& customer, const u32 depot_num, u32 maxload, u32 routes) {
 	// std::vector<Node*> depots, custers;
 	// custers.assign(nodes.begin(), nodes.end() - depot_num);
 	// depots.assign(nodes.end() - depot_num, nodes.end());  // 厂站必须在节点的末尾
@@ -30,7 +30,7 @@ void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<N
 	bestSol.allobj = 100000000.0;
 }
 
-void SA::reset() {
+void VN::reset() {
 	sol = initSol;
 	bestSol.allobj = 100000000.0;
 	bestSol.alltardiness = 100000000.0;
@@ -48,7 +48,7 @@ void SA::reset() {
 	info.arc = 0;
 }
 
-void SA::run() {
+void VN::run() {
 	// u32 customer = nodes.size() - depotnum;
 	//  sol.show();
 	bool improved{1}, flag{0}, change{1};
@@ -205,7 +205,8 @@ void SA::run() {
 				bestSol = sol;
 			}
 			if (T < 0.2 && change) {
-				lsbest = bestSol;
+				if (bestSol.valid)
+					lsbest = bestSol;
 				change = 0;
 			}
 			if (sol.allobj < lsbest.allobj) {
@@ -223,7 +224,7 @@ void SA::run() {
 		}
 		T *= cold_rate;
 	}
-	if (bestSol.allobj > lsbest.allobj) {
+	if (bestSol.allobj > lsbest.allobj || !bestSol.valid) {
 		bestSol = std::move(lsbest);
 	}
 	// bestSol.show();
@@ -239,6 +240,265 @@ void SA::run() {
 	//           << " or4: " << info.or4
 	//           << " 2-opt: " << info.opt2 << "\n";
 	// }
+}
+
+void SA::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<Node*>& customer, const u32 depot_num, u32 maxload, u32 routes) {
+	depotnum = depot_num;
+	vehicles = routes;
+	customers = std::move(customer);
+	depots = std::move(depot);
+	nodes = node;
+	initSol = assign(customers, depots, maxload, routes, ctrl);
+	initSol.update_hash(1);
+	sol = initSol;
+	bestSol.allobj = 100000000.0;
+}
+
+void SA::reset() {
+	sol = initSol;
+	bestSol.allobj = 100000000.0;
+	bestSol.alltardiness = 100000000.0;
+	bestSol.allength = 100000000.0;
+	bestSol.shash.clear();
+	bestSol.solution.clear();
+	bestSol.valid = 0;
+	info.one = 0;
+	info.opt2 = 0;
+	info.or2 = 0;
+	info.or3 = 0;
+	info.three = 0;
+	info.or4 = 0;
+	info.two = 0;
+	info.arc = 0;
+}
+
+void SA::run() {
+	bool improved{1}, change{1};
+	int max_epoch{10};
+	int epoch{max_epoch};
+	float size_near{0.5}, T{1.0}, cold_rate{0.93};
+	u32 maxcustomers = customers.size();
+	u32 stop{maxcustomers};
+	Solution lsbest = bestSol;
+	std::random_device rd;
+	Xoshiro::Xoshiro128ss gen(rd());
+	std::uniform_real_distribution<> dis(0, 1);
+	// sol.evaluate();
+	while (stop-- && improved) {
+		improved = false;
+		VNS::relocate(sol, info.one, size_near, improved);
+		VNS::oropt2(sol, info.or2, size_near, improved);
+		VNS::arcnode(sol, info.three, size_near, improved);
+		VNS::oropt3(sol, info.or3, size_near, improved);
+		VNS::oropt4(sol, info.or4, size_near, improved);
+		VNS::arcswap(sol, info.arc, improved);
+	}
+	stop = maxcustomers * 10;
+	sol.alltardiness = priority(sol);
+	sol.update();
+	// sol.show();
+	if (sol.valid)
+		bestSol = lsbest = sol;
+	while (epoch) {
+		// std::shuffle(vns, vns + 7, gen);
+		if (dis(gen) < 0.5) {
+			u32 k = vehicles / 2;
+			if (k < 2)
+				k = 2;
+			else if (k > 4)
+				k = 4;
+			PER::EjecChain(sol, k, 50);
+			// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
+			// PER::EjecChain(sol, vehicles * r > 2 ? vehicles * r : 2, 10 * r > 1 ? 10 * r : 1, 0);
+		} else {
+			PER::RuinCreate(sol, 0.3, customers, 10);
+			// PER::RuinCreate(sol, T > 0.2 ? T / 2 : 0.1, customers, 10, 2);
+			// PER::RuinCreate(sol, r > 0.2 ? r / 2 : 0.1, customers, 10, 2);
+		}
+		//}
+		improved = 1;
+		while (improved) {
+			improved = false;
+			VNS::relocate(sol, info.one, size_near, improved);
+		}
+		improved = 1;
+		while (improved) {
+			improved = false;
+			VNS::oropt2(sol, info.or2, size_near, improved);
+		}
+		improved = 1;
+		while (improved) {
+			improved = false;
+			VNS::arcnode(sol, info.three, size_near, improved);
+		}
+		improved = 1;
+		while (improved) {
+			improved = false;
+			VNS::oropt3(sol, info.or3, size_near, improved);
+		}
+		improved = 1;
+		while (improved) {
+			improved = false;
+			VNS::oropt4(sol, info.or4, size_near, improved);
+		}
+		improved = 1;
+		while (improved) {
+			improved = false;
+			VNS::arcswap(sol, info.arc, improved);
+		}
+		improved = 1;
+		while (improved) {
+			improved = false;
+			VNS::exchange(sol, info.two, size_near, improved);
+		}
+		improved = 1;
+		while (improved) {
+			improved = false;
+			VNS::twoopt(sol, info.opt2, improved);
+		}
+		improved = 1;
+		// sol.update();
+		if (sol.valid) {
+			if (sol.allobj < bestSol.allobj) {
+				bestSol = sol;
+			}
+			if (T < 0.2 && change) {
+				if (bestSol.valid)
+					lsbest = bestSol;
+				change = 0;
+			}
+			if (sol.allobj < lsbest.allobj) {
+				lsbest = sol;
+				epoch = max_epoch;
+			} else if (dis(gen) < T) {
+				lsbest = sol;
+				epoch = max_epoch;
+			} else {
+				sol = lsbest;
+				epoch--;
+			}
+			T *= cold_rate;
+		}
+		stop--;
+		if (stop == 0) break;
+	}
+	if (bestSol.allobj > lsbest.allobj || !bestSol.valid) {
+		bestSol = std::move(lsbest);
+	}
+}
+
+void VND::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<Node*>& customer, const u32 depot_num, u32 maxload, u32 routes) {
+	depotnum = depot_num;
+	vehicles = routes;
+	customers = std::move(customer);
+	depots = std::move(depot);
+	nodes = node;
+	initSol = assign(customers, depots, maxload, routes, ctrl);
+	initSol.update_hash(1);
+	sol = initSol;
+	bestSol.allobj = 100000000.0;
+}
+
+void VND::reset() {
+	sol = initSol;
+	bestSol.allobj = 100000000.0;
+	bestSol.alltardiness = 100000000.0;
+	bestSol.allength = 100000000.0;
+	bestSol.shash.clear();
+	bestSol.solution.clear();
+	bestSol.valid = 0;
+	info.one = 0;
+	info.opt2 = 0;
+	info.or2 = 0;
+	info.or3 = 0;
+	info.three = 0;
+	info.or4 = 0;
+	info.two = 0;
+	info.arc = 0;
+}
+
+void VND::run() {
+	bool improved{1};
+	int max_epoch{10};
+	int epoch{max_epoch};
+	float size_near{0.5};
+	u32 maxcustomers = customers.size();
+	u32 stop{maxcustomers};
+	int vns[4] = {1, 2, 3, 4};
+	Solution lsbest = bestSol;
+	std::random_device rd;
+	Xoshiro::Xoshiro128ss gen(rd());
+	std::uniform_real_distribution<> dis(0, 1);
+	// sol.evaluate();
+	while (stop-- && improved) {
+		improved = false;
+		VNS::relocate(sol, info.one, size_near, improved);
+		VNS::oropt2(sol, info.or2, size_near, improved);
+		VNS::arcnode(sol, info.three, size_near, improved);
+		VNS::oropt3(sol, info.or3, size_near, improved);
+		VNS::oropt4(sol, info.or4, size_near, improved);
+		VNS::arcswap(sol, info.arc, improved);
+	}
+	stop = maxcustomers * 10;
+	sol.alltardiness = priority(sol);
+	sol.update();
+	// sol.show();
+	if (sol.valid)
+		bestSol = lsbest = sol;
+	while (epoch) {
+		// std::shuffle(vns, vns + 7, gen);
+		for (u32 i{0}; i < 4;) {
+			if (vns[i] == 1) {
+				SHACK::twoopt(sol, 0.1, 50);
+			} else if (vns[i] == 2) {
+				SHACK::oropt(sol, 0.1, 50);
+			} else if (vns[i] == 3) {
+				SHACK::arcnode(sol, 0.1, 50);
+			} else if (vns[i] == 4) {
+				SHACK::arcswap(sol, 0.1, 50);
+			}
+			improved = 1;
+			while (improved) {
+				improved = false;
+				VNS::relocate(sol, info.one, size_near, improved);
+				VNS::exchange(sol, info.two, size_near, improved);
+				VNS::oropt2(sol, info.or2, size_near, improved);
+				VNS::arcnode(sol, info.three, size_near, improved);
+				VNS::oropt3(sol, info.or3, size_near, improved);
+				VNS::oropt4(sol, info.or4, size_near, improved);
+				VNS::arcswap(sol, info.arc, improved);
+				VNS::twoopt(sol, info.opt2, improved);
+				// if (improved) change = 1;
+				stop--;
+				if (stop == 0) break;
+			}
+			if (sol.valid) {
+				if (sol.allobj < lsbest.allobj) {
+					lsbest = sol;
+					i = 0;
+				} else {
+					sol = lsbest;
+					i++;
+				}
+			} else {
+				lsbest = sol;
+				i++;
+			}
+			stop = maxcustomers * 10;
+		}
+		if (lsbest.valid) {
+			if (lsbest.allobj < bestSol.allobj) {
+				bestSol = lsbest;
+				epoch = max_epoch;
+			} else {
+				lsbest = bestSol;
+				epoch--;
+			}
+		} else {
+			lsbest = bestSol;
+			epoch--;
+		}
+	}
 }
 
 /*
@@ -311,7 +571,7 @@ void SWO::decode(std::vector<Node*>& code, Solution& sol) {
 /// @return Solution 通过交叉操作生成的新解决方案。
 Solution SWO::cross(Solution& sol1, Solution& sol2, float cr) {
 	std::random_device rd;
-	std::mt19937 gen(rd());
+	Xoshiro::Xoshiro128ss gen(rd());
 	Solution child_sol;
 	u64 num{nodes.size()};
 	std::vector<Node*> code1, code2, child_code;
@@ -355,18 +615,18 @@ Solution SWO::cross(Solution& sol1, Solution& sol2, float cr) {
 /// @param cr 交叉率
 void SWO::run(u32 min_n, int epoch, float tr, float cr) {
 	std::random_device rd;
-	std::mt19937 gen(rd());
+	Xoshiro::Xoshiro128ss gen(rd());
 	std::uniform_real_distribution<> dis(0, 1);
 	int t{epoch};
 	u32 num = solutions.size();
-	u32 custer = nodes.size() - depotnum;
+	// u32 custer = nodes.size() - depotnum;
 	while (t < epoch) {
 		float k{1 - t / static_cast<float>(epoch)};
 		if (dis(gen) < tr) {     // 狩猎筑巢
 			if (dis(gen) < k) {  // 狩猎(扰动)
 				for (auto& sol : solutions) {
 					sol.update_hash(true);
-					PER::RuinCreate(sol, custer / 10, custer);
+					// PER::RuinCreate(sol, custer / 10, custer);
 					sol.update_hash(false);
 				}
 			} else {  // 筑巢(优化)

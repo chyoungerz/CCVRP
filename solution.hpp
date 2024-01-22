@@ -14,6 +14,7 @@ Solution greedynear(std::vector<const Node*>& nodes, const u32 depot_num, const 
 
 // 基于贪婪策略的客户分配构造初始解
 Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const u32 maxload, const u32 routes, u32& ctrl);
+Solution assign(std::vector<Node*> customers, std::vector<Node*> depots, const u32 maxload, const u32 routes, u32& ctrl);
 
 // 扫描法构造初始解
 Solution SweepA(const std::vector<Node>& nodes, const std::vector<Node>& station);

@@ -19,7 +19,7 @@ int main(int argc, char const *argv[]) {
 	Solution bestsol;
 	bestsol.allobj = 1000000000;
 	if (argc != 3) {
-		file = "A-n32-k5-PrU.vrp";
+		file = "A-n32-k5-PrK.vrp";
 		result = "data.txt";
 		routes = 5;
 		cerr << "no enought args" << endl;
@@ -45,7 +45,7 @@ int main(int argc, char const *argv[]) {
 		return 1;
 	}
 	init_distance(nodes, depot_num, depots, customers);  // 计算客户距离
-	SA vrp;
+	VND vrp;
 	vrp.init(nodes, depots, customers, depot_num, maxload, routes);
 #ifdef NDEBUG
 	Info infos;
@@ -56,23 +56,37 @@ int main(int argc, char const *argv[]) {
 	auto t1{chrono::high_resolution_clock::now()};
 	for (u32 i{0}; i < epoch; i++) {
 		vrp.run();
-		lengths.emplace_back(vrp.bestSol.allength);
-		objs.emplace_back(vrp.bestSol.allobj);
-		tardiness.emplace_back(vrp.bestSol.alltardiness);
-		if (bestsol.allobj > vrp.bestSol.allobj) {
-			bestsol = vrp.bestSol;
-			infos = vrp.info;
+		if (vrp.bestSol.valid) {
+			lengths.emplace_back(vrp.bestSol.allength);
+			objs.emplace_back(vrp.bestSol.allobj);
+			tardiness.emplace_back(vrp.bestSol.alltardiness);
+			if (bestsol.allobj > vrp.bestSol.allobj) {
+				bestsol = vrp.bestSol;
+				infos = vrp.info;
+			}
 		}
 		vrp.reset();
 	}
 	auto t2{chrono::high_resolution_clock::now()};
 	u64 duration = (chrono::duration_cast<chrono::milliseconds>(t2 - t1)).count();
-	write(result, bestsol, infos, lengths, objs, tardiness, duration);
+	write(result, bestsol, infos, lengths, objs, tardiness, duration, maxload);
+	bool pass = true;
+	for (auto i : bestsol.solution) {
+		if (i.load > maxload) {
+			pass = false;
+			break;
+		}
+	}
+	release(nodes);
+	if (pass) {
+		return 0;
+	} else {
+		return 1;
+	}
 #else
 	vrp.run();
 	vrp.bestSol.show();
-#endif
-
 	release(nodes);
 	return 0;
+#endif
 }

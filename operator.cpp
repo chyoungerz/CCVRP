@@ -1154,90 +1154,140 @@ bool PER::insert(Solution& sol, Node* node, u32 ctrl) {
 void PER::EjecChain(Solution& sol, u32 k, u32 epoch) {
 	u32 size_s = sol.solution.size();
 	if (k >= size_s) k = size_s;
-	std::vector<u32> sol_range(k, 0);
-	std::iota(sol_range.begin() + 1, sol_range.end(), 1);
+	if (k == 0 || k == 1) return;
+	std::vector<u32> select_s(size_s, 0);
+	std::iota(select_s.begin() + 1, select_s.end(), 1);
 	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::shuffle(sol_range.begin(), sol_range.end(), gen);
-	sol_range.emplace_back(sol_range.front());
+	Xoshiro::Xoshiro128ss gen(rd());
+	std::shuffle(select_s.begin(), select_s.end(), gen);
+	select_s.resize(k);
+	select_s.emplace_back(select_s.front());
 	for (u32 i{0}; i < k; i++) {
-		int range_a{static_cast<int>(sol.solution[sol_range[i]].path.size() - 1)};
-		int range_b{static_cast<int>(sol.solution[sol_range[i + 1]].path.size() - 1)};
-		std::uniform_int_distribution<> dis_a(1, range_a);
-		std::uniform_int_distribution<> dis_b(1, range_b);
-		u32 n{epoch};
-		while (n) {
-			u32 index_a{static_cast<u32>(dis_a(gen))};
-			u32 index_b{static_cast<u32>(dis_b(gen))};
-			int difload = sol.solution[sol_range[i]].path[index_a]->demand - sol.solution[sol_range[i + 1]].path[index_b]->demand;
-			if (sol.solution[sol_range[i]].load - difload <= sol.solution[sol_range[i]].capacity && sol.solution[sol_range[i + 1]].load + difload <= sol.solution[sol_range[i + 1]].capacity) {
-				sol.solution[sol_range[i]].load -= difload;
-				sol.solution[sol_range[i + 1]].load += difload;
-				std::swap(sol.solution[sol_range[i + 1]].path[index_b], sol.solution[sol_range[i]].path[index_a]);
-				sol.solution[sol_range[i + 1]].path_cumlength(1);
-				sol.solution[sol_range[i]].path_cumlength(1);
-				break;
-			}
-			n--;
+		u32 range_a = sol.solution[select_s[i]].path.size() - 2;
+		u32 range_b = sol.solution[select_s[i + 1]].path.size() - 2;
+		int n = epoch;
+		while (n--) {
+			u32 index_a{gen() % range_a + 1};
+			u32 index_b{gen() % range_b + 1};
+			int difload = sol.solution[select_s[i]].path[index_a]->demand - sol.solution[select_s[i + 1]].path[index_b]->demand;
+			if (sol.solution[select_s[i]].load - difload > sol.solution[select_s[i]].capacity || sol.solution[select_s[i + 1]].load + difload > sol.solution[select_s[i + 1]].capacity)
+				continue;
+			sol.solution[select_s[i]].load -= difload;
+			sol.solution[select_s[i + 1]].load += difload;
+			sol.shash[sol.solution[select_s[i]].path[index_a]->seq] = sol.solution[select_s[i + 1]].seq;
+			sol.shash[sol.solution[select_s[i + 1]].path[index_b]->seq] = sol.solution[select_s[i]].seq;
+			std::swap(sol.solution[select_s[i + 1]].path[index_b], sol.solution[select_s[i]].path[index_a]);
+			sol.solution[select_s[i + 1]].path_cumlength(1);
+			sol.solution[select_s[i]].path_cumlength(1);
+			sol.alltardiness = priority(sol);
+			// break;
 		}
 	}
+	sol.update();
 }
 
-void PER::RuinCreate(Solution& sol, u32 k, u32 maxnode) {
+void PER::RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 epoch) {
 	// ruin
 	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_int_distribution<> disceate(0, maxnode - 1);
-	u32 index{static_cast<u32>(disceate(gen))};
-	u32 locate{CHK::find(sol.solution[sol.shash[index]].path, index, 7)};
+	Xoshiro::Xoshiro128ss gen(rd());
+	u32 size = maxnode.size();
+	std::uniform_int_distribution<> disceate(0, size - 1);
 	std::vector<Node*> near;
-	near.reserve(maxnode);
-	for (u32 i{0}; i < k; i++) {
-		near.emplace_back(sol.solution[sol.shash[index]].path[locate]->distsort[i].toNode);
+	// double allength{sol.allength};
+	if (sol.solution.size() > sol.maxvehicle) {  // 移除最短
+		u32 reducevehicle = sol.solution.size() - sol.maxvehicle;
+		std::sort(sol.solution.begin(), sol.solution.end(), [](Vehicle& a, Vehicle& b) -> bool { return a.path.size() > b.path.size(); });
+		for (u32 i{0}; i < reducevehicle; i++) {
+			near.insert(near.end(), sol.solution.back().path.begin() + 1, sol.solution.back().path.end() - 1);
+			sol.solution.pop_back();
+		}
+		sol.update_hash();
+	} else {
+		u32 index = maxnode[disceate(gen)]->seq;
+		u32 rnode = sol.shash[index];
+		u32 locate{CHK::find(sol.solution[rnode].path, index, 10)};
+		near.reserve(size * k + 1);
+		for (u32 i{0}; i < k * size; i++) {
+			near.emplace_back(sol.solution[rnode].path[locate]->distsort[i].toNode);
+		}
+		// 移除node
+		for (u32 i{0}, n = near.size(); i < n; i++) {
+			index = sol.shash[near[i]->seq];
+			locate = CHK::find(sol.solution[index].path, near[i], 11);
+			sol.solution[index].load -= sol.solution[index].path[locate]->demand;       // load
+			sol.solution[index].path.erase(sol.solution[index].path.begin() + locate);  // path
+			                                                                            // sol.shash.erase(n->seq);                                                    // hash
+		}
+		std::for_each(sol.solution.begin(), sol.solution.end(), [](Vehicle& v) { v.path_cumlength(1); });
+		sol.update_hash();
+		// std::sort(sol.solution.begin(), sol.solution.end(), [](Vehicle& a, Vehicle& b) -> bool { return a.path.size() > b.path.size(); });
 	}
-	std::sort(near.begin(), near.end(), [](Node* a, Node* b) -> bool { return a->demand > b->demand; });
-	// sol.solution[index].path.erase(sol.solution[index].path.begin() + locate);
-	for (auto& n : near) {
-		index = sol.shash[n->seq];
-		locate = CHK::find(sol.solution[index].path, n, 8);
-		sol.solution[index].load -= sol.solution[index].path[locate]->demand;       // load
-		sol.solution[index].path.erase(sol.solution[index].path.begin() + locate);  // path
-		sol.shash.erase(n->seq);                                                    // hash
-	}
-	// update hash
-	// sol.update_hash();
-	//  recreate
-	for (auto& n : near) {
-		for (u32 i{1}; i < n->distsort.size(); i++) {
-			if (sol.shash.contains(n->distsort[i].to)) {                                            // 邻域是否被破坏
-				index = sol.shash[n->distsort[i].to];
-				if (sol.solution[index].load + n->demand > sol.solution[index].capacity) {          // 超载
-					continue;
-				}
-				locate = CHK::find(sol.solution[index].path, n->distsort[i].toNode, 9);
-				sol.solution[index].path.emplace(sol.solution[index].path.begin() + locate + 1, n);  // 插到后面
-				sol.solution[index].load += n->demand;             // load
-				sol.shash.emplace(n->seq, index);                  // hash
+	// 插入
+	Solution s{sol}, best_sol{sol};
+	best_sol.valid = 0;
+	bool error{0}, flag{0};
+	double flength{1000000000.0};
+	while (epoch) {
+		std::shuffle(near.begin(), near.end(), gen);  // 打乱
+		for (auto& n : near) {
+			if (!PER::insert(s, n, 0)) {
+				error = 1;
 				break;
 			}
-			if (i != n->distsort.size() - 1) {  // 都满了
+		}
+		epoch--;
+		if (error) {  // 失败
+			if (epoch > 0) {
+				s = sol;
+				error = 0;
 				continue;
-			} else {  // 插入空的路线
-				for (auto& s : sol.solution) {
-					if (s.path.size() == 2) {
-						s.path.emplace(s.path.end() - 1, n);
-						s.load += n->demand;
-						sol.shash.emplace(n->seq, s.seq);
-						break;
+			}
+			std::sort(near.begin(), near.end(), [](Node* a, Node* b) { return a->demand > b->demand; });  // 排序
+			for (auto& n : near) {
+				std::sort(sol.solution.begin(), sol.solution.end(), [](Vehicle& a, Vehicle& b) -> bool { return a.load > b.load; });
+				std::vector<Node*> ve{sol.solution.back().path};
+				sol.solution.back().load += n->demand;
+				ve.emplace(ve.begin() + 1, n);
+				u32 size = ve.size() - 1;
+				double tmp{}, best{1000000000.0};
+				if (ve[1]->end >= ve[2]->end) {
+					tmp = PER::cumlength(ve);
+					sol.solution.back().path = ve;
+					sol.solution.back().cumlength = tmp;
+					best = tmp;
+				}
+				for (u32 i{2}; i < size; i++) {
+					std::swap(ve[i], ve[i - 1]);
+					if (ve[i - 1]->end >= ve[i]->end && ve[i]->end >= ve[i + 1]->end) {
+						tmp = PER::cumlength(ve);
+						if (tmp < best) {
+							sol.solution.back().path = ve;
+							sol.solution.back().cumlength = tmp;
+							best = tmp;
+						}
 					}
 				}
 			}
+			sol.alltardiness = priority(sol);
+			sol.update();
+			flag = 0;
+			break;
 		}
+		s.alltardiness = priority(s);
+		s.update();
+		if (s.allobj < flength) {
+			flength = s.allobj;
+			flag = 1;
+			best_sol = s;
+			best_sol.valid = 1;
+		}
+		s = sol;
+		error = 0;
 	}
-	// update
-	for (auto& i : sol.solution) {
-		i.path_cumlength(1);
-	}
+	if (flag)
+		sol = best_sol;
+	sol.update_seq();
+	sol.update_hash(1);
 }
 
 void PER::RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 epoch, u32 rule) {

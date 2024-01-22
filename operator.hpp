@@ -344,6 +344,7 @@ namespace PER {
 	/// @param maxnode 最大节点数
 	/// @param epoch 最大停止次数
 	void RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 epoch, u32 rule);
+	void RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 epoch);
 
 	/// @brief 抛射链扰动
 	/// @param sol 解

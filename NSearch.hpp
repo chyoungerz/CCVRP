@@ -70,4 +70,12 @@ namespace VNS {
 	/// @brief 交叉扰动优化操作
 	void cross(Solution& solution, u32& num, bool& flag);
 };  // namespace VNS
+
+namespace SHACK {
+	void arcnode(Solution& solution, float threshold, u32 max_iter);
+	void oropt(Solution& solution, float threshold, u32 max_iter);
+	void arcswap(Solution& solution, float threshold, u32 max_iter);
+	void optstar(Solution& solution, float threshold, u32 max_iter);
+	void twoopt(Solution& solution, float threshold, u32 max_iter);
+};  // namespace SHACK
 #endif

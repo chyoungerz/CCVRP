@@ -17,8 +17,11 @@
 #define PRIORITY 16
 
 typedef unsigned int u32;
+typedef int i32;
 typedef unsigned long long int u64;
 typedef long long int i64;
+typedef double f64;
+typedef float f32;
 
 class Node;
 // 边长度，Node的一部分
@@ -313,12 +316,16 @@ class Solution {
 		if (update == 0) {
 			for (auto& i : solution) {
 				allength += i.cumlength;
-				if (i.load > i.capacity || i.length > i.Limit) valid = false;
+				if (i.load > i.capacity || i.length > i.Limit) {
+					valid = false;
+				}
 			}
 		} else {
 			for (auto& i : solution) {
 				allength += i.path_cumlength(true);
-				if (i.load > i.capacity || i.length > i.Limit) valid = false;
+				if (i.load > i.capacity || i.length > i.Limit) {
+					valid = false;
+				}
 			}
 		}
 		allobj = v_aim(allength, alltardiness);

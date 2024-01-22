@@ -284,6 +284,37 @@ Solution nassign(std::vector<Node*> customers, std::vector<Node*> depots, const 
 	return solution;
 }
 
+Solution assign(std::vector<Node*> customers, std::vector<Node*> depots, const u32 maxload, const u32 routes, u32& ctrl) {
+	Solution solution;
+	solution.multi = false;
+	solution.maxvehicle = routes;
+	Node* depot{depots.front()};
+	Vehicle vehicle(depot, maxload, 0);  // 初始路线
+	// 按离厂站距离排序
+	std::sort(customers.begin(), customers.end(), [](const Node* a, const Node* b) -> bool {
+		return a->demand > b->demand;
+	});
+	solution.add(vehicle, routes);
+	u32 maxcust = customers.size();
+	for (u32 i{0};; i++) {
+		if (i < maxcust) {
+			std::sort(solution.solution.begin(), solution.solution.end(), [](Vehicle& a, Vehicle& b) -> bool { return a.load > b.load; });
+			solution.solution.back().path.emplace_back(customers[i]);
+			solution.solution.back().load += customers[i]->demand;
+		} else
+			break;
+	}
+	for (auto& v : solution.solution) {
+		v.path.emplace_back(depot);
+		v.path_cumlength(true);
+	}
+	solution.update_seq();
+	solution.alltardiness = priority(solution);
+	solution.update();
+	solution.evaluate(ctrl);
+	return solution;
+}
+
 Solution SweepA(const std::vector<Node>& nodes, const std::vector<Node>& station) {
 	Solution solution;
 	return solution;
