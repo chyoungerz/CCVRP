@@ -112,6 +112,11 @@ inline bool read_vrp(const std::string& file, u32& maxload, u32& despot, u32& ro
 			break;
 		}
 	}
+#ifndef PR
+	for (auto& i : nodes) {
+		i->end = 0;
+	}
+#endif
 	return true;
 }
 

@@ -199,7 +199,7 @@ void VN::run() {
 		}
 		timelimit = 0;
 		stop = maxcustomers;
-		// sol.update();
+		sol.update();
 		if (sol.valid) {
 			if (sol.allobj < bestSol.allobj) {
 				bestSol = sol;

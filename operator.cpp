@@ -1268,12 +1268,16 @@ void PER::RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 ep
 					}
 				}
 			}
+#ifdef PR
 			sol.alltardiness = priority(sol);
+#endif
 			sol.update();
 			flag = 0;
 			break;
 		}
+#ifdef PR
 		s.alltardiness = priority(s);
+#endif
 		s.update();
 		if (s.allobj < flength) {
 			flength = s.allobj;
@@ -1345,7 +1349,10 @@ void PER::RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 ep
 		}
 		epoch--;
 		if (error) {  // 失败
+#ifdef PR
 			s.alltardiness = priority(s);
+#endif
+
 			s.update();
 			s.valid = false;
 			if (best_sol.valid == 0 && s.allobj < ilength) {
@@ -1358,7 +1365,10 @@ void PER::RuinCreate(Solution& sol, float k, std::vector<Node*>& maxnode, u32 ep
 			error = 0;
 			continue;
 		}
+#ifdef PR
 		s.alltardiness = priority(s);
+#endif
+
 		s.update();
 		if (s.allobj < flength) {
 			flength = s.allobj;
@@ -1405,7 +1415,9 @@ void PER::EjecChain(Solution& sol, u32 k, u32 epoch, u32 rule) {
 				std::swap(sol.solution[select_s[i + 1]].path[index_b], sol.solution[select_s[i]].path[index_a]);
 				sol.solution[select_s[i + 1]].path_cumlength(1);
 				sol.solution[select_s[i]].path_cumlength(1);
+#ifdef PR
 				sol.alltardiness = priority(sol);
+#endif
 				// break;
 			}
 			//} else if (sol.solution[select_s[i]].load - difload <= sol.solution[select_s[i]].capacity && sol.solution[select_s[i + 1]].load + difload <= sol.solution[select_s[i + 1]].capacity) {
@@ -1425,7 +1437,9 @@ void PER::EjecChain(Solution& sol, u32 k, u32 epoch, u32 rule) {
 				std::swap(sol.solution[select_s[i + 1]].path[index_b], sol.solution[select_s[i]].path[index_a]);
 				sol.solution[select_s[i + 1]].path_cumlength(1);
 				sol.solution[select_s[i]].path_cumlength(1);
+#ifdef PR
 				sol.alltardiness = priority(sol);
+#endif
 				// break;
 			}
 		}
@@ -1457,13 +1471,19 @@ bool OPS::onepointmove(Solution& s, Vehicle& r, const u32 a, const u32 b, u32 ct
 				}
 			}
 		} else {  // 可行
+#ifdef PR
 			s_front_tardiness = priority(s);
+#endif
+
 			saving0 = r_front_path - r.cumlength;
 			saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 		}
 		std::swap(r.path[b], r.path[b - 1]);
 		if (r.evaluate(r_back_path, r_back_limit, cmd0)) {  // 评估插入r2的后面
+#ifdef PR
 			s_back_tardiness = priority(s);
+#endif
+
 			saving1 = r_back_path - r.cumlength;
 			saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 		}
@@ -1479,7 +1499,10 @@ bool OPS::onepointmove(Solution& s, Vehicle& r, const u32 a, const u32 b, u32 ct
 			std::swap(r.path[b], r.path[b - 1]);
 			r.cumlength = r_front_path;
 			r.length = r_front_limit;
+#ifdef PR
 			s.alltardiness = s_front_tardiness;
+#endif
+
 			return true;
 		} else {
 			// 插入后面更优
@@ -1492,7 +1515,10 @@ bool OPS::onepointmove(Solution& s, Vehicle& r, const u32 a, const u32 b, u32 ct
 			// 可行
 			r.cumlength = r_back_path;
 			r.length = r_back_limit;
+#ifdef PR
 			s.alltardiness = s_back_tardiness;
+#endif
+
 			return true;
 		}
 	} else {  // a在b后面
@@ -1509,13 +1535,19 @@ bool OPS::onepointmove(Solution& s, Vehicle& r, const u32 a, const u32 b, u32 ct
 				}
 			}
 		} else {  // 可行
+#ifdef PR
 			s_front_tardiness = priority(s);
+#endif
+
 			saving0 = r_front_path - r.cumlength;
 			saving0 = v_aim(saving0, s_front_tardiness - s.alltardiness);
 		}
 		std::swap(r.path[b], r.path[b + 1]);
 		if (r.evaluate(r_back_path, r_back_limit, cmd0)) {  // 评估插入r2的后面
+#ifdef PR
 			s_back_tardiness = priority(s);
+#endif
+
 			saving1 = r_back_path - r.cumlength;
 			saving1 = v_aim(saving1, s_back_tardiness - s.alltardiness);
 		}
