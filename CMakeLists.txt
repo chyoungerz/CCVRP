@@ -6,6 +6,9 @@ project(CCVRP VERSION 0.1.0)
 #    ADD_DEFINITIONS(-DDEBUG)
 #ENDIF()
 
+# 优先级
+#ADD_DEFINITIONS(-DPR)
+
 # 设置C++编译参数(CMAKE_CXX_FLAGS是全局变量)
 set(CMAKE_CXX_FLAGS "-Wall -std=gnu++23")
 

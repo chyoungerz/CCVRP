@@ -44,7 +44,11 @@ struct Info {
 
 // 目标
 inline double v_aim(double cumlength_, double tardiness_ = 0.0) {
+#ifdef PR
 	return cumlength_ + tardiness_;
+#else
+	return cumlength_;
+#endif
 }
 
 /// @brief 节点
@@ -482,6 +486,7 @@ class Solution {
 		double result{};
 		// std::vector<u32> dfpr(s.maxpriority * s.maxnode, 0);
 		// std::vector<double> dftard(s.maxpriority * s.maxnode, 0.0);
+#ifdef PR
 		u32 maxpath{}, m{};
 		u32 size = s.solution.size();
 
@@ -527,6 +532,7 @@ class Solution {
 			}
 		}
 		delete[] dif;
+#endif
 		return result;
 	}
 };

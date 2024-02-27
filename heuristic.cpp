@@ -52,11 +52,11 @@ void VN::run() {
 	// u32 customer = nodes.size() - depotnum;
 	//  sol.show();
 	bool improved{1}, flag{0}, change{1};
-	int max_epoch{10};
+	int max_epoch{40};
 	int epoch{max_epoch};
-	float size_near{0.5}, T{1.0}, cold_rate{0.93};
+	float size_near{0.5}, T{1.0}, cold_rate{0.95};
 	int vns[7] = {1, 2, 3, 4, 5, 6, 7};
-	u32 maxcustomers = customers.size();
+	u32 maxcustomers = customers.size() * 10 > 100 ? customers.size() * 10 : 100;
 	u32 stop{maxcustomers}, timelimit{0};
 	Solution lsbest = bestSol;
 	std::random_device rd;
@@ -80,7 +80,7 @@ void VN::run() {
 		bestSol = lsbest = sol;
 	while (epoch) {
 		// std::shuffle(vns, vns + 7, gen);
-		//  if (T > 0.2) {
+		//   if (T > 0.2) {
 		//	float r = dis(gen);
 		//	if (dis(gen) < 0.5) {
 		//		// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
@@ -89,7 +89,7 @@ void VN::run() {
 		//		// PER::RuinCreate(sol, T > 0.2 ? T / 2 : 0.1, customers, 10, 2);
 		//		PER::RuinCreate(sol, r > 0.2 ? r / 2 : 0.1, customers, 10, 2);
 		//	}
-		// } else {
+		//  } else {
 		if (dis(gen) < 0.5) {
 			PER::EjecChain(sol, vehicles * (1 - T) > 2 ? vehicles * (1 - T) : 2, 10 * (1 - T) > 1 ? 10 * (1 - T) : 1, 0);
 			// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
