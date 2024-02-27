@@ -45,7 +45,7 @@ int main(int argc, char const *argv[]) {
 		return 1;
 	}
 	init_distance(nodes, depot_num, depots, customers);  // 计算客户距离
-	VND vrp;
+	VN vrp;
 	vrp.init(nodes, depots, customers, depot_num, maxload, routes);
 #ifdef NDEBUG
 	Info infos;

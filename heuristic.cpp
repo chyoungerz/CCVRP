@@ -28,6 +28,7 @@ void VN::init(std::vector<Node*>& node, std::vector<Node*>& depot, std::vector<N
 	initSol.update_hash(1);
 	sol = initSol;
 	bestSol.allobj = 100000000.0;
+	bestSol.allength = 100000000.0;
 }
 
 void VN::reset() {
@@ -52,7 +53,7 @@ void VN::run() {
 	// u32 customer = nodes.size() - depotnum;
 	//  sol.show();
 	bool improved{1}, flag{0}, change{1};
-	int max_epoch{40};
+	int max_epoch{30};
 	int epoch{max_epoch};
 	float size_near{0.5}, T{1.0}, cold_rate{0.95};
 	int vns[7] = {1, 2, 3, 4, 5, 6, 7};
@@ -73,7 +74,9 @@ void VN::run() {
 		VNS::arcswap(sol, info.arc, improved);
 	}
 	stop = maxcustomers;
+#ifdef PR
 	sol.alltardiness = priority(sol);
+#endif
 	sol.update();
 	// sol.show();
 	if (sol.valid)
