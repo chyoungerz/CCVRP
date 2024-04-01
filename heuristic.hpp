@@ -15,6 +15,7 @@ class VN {
 	std::vector<Node*> nodes;  // 全部节点
 	std::vector<Node*> depots;
 	std::vector<Node*> customers;
+	std::vector<double> hist;
 	Info info;
 	u32 depotnum;  // 厂站数
 	u32 vehicles;  // 最大车辆数

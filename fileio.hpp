@@ -241,4 +241,21 @@ inline void release(std::vector<Node*>& nodes) {
 	nodes.clear();
 }
 
+inline void hist(const std::string& filename, Solution& sol, const Info& info) {
+	std::fstream out(filename, std::ios::out | std::ios::app);  // 输出, 追加末尾
+	if (out.fail()) {
+		std::cerr << "Error! cannot write to file: " << filename << std::endl;
+		return;
+	}
+	for (u32 i = 0, n = sol.solution.size(); i < n; i++) {
+		if (sol.solution[i].path.size() - 2 <= 0) continue;
+		out << sol.solution[i] << " : " << sol.solution[i].load << "\n";
+	}
+	out << "one: " << info.one << " two: " << info.two << " three: " << info.three << " arc: " << info.arc << " or2: " << info.or2 << " or3: " << info.or3 << " or4: " << info.or4 << " 2-opt: " << info.opt2 << "\n";
+	out << "total obj: " << sol.allobj << "\t";
+	out << "total tardiness: " << sol.alltardiness << "\t";
+	out << "total length: " << sol.allength << "\n\n";
+	out.close();
+}
+
 #endif /*_FILEIO_HPP_*/
