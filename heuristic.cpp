@@ -38,7 +38,7 @@ void VN::reset() {
 	bestSol.allength = 100000000.0;
 	bestSol.shash.clear();
 	bestSol.solution.clear();
-	hist.clear();
+	hists.clear();
 	bestSol.valid = 0;
 	info.one = 0;
 	info.opt2 = 0;
@@ -53,7 +53,7 @@ void VN::reset() {
 void VN::run() {
 	// u32 customer = nodes.size() - depotnum;
 	//  sol.show();
-	bool improved{1}, flag{0}, change{1};
+	bool improved{1}, flag{0};
 	int max_epoch{20};
 	int epoch{max_epoch};
 	float size_near{0.5}, T{1.0}, cold_rate{0.94};
@@ -63,7 +63,7 @@ void VN::run() {
 	Solution lsbest = bestSol;
 	std::random_device rd;
 	Xoshiro::Xoshiro128ss gen(rd());
-	std::uniform_real_distribution<> dis(0, 1);
+	std::uniform_real_distribution<> dis(0, 1), dis2(0.2, 1);
 	//  sol.evaluate();
 	//  hist.emplace_back(sol.allobj);
 	while (stop-- && improved) {
@@ -87,8 +87,8 @@ void VN::run() {
 	while (epoch) {
 		// std::shuffle(vns, vns + 7, gen);
 		//   if (T > 0.2) {
-		float r = dis(gen);
-		// constexpr float r = 0.6;
+		// float r = dis2(gen);
+		constexpr float r = 1.0;
 		//	if (dis(gen) < 0.5) {
 		//		// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
 		//		PER::EjecChain(sol, vehicles * r > 2 ? vehicles * r : 2, 10 * r > 1 ? 10 * r : 1, 0);
@@ -100,13 +100,13 @@ void VN::run() {
 		if (dis(gen) < 0.5) {
 			// PER::EjecChain(sol, vehicles * (1 - T) > 2 ? vehicles * (1 - T) : 2, 10 * (1 - T) > 1 ? 10 * (1 - T) : 1, 0);
 			// PER::EjecChain(sol, vehicles * T > 2 ? vehicles * T : 2, 10 * T > 1 ? 10 * T : 1, 0);
-			PER::EjecChain(sol, vehicles * r > 2 ? vehicles * r : 2, 10 * r > 1 ? 10 * r : 1, 0);
-			// PER::EjecChain(sol, vehicles * r, 10 * r, 0);
+			// PER::EjecChain(sol, vehicles * r > 2 ? vehicles * r : 2, 10 * r > 1 ? 10 * r : 1, 0);
+			PER::EjecChain(sol, vehicles * r, 10 * r, 0);
 		} else {
 			// PER::RuinCreate(sol, (1 - T) / 2 > 0.1 ? (1 - T) / 2 : 0.1, customers, 10, 2);
 			// PER::RuinCreate(sol, T > 0.2 ? T / 2 : 0.1, customers, 10, 2);
-			PER::RuinCreate(sol, r > 0.2 ? r / 2 : 0.1, customers, 10, 2);
-			// PER::RuinCreate(sol, r / 2, customers, 10, 2);
+			// PER::RuinCreate(sol, r > 0.2 ? r / 2 : 0.1, customers, 10, 2);
+			PER::RuinCreate(sol, r / 2, customers, 10, 2);
 		}
 		//}
 		for (u32 n{0}; n < 7;) {
@@ -213,11 +213,11 @@ void VN::run() {
 			if (sol.allobj < bestSol.allobj) {
 				bestSol = sol;
 			}
-			if (T < 0.2 && change) {
-				if (bestSol.valid)
-					lsbest = bestSol;
-				change = 0;
-			}
+			// if (T < 0.2 && change) {
+			//	if (bestSol.valid)
+			//		lsbest = bestSol;
+			//	change = 0;
+			// }
 			if (sol.allobj < lsbest.allobj) {
 				lsbest = sol;
 				epoch = max_epoch;
@@ -232,10 +232,10 @@ void VN::run() {
 			epoch--;
 		}
 		T *= cold_rate;
-		// hist.emplace_back(lsbest.allobj);
+		hists.emplace_back(lsbest.allobj);
 	}
 	if (bestSol.allobj > lsbest.allobj || !bestSol.valid) {
-		// hist.emplace_back(lsbest.allobj);
+		hists.emplace_back(lsbest.allobj);
 		bestSol = std::move(lsbest);
 	}
 	// bestSol.show();
@@ -284,7 +284,7 @@ void SA::reset() {
 }
 
 void SA::run() {
-	bool improved{1}, change{1};
+	bool improved{1};
 	int max_epoch{20};
 	int epoch{max_epoch};
 	float size_near{0.5}, T{1.0}, cold_rate{0.94};
@@ -373,11 +373,11 @@ void SA::run() {
 			if (sol.allobj < bestSol.allobj) {
 				bestSol = sol;
 			}
-			if (T < 0.2 && change) {
-				if (bestSol.valid)
-					lsbest = bestSol;
-				change = 0;
-			}
+			// if (T < 0.2 && change) {
+			//	if (bestSol.valid)
+			//		lsbest = bestSol;
+			//	change = 0;
+			// }
 			if (sol.allobj < lsbest.allobj) {
 				lsbest = sol;
 				epoch = max_epoch;

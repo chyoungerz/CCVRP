@@ -496,6 +496,7 @@ class Solution {
 		m = maxpath - 1;
 		maxpath -= 2;
 		double* dif = new double[s.solution.size() * m]{};
+		// std::vector<double> dif(s.solution.size() * m, 0.0);
 		for (u32 i{0}; i < size; i++) {
 			for (u32 j{1}, psize = s.solution[i].path.size() - 1; j < psize; j++) {
 				dif[i * m + j] += dif[i * m + j - 1] + s.solution[i].path[j - 1]->dists[s.solution[i].path[j]->seq].dist;
@@ -516,7 +517,7 @@ class Solution {
 		        }
 		    }
 		}*/
-		for (u32 i{2}; i < maxpath; i++) {
+		for (u32 i{2}; i <= maxpath; i++) {
 			for (u32 a{0}; a < size; a++) {
 				if (i + 2 <= s.solution[a].path.size()) {
 					for (u32 j{1}; j < i; j++) {

@@ -258,4 +258,16 @@ inline void hist(const std::string& filename, Solution& sol, const Info& info) {
 	out.close();
 }
 
+inline void write(const std::string& filename, const std::vector<double> h) {
+	std::fstream out(filename, std::ios::out | std::ios::app);  // 输出, 追加末尾
+	if (out.fail()) {
+		std::cerr << "Error! cannot write to file: " << filename << std::endl;
+		return;
+	}
+	for (u64 i = 0; i < h.size(); i++) {
+		out << i + 1 << "," << h[i] << "\n";
+	}
+	out.close();
+}
+
 #endif /*_FILEIO_HPP_*/

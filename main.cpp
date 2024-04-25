@@ -7,21 +7,23 @@
 #include "heuristic.hpp"
 #include "node.hpp"
 
+static const int _ = []() { std::ios::sync_with_stdio(false); std::cin.tie(nullptr); std::cout.tie(nullptr); return 0; }();
+
 using namespace std;
 /// @brief
 /// @param argv 文件 结果文件 迭代次数 接受准则等
 int main(int argc, char const *argv[]) {
-	ios::sync_with_stdio(false);
-	// const time_t now = time(nullptr);  // 以当前时间设置随机数种子
+	// ios::sync_with_stdio(false);
+	//  const time_t now = time(nullptr);  // 以当前时间设置随机数种子
 	string file, result, resulthistory;
 	vector<Node *> nodes, depots, customers;
 	u32 maxload{}, depot_num{}, routes{}, epoch{};
 	Solution bestsol;
 	bestsol.allobj = 1000000000;
 	if (argc != 3) {
-		file = "A-n32-k5-PrK.vrp";
+		file = "P-n16-k8-PrK.vrp";
 		result = "data.txt";
-		routes = 5;
+		routes = 8;
 		cerr << "no enought args" << endl;
 		cerr << "use default: " << file << endl;
 	} else {
@@ -67,6 +69,7 @@ int main(int argc, char const *argv[]) {
 				bestsol = vrp.bestSol;
 			}
 		}
+		// write("results/epoch.csv", vrp.hists);
 		vrp.reset();
 	}
 	auto t2{chrono::high_resolution_clock::now()};
@@ -89,6 +92,8 @@ int main(int argc, char const *argv[]) {
 #else
 	vrp.run();
 	vrp.bestSol.show();
+	int a = priority(vrp.bestSol);
+	cout << "priority: " << a << endl;
 	release(nodes);
 	return 0;
 #endif

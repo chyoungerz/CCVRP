@@ -7,7 +7,7 @@ project(CCVRP VERSION 0.1.0)
 #ENDIF()
 
 # 优先级
-#ADD_DEFINITIONS(-DPR)
+ADD_DEFINITIONS(-DPR)
 
 # 设置C++编译参数(CMAKE_CXX_FLAGS是全局变量)
 set(CMAKE_CXX_FLAGS "-Wall -std=gnu++23")
@@ -77,16 +77,16 @@ set(TESTS_P
 )
 
 foreach(TEST IN LISTS TESTS_A)
-  add_test(NAME ${TEST} COMMAND vrp a/${TEST}-Prk.vrp 30 CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing)
+  add_test(NAME ${TEST} COMMAND vrp a/${TEST}-Prk.vrp 10 CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing)
 endforeach()
 foreach(TEST IN LISTS TESTS_B)
-  add_test(NAME ${TEST} COMMAND vrp b/${TEST}-Prk.vrp 30 CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing)
+  add_test(NAME ${TEST} COMMAND vrp b/${TEST}-Prk.vrp 10 CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing)
 endforeach()
 foreach(TEST IN LISTS TESTS_E)
-  add_test(NAME ${TEST} COMMAND vrp e/${TEST}-Prk.vrp 30 CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing)
+  add_test(NAME ${TEST} COMMAND vrp e/${TEST}-Prk.vrp 10 CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing)
 endforeach()
 foreach(TEST IN LISTS TESTS_P)
-  add_test(NAME ${TEST} COMMAND vrp p/${TEST}-Prk.vrp 30 CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing)
+  add_test(NAME ${TEST} COMMAND vrp p/${TEST}-Prk.vrp 10 CONFIGURATIONS Release WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing)
 endforeach()
 
 #set_tests_properties(p01 PROPERTIES PASS_CONFIGURE "0")

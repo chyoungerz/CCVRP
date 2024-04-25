@@ -2222,6 +2222,8 @@ bool OPS::arcnode(Solution& s, Vehicle& r1, Vehicle& r2, const u32 a, const u32 
 	double r1_newpath{}, r1_newlimit{}, r2_new_path{}, r2_limit{}, s_tardiness{-1.0};
 	if (r1.seq == r2.seq) {                       // 如果两个车辆的路径相同
 		r1.precheck(cmd1);
+		if (cmd1 & LOADS)
+			return false;
 		if (cmd1 & LENGTH)
 			flag = 1;
 		if (a < b) {                              // 如果a在b前面
@@ -2294,7 +2296,8 @@ bool OPS::arcnode(Solution& s, Vehicle& r1, Vehicle& r2, const u32 a, const u32 
 	} else {                                     // 如果两个车辆的路径不同
 		r1.precheck(cmd1), r2.precheck(cmd2);
 		if (cmd1 & LOADS || cmd2 & LOADS)
-			return false;
+			return false; // ? 
+//          flag = 3; //可能会死循环
 		else if (cmd1 & LENGTH || cmd2 & LENGTH)
 			flag = 1;
 		if (flag == 3) {
